@@ -1,0 +1,98 @@
+using Microsoft.AspNetCore.Mvc;
+using SRJE.Web.Models.Requests;
+using SRJE.Web.Services;
+
+namespace SRJE.Web.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class BeneficiariosController : ControllerBase
+{
+    private readonly IBeneficiarioService _service;
+
+    public BeneficiariosController(IBeneficiarioService service)
+    {
+        _service = service;
+    }
+
+    /// <summary>GET /api/beneficiarios — Listar con paginacion y filtros</summary>
+    [HttpGet]
+    public async Task<IActionResult> Listar([FromQuery] BuscarBeneficiarioQuery query)
+    {
+        var result = await _service.ListarAsync(query);
+        return Ok(result);
+    }
+
+    /// <summary>GET /api/beneficiarios/{rut} — Ficha completa por RUT</summary>
+    [HttpGet("{rut:long}")]
+    public async Task<IActionResult> ObtenerPorRut(long rut)
+    {
+        var result = await _service.ObtenerPorRutAsync(rut);
+        if (result == null) return NotFound();
+        return Ok(result);
+    }
+
+    /// <summary>POST /api/beneficiarios — Crear nuevo beneficiario</summary>
+    [HttpPost]
+    public async Task<IActionResult> Crear([FromBody] CrearBeneficiarioRequest request)
+    {
+        try
+        {
+            var usuario = User.Identity?.Name ?? "sistema";
+            var result = await _service.CrearAsync(request, usuario);
+            return CreatedAtAction(nameof(ObtenerPorRut),
+                new { rut = result.RutBeneficiario }, result);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { error = ex.Message });
+        }
+    }
+
+    /// <summary>PUT /api/beneficiarios/{rut} — Actualizar ficha</summary>
+    [HttpPut("{rut:long}")]
+    public async Task<IActionResult> Actualizar(long rut, [FromBody] ActualizarBeneficiarioRequest request)
+    {
+        try
+        {
+            var usuario = User.Identity?.Name ?? "sistema";
+            var result = await _service.ActualizarAsync(rut, request, usuario);
+            return Ok(result);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+    }
+
+    /// <summary>DELETE /api/beneficiarios/{rut} — Inactivar beneficiario</summary>
+    [HttpDelete("{rut:long}")]
+    public async Task<IActionResult> Inactivar(long rut)
+    {
+        var usuario = User.Identity?.Name ?? "sistema";
+        var result = await _service.InactivarAsync(rut, usuario);
+        if (!result) return NotFound();
+        return Ok(new { inactivado = true });
+    }
+
+    /// <summary>GET /api/beneficiarios/{rut}/retenciones — Retenciones del beneficiario</summary>
+    [HttpGet("{rut:long}/retenciones")]
+    public async Task<IActionResult> ObtenerRetenciones(long rut)
+    {
+        var result = await _service.ObtenerRetencionesAsync(rut);
+        return Ok(result);
+    }
+
+    /// <summary>GET /api/beneficiarios/buscar?q= — Busqueda por nombre o RUT</summary>
+    [HttpGet("buscar")]
+    public async Task<IActionResult> Buscar([FromQuery] string q)
+    {
+        if (string.IsNullOrWhiteSpace(q)) return Ok(Array.Empty<object>());
+        var result = await _service.BuscarAsync(q);
+        return Ok(result);
+    }
+}
