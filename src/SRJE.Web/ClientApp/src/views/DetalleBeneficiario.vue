@@ -17,6 +17,14 @@
       </section>
 
       <section>
+        <h3>Datos del Funcionario</h3>
+        <dl>
+          <dt>RUT Funcionario</dt><dd>{{ store.detalle.rutFuncionarioFormateado || '-' }}</dd>
+          <dt>Nombre Funcionario</dt><dd>{{ store.detalle.nombreFuncionario || '-' }}</dd>
+        </dl>
+      </section>
+
+      <section>
         <h3>Cuenta Bancaria</h3>
         <dl>
           <dt>Banco</dt><dd>{{ store.detalle.codBanco || '-' }}</dd>
@@ -80,7 +88,7 @@ onMounted(() => store.obtener(Number(props.rut)))
 
 <style scoped>
 .rut { font-size: 1.2rem; color: #666; margin-bottom: 1rem; }
-.sections { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+.sections { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
 section { background: #fff; padding: 1rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 1rem; }
 h3 { margin-bottom: 0.75rem; color: #1976d2; }
 dl { display: grid; grid-template-columns: auto 1fr; gap: 0.3rem 1rem; }

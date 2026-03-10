@@ -80,6 +80,12 @@ public class BeneficiarioService : IBeneficiarioService
             CodBanco = beneficiario.CodBanco,
             CtaEstado = beneficiario.CtaEstado,
             Sucursal = beneficiario.Sucursal,
+            RutFuncionario = beneficiario.RutFuncionario,
+            DvFuncionario = beneficiario.DvFuncionario,
+            RutFuncionarioFormateado = beneficiario.RutFuncionario.HasValue && beneficiario.DvFuncionario != null
+                ? RutHelper.Formatear(beneficiario.RutFuncionario.Value, beneficiario.DvFuncionario)
+                : null,
+            NombreFuncionario = beneficiario.NombreFuncionario,
             Estado = beneficiario.Estado,
             FechaCreacion = beneficiario.FechaCreacion,
             FechaModificacion = beneficiario.FechaModificacion,
@@ -139,6 +145,9 @@ public class BeneficiarioService : IBeneficiarioService
             CodBanco = request.CodBanco,
             CtaEstado = request.CodBanco == 12 ? request.CtaEstado?.PadLeft(11, '0') : null,
             Sucursal = request.Sucursal,
+            RutFuncionario = request.RutFuncionario,
+            DvFuncionario = request.DvFuncionario?.ToUpper(),
+            NombreFuncionario = request.NombreFuncionario,
             UsuarioCreacion = usuario
         };
 
@@ -178,6 +187,9 @@ public class BeneficiarioService : IBeneficiarioService
         entity.CodBanco = request.CodBanco;
         entity.CtaEstado = request.CodBanco == 12 ? request.CtaEstado?.PadLeft(11, '0') : null;
         entity.Sucursal = request.Sucursal;
+        entity.RutFuncionario = request.RutFuncionario;
+        entity.DvFuncionario = request.DvFuncionario?.ToUpper();
+        entity.NombreFuncionario = request.NombreFuncionario;
         entity.FechaModificacion = DateTime.Now;
 
         await _db.SaveChangesAsync();
@@ -259,6 +271,12 @@ public class BeneficiarioService : IBeneficiarioService
         CodBanco = b.CodBanco,
         CtaEstado = b.CtaEstado,
         Sucursal = b.Sucursal,
+        RutFuncionario = b.RutFuncionario,
+        DvFuncionario = b.DvFuncionario,
+        RutFuncionarioFormateado = b.RutFuncionario.HasValue && b.DvFuncionario != null
+            ? RutHelper.Formatear(b.RutFuncionario.Value, b.DvFuncionario)
+            : null,
+        NombreFuncionario = b.NombreFuncionario,
         Estado = b.Estado,
         FechaCreacion = b.FechaCreacion
     };

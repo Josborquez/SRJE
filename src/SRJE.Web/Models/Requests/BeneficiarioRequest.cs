@@ -37,6 +37,14 @@ public class CrearBeneficiarioRequest
 
     [MaxLength(60)]
     public string? Sucursal { get; set; }
+
+    public long? RutFuncionario { get; set; }
+
+    [MaxLength(1)]
+    public string? DvFuncionario { get; set; }
+
+    [MaxLength(100)]
+    public string? NombreFuncionario { get; set; }
 }
 
 public class ActualizarBeneficiarioRequest : CrearBeneficiarioRequest
