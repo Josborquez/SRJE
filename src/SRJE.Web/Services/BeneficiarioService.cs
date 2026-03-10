@@ -143,7 +143,7 @@ public class BeneficiarioService : IBeneficiarioService
             CtaOtBanco = request.CtaOtBanco,
             TipoCuenta = request.TipoCuenta,
             CodBanco = request.CodBanco,
-            CtaEstado = request.CodBanco == 12 ? request.CtaEstado?.PadLeft(11, '0') : null,
+            CtaEstado = request.CodBanco == 12 ? request.CtaEstado : null,
             Sucursal = request.Sucursal,
             RutFuncionario = request.RutFuncionario,
             DvFuncionario = request.DvFuncionario?.ToUpper(),
@@ -185,7 +185,7 @@ public class BeneficiarioService : IBeneficiarioService
         entity.CtaOtBanco = request.CtaOtBanco;
         entity.TipoCuenta = request.TipoCuenta;
         entity.CodBanco = request.CodBanco;
-        entity.CtaEstado = request.CodBanco == 12 ? request.CtaEstado?.PadLeft(11, '0') : null;
+        entity.CtaEstado = request.CodBanco == 12 ? request.CtaEstado : null;
         entity.Sucursal = request.Sucursal;
         entity.RutFuncionario = request.RutFuncionario;
         entity.DvFuncionario = request.DvFuncionario?.ToUpper();

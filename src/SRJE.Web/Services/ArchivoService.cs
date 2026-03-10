@@ -254,7 +254,7 @@ public class ArchivoService : IArchivoService
                         NombreBeneficiario = linea.NombreBeneficiario,
                         CodBanco = linea.CodBanco,
                         TipoCuenta = linea.TipoCuenta,
-                        CtaEstado = linea.CodBanco == 12 ? linea.NumeroCuenta?.PadLeft(11, '0') : null,
+                        CtaEstado = linea.CodBanco == 12 ? linea.NumeroCuenta : null,
                         CtaOtBanco = linea.CodBanco != 12 ? linea.NumeroCuenta : null,
                         UsuarioCreacion = usuario
                     });
@@ -264,7 +264,7 @@ public class ArchivoService : IArchivoService
                 {
                     beneficiario.CodBanco = linea.CodBanco;
                     beneficiario.TipoCuenta = linea.TipoCuenta;
-                    beneficiario.CtaEstado = linea.CodBanco == 12 ? linea.NumeroCuenta?.PadLeft(11, '0') : null;
+                    beneficiario.CtaEstado = linea.CodBanco == 12 ? linea.NumeroCuenta : null;
                     beneficiario.CtaOtBanco = linea.CodBanco != 12 ? linea.NumeroCuenta : null;
                     beneficiario.FechaModificacion = DateTime.Now;
                     actualizados++;
