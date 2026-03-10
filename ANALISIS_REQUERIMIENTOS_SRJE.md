@@ -437,10 +437,21 @@ El documento SRJE_Prompt_Desarrollo_v3.docx es un prompt de desarrollo exhaustiv
 - **ENVIO_REMUNERACIONES:** 126 chars (no 127). No contiene MONTO. Encoding Latin-1.
 - **TEMGE cabecera/cierre:** 129 chars (no 130). COD_EMPRESA es 20 chars (no 21).
 - **DevExpress:** Eliminado del stack — innecesario con Vue.js 3.
-- **Banco 504:** Encontrado en archivo real, no documentado en catalogo.
-- **Cuentas 10 digitos:** Excel de nuevas cuentas tiene cuentas BcoEstado con largo variable.
 
-### Puntos pendientes de aclaracion:
-- Confirmar si el banco codigo 504 es valido o es un error en los datos
-- Definir regla para cuentas BancoEstado con menos de 11 digitos (padding vs rechazo)
-- Confirmar servidor Oracle 19c disponible para desarrollo
+### Puntos pendientes RESUELTOS (validados con Retenciones.sql y archivos reales):
+
+**1. Banco codigo 504 — ES VALIDO**
+El codigo VB6 legacy en `Retenciones.sql` solo distingue `Cod_Banco = 12` (BancoEstado) vs "todo lo demas". No valida codigos de banco contra un catalogo. El registro con COD_BANCO=504 corresponde a:
+- RUT: 21202875-4, Beneficiario: PAZMINO COELLO KARINA
+- Cuenta: 000210200353565 (otro banco), Tipo: 02 (Ahorro)
+- Monto: $877.842
+El codigo 504 podria corresponder a **Banco Consorcio** o un codigo SBIF/CMF vigente. Se recomienda mantener el catalogo de bancos extensible (tabla BD, no hardcoded) e incluir banco 504.
+
+**2. Cuentas BancoEstado con menos de 11 digitos — APLICAR PADDING**
+El VB6 legacy usa `Format(Cta_estado, "00000000000")` que aplica padding izquierda con ceros hasta 11 digitos. Por lo tanto, una cuenta `1367076816` (10 digitos) se convierte en `01367076816` (11 digitos). El campo en SQL Server es `[Cta_Estado] [nchar](11)` (largo fijo). **Regla: aplicar LPAD con ceros a 11 digitos** al importar desde Excel, no rechazar.
+
+**3. Cabecera TEMGE — Confirmado 129 chars**
+El VB6 genera: `"1" + "06110104519640100572" + Space(11) + fecha + fecha + hora + Space(75)` = exactamente **129 chars**. Confirmado que la cabecera siempre fue 129, no 130. El cierre en VB6 genera 130 chars (`Space(109)`) pero el archivo real muestra 129 — posible trim al escribir. Para el nuevo sistema se recomienda generar cierre de 130 chars (respetando el `Space(109)` del VB6 original).
+
+### Servidor Oracle 19c:
+- Confirmado disponible para desarrollo. Scripts DDL generados en `oracle/` para ejecucion manual.

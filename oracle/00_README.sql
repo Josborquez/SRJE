@@ -1,0 +1,23 @@
+-- ============================================================================
+-- SRJE - Sistema de Retenciones Judiciales de Empleados
+-- Scripts DDL Oracle 19c
+-- ============================================================================
+--
+-- ORDEN DE EJECUCION:
+--   1. 01_tablas_principales.sql  — 7 tablas core (BENEFICIARIOS, FUNCIONARIOS,
+--                                    RETENIDO_JUDICIAL, HISTORIAL_PAGOS_TEMGE,
+--                                    DETALLE_PAGO_TEMGE, BANCOS, TIPOS_RETENCION)
+--   2. 02_tablas_auditoria.sql    — 5 tablas (LOG_CARGAS, LOG_CARGA_DETALLE,
+--                                    AUDITORIA_CAMBIOS, API_CLIENTES, LOG_API_ACCESOS)
+--   3. 03_indices.sql             — Indices de rendimiento
+--   4. 04_datos_catalogo.sql      — Datos iniciales (13 bancos + 13 tipos retencion)
+--
+-- TOTAL: 12 tablas + indices + datos de catalogo
+--
+-- NOTAS:
+--   - Ejecutar con usuario propietario del esquema SRJE
+--   - Requiere Oracle 19c o superior (usa GENERATED ALWAYS AS IDENTITY)
+--   - Las tablas BANCOS y TIPOS_RETENCION son catalogos extensibles
+--   - Banco 504 (Banco Consorcio) incluido por datos reales del archivo TEMGE
+--   - Campos NCLOB en LOG_CARGA_DETALLE para almacenar JSON de auditoria
+-- ============================================================================
