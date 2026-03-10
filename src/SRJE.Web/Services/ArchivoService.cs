@@ -123,6 +123,9 @@ public class ArchivoService : IArchivoService
         int insertados = 0, actualizados = 0, excluidos = 0, errores = 0;
         decimal montoTotal = 0;
 
+        // Track funcionarios already processed in this batch to avoid duplicate inserts
+        var funcionariosEnBatch = new Dictionary<long, Funcionario>();
+
         foreach (var linea in request.Lineas)
         {
             if (!linea.Incluir)
@@ -134,18 +137,24 @@ public class ArchivoService : IArchivoService
             try
             {
                 // Upsert funcionario
-                var funcionario = await _db.Funcionarios
-                    .FirstOrDefaultAsync(f => f.RutFuncionario == linea.RutFuncionario);
-
-                if (funcionario == null && linea.RutFuncionario.HasValue)
+                if (linea.RutFuncionario.HasValue &&
+                    !funcionariosEnBatch.ContainsKey(linea.RutFuncionario.Value))
                 {
-                    funcionario = new Funcionario
+                    var funcionario = await _db.Funcionarios
+                        .FirstOrDefaultAsync(f => f.RutFuncionario == linea.RutFuncionario);
+
+                    if (funcionario == null)
                     {
-                        RutFuncionario = linea.RutFuncionario.Value,
-                        DvFuncionario = linea.DvFuncionario ?? "",
-                        Activo = "S"
-                    };
-                    _db.Funcionarios.Add(funcionario);
+                        funcionario = new Funcionario
+                        {
+                            RutFuncionario = linea.RutFuncionario.Value,
+                            DvFuncionario = linea.DvFuncionario ?? "",
+                            Activo = "S"
+                        };
+                        _db.Funcionarios.Add(funcionario);
+                    }
+
+                    funcionariosEnBatch[linea.RutFuncionario.Value] = funcionario;
                 }
 
                 // Upsert retencion
