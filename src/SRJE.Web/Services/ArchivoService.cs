@@ -22,9 +22,10 @@ public class ArchivoService : IArchivoService
         var lineas = RemuneracionesParser.Parsear(stream);
 
         // Enriquecer con datos de BD
-        var rutsExistentes = await _db.Beneficiarios
+        var rutsExistentes = (await _db.Beneficiarios
             .Select(b => b.RutBeneficiario)
-            .ToHashSetAsync();
+            .ToListAsync())
+            .ToHashSet();
 
         foreach (var linea in lineas)
         {
@@ -58,9 +59,10 @@ public class ArchivoService : IArchivoService
         }
 
         // Marcar beneficiarios no encontrados
-        var rutsExistentes = await _db.Beneficiarios
+        var rutsExistentes = (await _db.Beneficiarios
             .Select(b => b.RutBeneficiario)
-            .ToHashSetAsync();
+            .ToListAsync())
+            .ToHashSet();
 
         foreach (var linea in resultado.Lineas)
         {
