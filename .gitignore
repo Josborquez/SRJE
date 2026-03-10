@@ -1,0 +1,29 @@
+# Visual Studio
+.vs/
+bin/
+obj/
+*.user
+*.suo
+*.cache
+*.log
+*.vspscc
+*.vssscc
+# launchSettings.json se incluye en el repo para facilitar setup
+
+# .NET
+*.nupkg
+project.lock.json
+
+# Node / Vue
+node_modules/
+dist/
+*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+appsettings.Development.json
+*.pfx
+*.key
