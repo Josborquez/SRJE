@@ -22,7 +22,7 @@ CREATE TABLE BENEFICIARIOS (
     CTA_OT_BANCO          NVARCHAR2(15)       NULL,        -- Cuenta en otro banco (max 15 chars)
     TIPO_CUENTA           NUMBER(18,0)        NULL,        -- 01=Cta.Cte, 02=Ahorro, 03=Vista
     COD_BANCO             NUMBER(18,0)        NULL,        -- 012=BancoEstado
-    CTA_ESTADO            NCHAR(11)           NULL,        -- Cuenta BancoEstado (11 chars)
+    CTA_ESTADO            NVARCHAR2(15)       NULL,        -- Cuenta BancoEstado (hasta 15 chars)
     SUCURSAL              NVARCHAR2(60)       NULL,
     ESTADO                NCHAR(1)            DEFAULT 'A', -- A=Activo, I=Inactivo, S=Suspendido
     FECHA_CREACION        DATE                DEFAULT SYSDATE,
@@ -38,7 +38,7 @@ CREATE TABLE BENEFICIARIOS (
 COMMENT ON TABLE BENEFICIARIOS IS 'Ficha del beneficiario de retencion judicial';
 COMMENT ON COLUMN BENEFICIARIOS.NOMBRE_BENEFICIARIO IS 'Nombre completo (39 chars para archivo TEMGE)';
 COMMENT ON COLUMN BENEFICIARIOS.CTA_OT_BANCO IS 'Numero de cuenta en otro banco (15 chars max)';
-COMMENT ON COLUMN BENEFICIARIOS.CTA_ESTADO IS 'Numero cuenta BancoEstado (11 chars, LPAD con ceros)';
+COMMENT ON COLUMN BENEFICIARIOS.CTA_ESTADO IS 'Numero cuenta BancoEstado (hasta 15 chars)';
 
 -- --------------------------------------------------------------------------
 -- 2. FUNCIONARIOS — Funcionarios publicos afectados por retenciones

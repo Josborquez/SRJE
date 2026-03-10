@@ -53,10 +53,10 @@ public static class NuevasCuentasParser
                 dto.TipoCuenta = tipoCuenta;
                 dto.CodBanco = codBanco;
 
-                // BancoEstado (cod 12): usar CTA_ESTADO con LPAD a 11 digitos
+                // BancoEstado (cod 12): usar CTA_ESTADO (hasta 15 chars)
                 if (codBanco == 12)
                 {
-                    dto.NumeroCuenta = ctaEstado.PadLeft(11, '0');
+                    dto.NumeroCuenta = ctaEstado;
                 }
                 else
                 {
@@ -71,12 +71,12 @@ public static class NuevasCuentasParser
                     continue;
                 }
 
-                // Validar cuenta BancoEstado: 11 digitos numericos
-                if (codBanco == 12 && (dto.NumeroCuenta.Length != 11 ||
-                    !dto.NumeroCuenta.All(char.IsDigit)))
+                // Validar cuenta BancoEstado: hasta 15 digitos numericos
+                if (codBanco == 12 && (string.IsNullOrEmpty(dto.NumeroCuenta) ||
+                    dto.NumeroCuenta.Length > 15 || !dto.NumeroCuenta.All(char.IsDigit)))
                 {
                     dto.EstadoLinea = "ADVERTENCIA";
-                    dto.Mensaje = $"Cuenta BancoEstado ajustada de {ctaEstado.Length} a 11 digitos";
+                    dto.Mensaje = $"Cuenta BancoEstado tiene {ctaEstado.Length} digitos (maximo 15)";
                 }
             }
             catch (Exception ex)

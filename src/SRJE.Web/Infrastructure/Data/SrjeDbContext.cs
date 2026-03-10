@@ -38,7 +38,7 @@ public class SrjeDbContext : DbContext
             e.Property(x => x.CtaOtBanco).HasColumnName("CTA_OT_BANCO").HasMaxLength(15);
             e.Property(x => x.TipoCuenta).HasColumnName("TIPO_CUENTA");
             e.Property(x => x.CodBanco).HasColumnName("COD_BANCO");
-            e.Property(x => x.CtaEstado).HasColumnName("CTA_ESTADO").HasMaxLength(11).IsFixedLength();
+            e.Property(x => x.CtaEstado).HasColumnName("CTA_ESTADO").HasMaxLength(15);
             e.Property(x => x.Sucursal).HasColumnName("SUCURSAL").HasMaxLength(60);
             e.Property(x => x.RutFuncionario).HasColumnName("RUT_FUNCIONARIO");
             e.Property(x => x.DvFuncionario).HasColumnName("DV_FUNCIONARIO").HasMaxLength(1);
