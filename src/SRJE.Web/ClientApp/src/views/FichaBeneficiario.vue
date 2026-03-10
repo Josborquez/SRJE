@@ -54,7 +54,24 @@
         </div>
       </fieldset>
 
-      <!-- Seccion 2: Cuenta Bancaria -->
+      <!-- Seccion 2: Datos del Funcionario -->
+      <fieldset>
+        <legend>Datos del Funcionario</legend>
+        <div class="form-grid">
+          <RutInput
+            v-model="form.rutFuncionario"
+            label="RUT Funcionario"
+            @rutValidado="onRutFuncionarioValidado"
+          />
+          <div class="field">
+            <label>Nombre Funcionario (max 100 chars)</label>
+            <input v-model="form.nombreFuncionario" maxlength="100" />
+            <small>{{ form.nombreFuncionario?.length || 0 }}/100</small>
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- Seccion 3: Cuenta Bancaria -->
       <fieldset>
         <legend>Cuenta Bancaria</legend>
         <div class="form-grid">
@@ -132,7 +149,10 @@ const form = ref({
   tipoCuenta: null,
   codBanco: null,
   ctaEstado: '',
-  sucursal: ''
+  sucursal: '',
+  rutFuncionario: null,
+  dvFuncionario: '',
+  nombreFuncionario: ''
 })
 
 onMounted(async () => {
@@ -151,6 +171,10 @@ onMounted(async () => {
 function onRutValidado({ rut, dv, valido }) {
   form.value.dvBeneficiario = dv
   rutValido.value = valido
+}
+
+function onRutFuncionarioValidado({ rut, dv, valido }) {
+  form.value.dvFuncionario = dv
 }
 
 function onBancoChange() {

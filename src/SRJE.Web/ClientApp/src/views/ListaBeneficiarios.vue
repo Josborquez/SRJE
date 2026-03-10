@@ -20,6 +20,8 @@
         <tr>
           <th>RUT</th>
           <th>Nombre</th>
+          <th>RUT Funcionario</th>
+          <th>Nombre Funcionario</th>
           <th>Banco</th>
           <th>Cuenta</th>
           <th>Estado</th>
@@ -30,6 +32,8 @@
         <tr v-for="b in store.items" :key="b.id">
           <td>{{ b.rutFormateado }}</td>
           <td>{{ b.nombreBeneficiario }}</td>
+          <td>{{ b.rutFuncionarioFormateado || '-' }}</td>
+          <td>{{ b.nombreFuncionario || '-' }}</td>
           <td>{{ b.nombreBanco || b.codBanco }}</td>
           <td>{{ b.ctaEstado || b.ctaOtBanco || '-' }}</td>
           <td><span :class="'estado estado-' + b.estado.toLowerCase()">{{ b.estado }}</span></td>

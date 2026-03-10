@@ -19,6 +19,10 @@ public class BeneficiarioDto
     public string? NombreBanco { get; set; }
     public string? CtaEstado { get; set; }
     public string? Sucursal { get; set; }
+    public long? RutFuncionario { get; set; }
+    public string? DvFuncionario { get; set; }
+    public string? RutFuncionarioFormateado { get; set; }
+    public string? NombreFuncionario { get; set; }
     public string Estado { get; set; } = "A";
     public DateTime? FechaCreacion { get; set; }
 }
