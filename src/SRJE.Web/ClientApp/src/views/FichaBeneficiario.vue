@@ -226,18 +226,7 @@ async function guardar() {
 </script>
 
 <style scoped>
+/* Estilos globales aplicados desde assets/styles.css */
+/* Solo overrides especificos de este componente */
 .form-ficha { max-width: 800px; }
-fieldset { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; background: #fff; }
-legend { font-weight: 600; padding: 0 0.5rem; color: #1976d2; }
-.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
-.field { display: flex; flex-direction: column; }
-.field label { font-size: 0.85rem; margin-bottom: 0.2rem; font-weight: 500; }
-.field input, .field select { padding: 0.45rem; border: 1px solid #ccc; border-radius: 4px; }
-.field small { color: #999; font-size: 0.75rem; }
-.form-actions { display: flex; gap: 0.5rem; margin-top: 1rem; }
-.btn { padding: 0.6rem 1.2rem; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; font-size: 0.9rem; }
-.btn-primary { background: #1976d2; color: #fff; }
-.btn-primary:disabled { background: #ccc; }
-.btn-secondary { background: #eee; color: #333; }
-.error { margin-top: 1rem; padding: 0.8rem; background: #fce4ec; color: #c62828; border-radius: 4px; }
 </style>

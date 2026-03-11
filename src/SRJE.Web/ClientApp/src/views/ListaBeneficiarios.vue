@@ -161,43 +161,7 @@ async function ejecutarInactivar() {
 </script>
 
 <style scoped>
-.toolbar { display: flex; gap: 1rem; margin: 1rem 0; align-items: center; }
-.search-input { flex: 1; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; font-size: 0.95rem; }
-.btn { padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; }
-.btn-primary { background: #1976d2; color: #fff; }
-.data-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; }
-.data-table th, .data-table td { padding: 0.6rem 0.8rem; border-bottom: 1px solid #eee; text-align: left; }
-.data-table th { background: #f5f5f5; font-weight: 600; }
-.data-table tr:hover { background: #f9f9f9; }
-.estado { padding: 0.15rem 0.5rem; border-radius: 3px; font-size: 0.8rem; }
-.estado-a { background: #e8f5e9; color: #2e7d32; }
-.estado-i { background: #ffebee; color: #c62828; }
-.btn-sm { padding: 0.25rem 0.5rem; font-size: 0.8rem; color: #1976d2; text-decoration: none; background: none; border: none; cursor: pointer; }
-.btn-sm:hover { text-decoration: underline; }
-.btn-sm-danger { color: #c62828; }
+/* Estilos globales aplicados desde assets/styles.css */
+/* Solo overrides especificos de este componente */
 .actions { white-space: nowrap; }
-.empty-state { padding: 2rem; text-align: center; color: #999; background: #fff; border-radius: 8px; }
-
-/* Paginacion */
-.pagination-bar {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-top: 1rem; padding: 0.75rem 0; flex-wrap: wrap; gap: 0.5rem;
-}
-.pagination-info { font-size: 0.85rem; color: #666; }
-.pagination-controls { display: flex; align-items: center; gap: 0.25rem; }
-.page-size-select {
-  padding: 0.35rem 0.5rem; border: 1px solid #ccc; border-radius: 4px;
-  font-size: 0.85rem; margin-right: 0.5rem; background: #fff;
-}
-.page-btn {
-  min-width: 32px; height: 32px; padding: 0 0.4rem; border: 1px solid #ddd;
-  border-radius: 4px; cursor: pointer; background: #fff; font-size: 0.85rem;
-  display: inline-flex; align-items: center; justify-content: center;
-}
-.page-btn:hover:not(:disabled):not(.active) { background: #f0f0f0; }
-.page-btn.active { background: #1976d2; color: #fff; border-color: #1976d2; }
-.page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-.loading { padding: 2rem; text-align: center; color: #666; }
-.error { padding: 1rem; background: #fce4ec; color: #c62828; border-radius: 4px; margin: 1rem 0; }
 </style>

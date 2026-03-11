@@ -113,7 +113,5 @@ function cancelar() {
 </script>
 
 <style scoped>
-.loading { padding: 1rem; text-align: center; }
-.error { padding: 0.8rem; background: #fce4ec; color: #c62828; border-radius: 4px; margin: 1rem 0; }
-.resultado { margin-top: 1rem; padding: 1rem; background: #e8f5e9; border-radius: 8px; }
+/* Estilos globales aplicados desde assets/styles.css */
 </style>
