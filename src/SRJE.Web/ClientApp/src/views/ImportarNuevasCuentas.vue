@@ -1,14 +1,16 @@
 <template>
   <div class="importar-nuevas-cuentas">
-    <h1>Importar Nuevas Cuentas</h1>
-    <p>Archivo Excel (.xlsx) con datos de nuevas cuentas bancarias.</p>
+    <div class="page-header">
+      <h1><CreditCard :size="24" /> Importar Nuevas Cuentas</h1>
+      <p>Cargue un archivo Excel (.xlsx) con los datos de nuevas cuentas bancarias de beneficiarios.</p>
+    </div>
 
     <AlertMessage v-if="alertMsg" :message="alertMsg" :type="alertType" @close="alertMsg = ''" />
 
     <div v-if="!preview">
       <FileUpload accept=".xlsx,.xls" @fileSelected="onFileSelected" />
-      <div v-if="loading" class="loading">Parseando Excel...</div>
-      <div v-if="error" class="error">{{ error }}</div>
+      <div v-if="loading" class="loading">Procesando archivo Excel...</div>
+      <div v-if="error" class="error"><CircleAlert :size="16" /> {{ error }}</div>
     </div>
 
     <div v-else>
@@ -20,16 +22,18 @@
       />
 
       <div v-if="resultado" class="resultado">
-        <h3>Resultado</h3>
-        <p>Insertados: {{ resultado.insertados }} | Actualizados: {{ resultado.actualizados }}
-          | Excluidos: {{ resultado.excluidos }} | Errores: {{ resultado.errores }}</p>
+        <h3><CheckCircle :size="18" /> Resultado de Importacion</h3>
+        <p>Insertados: <strong>{{ resultado.insertados }}</strong> |
+          Actualizados: <strong>{{ resultado.actualizados }}</strong> |
+          Excluidos: <strong>{{ resultado.excluidos }}</strong> |
+          Errores: <strong>{{ resultado.errores }}</strong></p>
       </div>
     </div>
 
     <ConfirmModal
       v-model="showConfirm"
       title="Confirmar Importacion de Cuentas"
-      :message="`Se importaran ${lineasSeleccionadas} registros de nuevas cuentas. Desea continuar?`"
+      :message="`Se importaran ${lineasSeleccionadas} registros de nuevas cuentas bancarias. ¿Desea continuar?`"
       confirmText="Si, importar"
       @confirm="confirmar"
     />
@@ -43,6 +47,7 @@ import PreviewImportacion from '../components/PreviewImportacion.vue'
 import AlertMessage from '../components/AlertMessage.vue'
 import ConfirmModal from '../components/ConfirmModal.vue'
 import { archivosApi } from '../api/index.js'
+import { CreditCard, CircleAlert, CheckCircle } from 'lucide-vue-next'
 
 const preview = ref(null)
 const loading = ref(false)
@@ -74,7 +79,7 @@ async function onFileSelected(file) {
     const { data } = await archivosApi.previewNuevasCuentas(file)
     preview.value = data
     alertType.value = 'info'
-    alertMsg.value = `Se cargaron ${data.lineas?.length || 0} registros del archivo. Revise y confirme la importacion.`
+    alertMsg.value = `Se cargaron ${data.lineas?.length || 0} registros del archivo. Revise los datos y confirme la importacion.`
   } catch (e) {
     error.value = e.response?.data?.error || e.message
   } finally {
@@ -99,7 +104,7 @@ async function confirmar() {
   } catch (e) {
     error.value = e.response?.data?.error || e.message
     alertType.value = 'error'
-    alertMsg.value = 'Error al confirmar la importacion.'
+    alertMsg.value = 'Error al confirmar la importacion de cuentas.'
   } finally {
     loading.value = false
   }
@@ -111,7 +116,3 @@ function cancelar() {
   alertMsg.value = ''
 }
 </script>
-
-<style scoped>
-/* Estilos globales aplicados desde assets/styles.css */
-</style>

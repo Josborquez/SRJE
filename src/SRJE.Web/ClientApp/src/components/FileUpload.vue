@@ -7,22 +7,33 @@
     @drop.prevent="onDrop"
   >
     <div v-if="!selectedFile" class="upload-placeholder">
-      <p>Arrastra un archivo aqui o</p>
+      <UploadCloud :size="40" class="upload-icon" />
+      <p class="upload-title">Arrastra un archivo aqui</p>
+      <p class="upload-subtitle">o seleccionalo desde tu computador</p>
       <label class="upload-btn">
-        Seleccionar archivo
+        <FolderOpen :size="16" /> Seleccionar archivo
         <input type="file" :accept="accept" @change="onFileSelect" hidden />
       </label>
-      <small v-if="accept">Formatos aceptados: {{ accept }}</small>
+      <small v-if="accept" class="upload-formats">Formatos aceptados: {{ accept }}</small>
     </div>
     <div v-else class="file-info">
-      <span>{{ selectedFile.name }} ({{ formatSize(selectedFile.size) }})</span>
-      <button @click="clear" class="btn-clear">Quitar</button>
+      <div class="file-info-detail">
+        <FileCheck :size="20" class="file-info-icon" />
+        <div>
+          <span class="file-name">{{ selectedFile.name }}</span>
+          <span class="file-size">{{ formatSize(selectedFile.size) }}</span>
+        </div>
+      </div>
+      <button @click="clear" class="btn-clear">
+        <Trash2 :size="14" /> Quitar
+      </button>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
+import { UploadCloud, FolderOpen, FileCheck, Trash2 } from 'lucide-vue-next'
 
 const props = defineProps({
   accept: { type: String, default: '' }
@@ -63,15 +74,65 @@ function formatSize(bytes) {
 
 <style scoped>
 .file-upload {
-  border: 2px dashed #ccc; border-radius: 8px; padding: 2rem;
-  text-align: center; transition: border-color 0.2s; background: #fafafa;
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 2.5rem 2rem;
+  text-align: center;
+  transition: all 0.2s;
+  background: #fafbfc;
 }
-.file-upload.drag-over { border-color: #4fc3f7; background: #e3f2fd; }
+.file-upload:hover { border-color: #94a3b8; }
+.file-upload.drag-over { border-color: #2563eb; background: #eff6ff; }
+
+.upload-placeholder { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
+.upload-icon { color: #94a3b8; margin-bottom: 0.5rem; }
+.upload-title { font-size: 1rem; font-weight: 500; color: #334155; }
+.upload-subtitle { font-size: 0.85rem; color: #94a3b8; margin-bottom: 0.5rem; }
+
 .upload-btn {
-  display: inline-block; padding: 0.5rem 1rem; background: #1976d2; color: #fff;
-  border-radius: 4px; cursor: pointer; margin: 0.5rem 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1.1rem;
+  background: #2563eb;
+  color: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  margin: 0.5rem 0;
+  font-size: 0.88rem;
+  font-weight: 500;
+  transition: background 0.2s;
 }
-.upload-btn:hover { background: #1565c0; }
-.file-info { display: flex; align-items: center; justify-content: center; gap: 1rem; }
-.btn-clear { background: none; border: 1px solid #999; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer; }
+.upload-btn:hover { background: #1d4ed8; }
+.upload-formats { color: #94a3b8; font-size: 0.78rem; margin-top: 0.3rem; }
+
+.file-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+}
+.file-info-detail {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.file-info-icon { color: #16a34a; }
+.file-info-detail div { display: flex; flex-direction: column; text-align: left; }
+.file-name { font-weight: 500; font-size: 0.92rem; color: #1e293b; }
+.file-size { font-size: 0.8rem; color: #94a3b8; }
+.btn-clear {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: none;
+  border: 1px solid #e2e8f0;
+  padding: 0.35rem 0.7rem;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #64748b;
+  font-size: 0.82rem;
+  transition: all 0.2s;
+}
+.btn-clear:hover { border-color: #dc2626; color: #dc2626; background: #fef2f2; }
 </style>

@@ -1,0 +1,1 @@
+const s=[2,3,4,5,6,7];function u(t){const r=String(t);let e=0;for(let o=r.length-1,a=0;o>=0;o--,a++)e+=parseInt(r[o])*s[a%s.length];const n=11-e%11;return n===11?"0":n===10?"K":String(n)}function f(t,r){return!t||t<=0||!r?!1:u(t)===r.toUpperCase().trim()}function i(t,r){return`${Number(t).toLocaleString("es-CL")}-${r}`}export{u as c,i as f,f as v};

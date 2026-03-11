@@ -1,0 +1,1 @@
+function u(r){if(r==null||r==="")return"-";const t=String(r);if(/^\d+$/.test(t))return t;const e=t.replace(/,/g,".");try{const n=Number(e);return isNaN(n)?t:n.toFixed(0)}catch{return t}}export{u as f};
