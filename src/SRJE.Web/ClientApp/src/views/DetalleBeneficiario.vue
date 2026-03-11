@@ -3,6 +3,8 @@
     <h1>{{ store.detalle.nombreBeneficiario }}</h1>
     <p class="rut">{{ store.detalle.rutFormateado }}</p>
 
+    <AlertMessage v-if="alertMsg" :message="alertMsg" :type="alertType" @close="alertMsg = ''" />
+
     <div class="sections">
       <section>
         <h3>Datos Personales</h3>
@@ -27,9 +29,9 @@
       <section>
         <h3>Cuenta Bancaria</h3>
         <dl>
-          <dt>Banco</dt><dd>{{ store.detalle.codBanco || '-' }}</dd>
+          <dt>Banco</dt><dd>{{ store.detalle.nombreBanco || store.detalle.codBanco || '-' }}</dd>
           <dt>Tipo Cuenta</dt><dd>{{ tipoCuentaLabel }}</dd>
-          <dt>Cuenta</dt><dd>{{ store.detalle.ctaEstado || store.detalle.ctaOtBanco || '-' }}</dd>
+          <dt>Cuenta</dt><dd>{{ formatCuenta(store.detalle.ctaEstado || store.detalle.ctaOtBanco) }}</dd>
           <dt>Sucursal</dt><dd>{{ store.detalle.sucursal || '-' }}</dd>
         </dl>
       </section>
@@ -61,19 +63,38 @@
 
     <div class="actions">
       <router-link :to="`/beneficiarios/${rut}/editar`" class="btn btn-primary">Editar</router-link>
+      <button v-if="store.detalle.estado === 'A'" class="btn btn-danger" @click="showConfirm = true">Inactivar</button>
       <router-link to="/beneficiarios" class="btn btn-secondary">Volver</router-link>
     </div>
+
+    <ConfirmModal
+      v-model="showConfirm"
+      title="Inactivar Beneficiario"
+      :message="`Esta seguro de inactivar a ${store.detalle.nombreBeneficiario}? Esta accion cambiara su estado a Inactivo.`"
+      confirmText="Si, inactivar"
+      variant="danger"
+      @confirm="ejecutarInactivar"
+    />
   </div>
   <div v-else-if="store.loading" class="loading">Cargando...</div>
   <div v-else class="error">Beneficiario no encontrado</div>
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useBeneficiariosStore } from '../stores/beneficiarios.js'
+import { formatCuenta } from '../composables/useFormato.js'
+import AlertMessage from '../components/AlertMessage.vue'
+import ConfirmModal from '../components/ConfirmModal.vue'
 
 const props = defineProps({ rut: { type: [String, Number], required: true } })
 const store = useBeneficiariosStore()
+const router = useRouter()
+
+const alertMsg = ref('')
+const alertType = ref('info')
+const showConfirm = ref(false)
 
 const tipoCuentaLabel = computed(() => {
   const tc = store.detalle?.tipoCuenta
@@ -84,6 +105,18 @@ const tipoCuentaLabel = computed(() => {
 })
 
 onMounted(() => store.obtener(Number(props.rut)))
+
+async function ejecutarInactivar() {
+  const ok = await store.inactivar(Number(props.rut))
+  if (ok) {
+    alertType.value = 'success'
+    alertMsg.value = 'Beneficiario inactivado exitosamente. Redirigiendo...'
+    setTimeout(() => router.push('/beneficiarios'), 1500)
+  } else {
+    alertType.value = 'error'
+    alertMsg.value = store.error || 'Error al inactivar el beneficiario.'
+  }
+}
 </script>
 
 <style scoped>
@@ -101,8 +134,10 @@ dd { margin: 0; }
 .data-table th, .data-table td { padding: 0.5rem; border-bottom: 1px solid #eee; text-align: left; }
 .data-table th { background: #f5f5f5; }
 .actions { display: flex; gap: 0.5rem; margin-top: 1rem; }
-.btn { padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; }
+.btn { padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; font-size: 0.9rem; }
 .btn-primary { background: #1976d2; color: #fff; }
+.btn-danger { background: #d32f2f; color: #fff; }
+.btn-danger:hover { background: #c62828; }
 .btn-secondary { background: #eee; color: #333; }
 .loading { padding: 2rem; text-align: center; }
 .error { padding: 1rem; background: #fce4ec; color: #c62828; border-radius: 4px; }

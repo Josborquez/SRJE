@@ -3,6 +3,8 @@
     <h1>Importar Archivo TEMGE</h1>
     <p>Archivo bancario de ancho fijo para conciliacion de pagos.</p>
 
+    <AlertMessage v-if="alertMsg" :message="alertMsg" :type="alertType" @close="alertMsg = ''" />
+
     <div v-if="!preview">
       <FileUpload accept=".txt" @fileSelected="onFileSelected" />
       <div v-if="loading" class="loading">Parseando archivo TEMGE...</div>
@@ -36,11 +38,14 @@
 import { ref } from 'vue'
 import FileUpload from '../components/FileUpload.vue'
 import PreviewImportacion from '../components/PreviewImportacion.vue'
+import AlertMessage from '../components/AlertMessage.vue'
 import { archivosApi } from '../api/index.js'
 
 const preview = ref(null)
 const loading = ref(false)
 const error = ref(null)
+const alertMsg = ref('')
+const alertType = ref('info')
 
 const columnas = [
   { key: 'rutBeneficiario', label: 'RUT Benef.' },
@@ -55,11 +60,21 @@ async function onFileSelected(file) {
   if (!file) return
   loading.value = true
   error.value = null
+  alertMsg.value = ''
   try {
     const { data } = await archivosApi.previewTemge(file)
     preview.value = data
+    if (!data.integridadOk) {
+      alertType.value = 'warning'
+      alertMsg.value = 'Atencion: Los totales del archivo no coinciden con el registro de cierre. Verifique el archivo.'
+    } else {
+      alertType.value = 'success'
+      alertMsg.value = `Archivo TEMGE cargado correctamente. ${data.lineas?.length || 0} registros encontrados.`
+    }
   } catch (e) {
     error.value = e.response?.data?.error || e.message
+    alertType.value = 'error'
+    alertMsg.value = 'Error al procesar el archivo TEMGE.'
   } finally {
     loading.value = false
   }
@@ -67,6 +82,7 @@ async function onFileSelected(file) {
 
 function cancelar() {
   preview.value = null
+  alertMsg.value = ''
 }
 </script>
 
