@@ -299,22 +299,33 @@ public class ArchivoService : IArchivoService
 
     public async Task<byte[]> GenerarTemgeAsync(string usuario)
     {
-        // Obtener beneficiarios activos con retencion activa y cuenta valida
+        // Obtener beneficiarios activos con retencion activa y cuenta valida,
+        // agrupando por beneficiario para sumar todas sus retenciones vigentes.
         var datos = await (
             from b in _db.Beneficiarios
             join r in _db.RetenidosJudiciales on b.RutBeneficiario equals r.RutBeneficiario
             where b.Estado == "A" && r.Estado == "A"
                 && (b.CtaEstado != null || b.CtaOtBanco != null)
-            select new RegistroTemge
+            group r by new
             {
-                RutBeneficiario = b.RutBeneficiario,
-                DvBeneficiario = b.DvBeneficiario,
-                NombreBeneficiario = b.NombreBeneficiario,
+                b.RutBeneficiario,
+                b.DvBeneficiario,
+                b.NombreBeneficiario,
                 CodBanco = b.CodBanco ?? 12,
                 TipoCuenta = b.TipoCuenta ?? 2,
-                NumeroCuenta = b.CtaOtBanco,
-                CtaEstado = b.CtaEstado,
-                Monto = r.Monto
+                b.CtaOtBanco,
+                b.CtaEstado
+            } into g
+            select new RegistroTemge
+            {
+                RutBeneficiario = g.Key.RutBeneficiario,
+                DvBeneficiario = g.Key.DvBeneficiario,
+                NombreBeneficiario = g.Key.NombreBeneficiario,
+                CodBanco = g.Key.CodBanco,
+                TipoCuenta = g.Key.TipoCuenta,
+                NumeroCuenta = g.Key.CtaOtBanco,
+                CtaEstado = g.Key.CtaEstado,
+                Monto = g.Sum(r => r.Monto)
             }).ToListAsync();
 
         var builder = new TemgeBuilder();
