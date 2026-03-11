@@ -299,34 +299,44 @@ public class ArchivoService : IArchivoService
 
     public async Task<byte[]> GenerarTemgeAsync(string usuario)
     {
-        // Obtener beneficiarios activos con retencion activa y cuenta valida,
-        // agrupando por beneficiario para sumar todas sus retenciones vigentes.
-        var datos = await (
+        // Obtener beneficiarios activos con retencion activa y cuenta valida.
+        // Se materializa el JOIN primero y se agrupa en memoria para evitar
+        // problemas de traduccion del GROUP BY en Oracle EF Core provider.
+        var filas = await (
             from b in _db.Beneficiarios
             join r in _db.RetenidosJudiciales on b.RutBeneficiario equals r.RutBeneficiario
             where b.Estado == "A" && r.Estado == "A"
                 && (b.CtaEstado != null || b.CtaOtBanco != null)
-            group r by new
+            select new
             {
                 b.RutBeneficiario,
                 b.DvBeneficiario,
                 b.NombreBeneficiario,
-                CodBanco = b.CodBanco ?? 12,
-                TipoCuenta = b.TipoCuenta ?? 2,
+                b.CodBanco,
+                b.TipoCuenta,
                 b.CtaOtBanco,
-                b.CtaEstado
-            } into g
-            select new RegistroTemge
-            {
-                RutBeneficiario = g.Key.RutBeneficiario,
-                DvBeneficiario = g.Key.DvBeneficiario,
-                NombreBeneficiario = g.Key.NombreBeneficiario,
-                CodBanco = g.Key.CodBanco,
-                TipoCuenta = g.Key.TipoCuenta,
-                NumeroCuenta = g.Key.CtaOtBanco,
-                CtaEstado = g.Key.CtaEstado,
-                Monto = g.Sum(r => r.Monto)
+                b.CtaEstado,
+                MontoRetencion = r.Monto
             }).ToListAsync();
+
+        // Agrupar por beneficiario y sumar montos en memoria
+        var datos = filas
+            .GroupBy(f => f.RutBeneficiario)
+            .Select(g =>
+            {
+                var first = g.First();
+                return new RegistroTemge
+                {
+                    RutBeneficiario = first.RutBeneficiario,
+                    DvBeneficiario = first.DvBeneficiario,
+                    NombreBeneficiario = first.NombreBeneficiario,
+                    CodBanco = first.CodBanco ?? 12,
+                    TipoCuenta = first.TipoCuenta ?? 2,
+                    NumeroCuenta = first.CtaOtBanco,
+                    CtaEstado = first.CtaEstado,
+                    Monto = g.Sum(f => f.MontoRetencion)
+                };
+            }).ToList();
 
         var builder = new TemgeBuilder();
         var fechaProceso = DateTime.Now;
