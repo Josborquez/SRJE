@@ -2,6 +2,8 @@
   <div class="ficha-beneficiario">
     <h1>{{ isEditing ? 'Editar' : 'Nuevo' }} Beneficiario</h1>
 
+    <AlertMessage v-if="alertMsg" :message="alertMsg" :type="alertType" @close="alertMsg = ''" />
+
     <form @submit.prevent="guardar" class="form-ficha">
       <!-- Seccion 1: Datos Personales -->
       <fieldset>
@@ -95,11 +97,11 @@
           </div>
           <div class="field" v-if="form.codBanco === 12">
             <label>Cuenta BancoEstado (11 digitos)</label>
-            <input v-model="form.ctaEstado" maxlength="11" placeholder="Ej: 41762633599" />
+            <input v-model="form.ctaEstado" maxlength="11" placeholder="Ej: 41762633599" @input="limpiarCuenta('ctaEstado')" />
           </div>
           <div class="field" v-if="form.codBanco && form.codBanco !== 12">
             <label>Cuenta Otro Banco (max 15)</label>
-            <input v-model="form.ctaOtBanco" maxlength="15" />
+            <input v-model="form.ctaOtBanco" maxlength="15" @input="limpiarCuenta('ctaOtBanco')" />
           </div>
           <div class="field">
             <label>Sucursal</label>
@@ -109,8 +111,8 @@
       </fieldset>
 
       <div class="form-actions">
-        <button type="submit" class="btn btn-primary" :disabled="!rutValido">
-          {{ isEditing ? 'Actualizar' : 'Crear' }} Beneficiario
+        <button type="submit" class="btn btn-primary" :disabled="!rutValido || guardando">
+          {{ guardando ? 'Guardando...' : (isEditing ? 'Actualizar' : 'Crear') + ' Beneficiario' }}
         </button>
         <router-link to="/beneficiarios" class="btn btn-secondary">Cancelar</router-link>
       </div>
@@ -124,8 +126,10 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import RutInput from '../components/RutInput.vue'
+import AlertMessage from '../components/AlertMessage.vue'
 import { useBeneficiariosStore } from '../stores/beneficiarios.js'
 import { catalogosApi } from '../api/index.js'
+import { formatCuenta } from '../composables/useFormato.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -134,6 +138,9 @@ const store = useBeneficiariosStore()
 const isEditing = computed(() => !!route.params.rut)
 const rutValido = ref(false)
 const bancos = ref([])
+const guardando = ref(false)
+const alertMsg = ref('')
+const alertType = ref('info')
 
 const form = ref({
   rutBeneficiario: null,
@@ -163,6 +170,15 @@ onMounted(async () => {
     const detalle = await store.obtener(Number(route.params.rut))
     if (detalle) {
       Object.assign(form.value, detalle)
+      // Corregir numero de cuenta si viene en notacion cientifica
+      if (form.value.ctaEstado) {
+        form.value.ctaEstado = formatCuenta(form.value.ctaEstado)
+        if (form.value.ctaEstado === '-') form.value.ctaEstado = ''
+      }
+      if (form.value.ctaOtBanco) {
+        form.value.ctaOtBanco = formatCuenta(form.value.ctaOtBanco)
+        if (form.value.ctaOtBanco === '-') form.value.ctaOtBanco = ''
+      }
       rutValido.value = true
     }
   }
@@ -182,16 +198,29 @@ function onBancoChange() {
   form.value.ctaOtBanco = ''
 }
 
+function limpiarCuenta(campo) {
+  // Solo permitir digitos en los campos de cuenta
+  form.value[campo] = form.value[campo].replace(/[^0-9]/g, '')
+}
+
 async function guardar() {
+  guardando.value = true
   try {
     if (isEditing.value) {
       await store.actualizar(route.params.rut, form.value)
+      alertType.value = 'success'
+      alertMsg.value = 'Beneficiario actualizado exitosamente. Redirigiendo...'
     } else {
       await store.crear(form.value)
+      alertType.value = 'success'
+      alertMsg.value = 'Beneficiario creado exitosamente. Redirigiendo...'
     }
-    router.push('/beneficiarios')
+    setTimeout(() => router.push('/beneficiarios'), 1500)
   } catch {
-    // error ya esta en store.error
+    alertType.value = 'error'
+    alertMsg.value = store.error || 'Error al guardar el beneficiario.'
+  } finally {
+    guardando.value = false
   }
 }
 </script>
