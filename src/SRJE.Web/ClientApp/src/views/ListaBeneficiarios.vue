@@ -1,24 +1,33 @@
 <template>
   <div class="lista-beneficiarios">
-    <h1>Beneficiarios</h1>
+    <div class="page-header">
+      <h1><Users :size="24" /> Beneficiarios</h1>
+    </div>
 
     <div class="toolbar">
-      <input
-        v-model="busqueda"
-        @input="debounceBuscar"
-        placeholder="Buscar por nombre o RUT..."
-        class="search-input"
-      />
-      <router-link to="/beneficiarios/nuevo" class="btn btn-primary">Nuevo Beneficiario</router-link>
+      <div class="search-wrapper">
+        <Search :size="18" class="search-icon" />
+        <input
+          v-model="busqueda"
+          @input="debounceBuscar"
+          placeholder="Buscar por nombre o RUT..."
+          class="search-input"
+        />
+      </div>
+      <router-link to="/beneficiarios/nuevo" class="btn btn-primary">
+        <UserPlus :size="16" /> Nuevo Beneficiario
+      </router-link>
     </div>
 
     <AlertMessage v-if="alertMsg" :message="alertMsg" :type="alertType" @close="alertMsg = ''" />
 
-    <div v-if="store.loading" class="loading">Cargando...</div>
-    <div v-if="store.error" class="error">{{ store.error }}</div>
+    <div v-if="store.loading" class="loading">Cargando beneficiarios...</div>
+    <div v-if="store.error" class="error"><CircleAlert :size="16" /> {{ store.error }}</div>
 
     <div v-if="!store.loading && !store.items.length && !store.error" class="empty-state">
-      No se encontraron beneficiarios.
+      <Inbox :size="48" class="empty-icon" />
+      <p>No se encontraron beneficiarios.</p>
+      <small>Intenta con otra busqueda o crea un nuevo beneficiario.</small>
     </div>
 
     <table v-if="store.items.length" class="data-table">
@@ -42,17 +51,29 @@
           <td>{{ b.nombreFuncionario || '-' }}</td>
           <td>{{ b.nombreBanco || b.codBanco || '-' }}</td>
           <td>{{ formatCuenta(b.ctaEstado || b.ctaOtBanco) }}</td>
-          <td><span :class="'estado estado-' + b.estado.toLowerCase()">{{ b.estado === 'A' ? 'Activo' : 'Inactivo' }}</span></td>
-          <td class="actions">
-            <router-link :to="`/beneficiarios/${b.rutBeneficiario}`" class="btn-sm">Ver</router-link>
-            <router-link :to="`/beneficiarios/${b.rutBeneficiario}/editar`" class="btn-sm">Editar</router-link>
-            <button v-if="b.estado === 'A'" class="btn-sm btn-sm-danger" @click="confirmarInactivar(b)">Inactivar</button>
+          <td>
+            <span :class="'estado estado-' + b.estado.toLowerCase()">
+              <CircleCheck v-if="b.estado === 'A'" :size="13" />
+              <CircleX v-else :size="13" />
+              {{ b.estado === 'A' ? 'Activo' : 'Inactivo' }}
+            </span>
+          </td>
+          <td class="actions inline">
+            <router-link :to="`/beneficiarios/${b.rutBeneficiario}`" class="btn-sm">
+              <Eye :size="14" /> Ver
+            </router-link>
+            <router-link :to="`/beneficiarios/${b.rutBeneficiario}/editar`" class="btn-sm">
+              <Pencil :size="14" /> Editar
+            </router-link>
+            <button v-if="b.estado === 'A'" class="btn-sm btn-sm-danger" @click="confirmarInactivar(b)">
+              <Ban :size="14" /> Inactivar
+            </button>
           </td>
         </tr>
       </tbody>
     </table>
 
-    <!-- Paginacion mejorada -->
+    <!-- Paginacion -->
     <div v-if="store.totalPages >= 1" class="pagination-bar">
       <div class="pagination-info">
         Mostrando {{ rangoInicio }}-{{ rangoFin }} de {{ store.totalCount }} registros
@@ -80,7 +101,7 @@
     <ConfirmModal
       v-model="showConfirmInactivar"
       title="Inactivar Beneficiario"
-      :message="`Esta seguro de inactivar a ${beneficiarioAInactivar?.nombreBeneficiario || ''}? Esta accion cambiara su estado a Inactivo.`"
+      :message="`¿Esta seguro de inactivar a ${beneficiarioAInactivar?.nombreBeneficiario || ''}? Esta accion cambiara su estado a Inactivo.`"
       confirmText="Si, inactivar"
       variant="danger"
       @confirm="ejecutarInactivar"
@@ -94,6 +115,10 @@ import { useBeneficiariosStore } from '../stores/beneficiarios.js'
 import AlertMessage from '../components/AlertMessage.vue'
 import ConfirmModal from '../components/ConfirmModal.vue'
 import { formatCuenta } from '../composables/useFormato.js'
+import {
+  Users, Search, UserPlus, Eye, Pencil, Ban,
+  CircleCheck, CircleX, CircleAlert, Inbox
+} from 'lucide-vue-next'
 
 const store = useBeneficiariosStore()
 const busqueda = ref('')
@@ -159,9 +184,3 @@ async function ejecutarInactivar() {
   beneficiarioAInactivar.value = null
 }
 </script>
-
-<style scoped>
-/* Estilos globales aplicados desde assets/styles.css */
-/* Solo overrides especificos de este componente */
-.actions { white-space: nowrap; }
-</style>

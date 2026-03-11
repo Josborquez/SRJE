@@ -1,48 +1,50 @@
 <template>
   <div class="preview-importacion">
     <div class="preview-stats">
-      <span class="stat ok">OK: {{ stats.ok }}</span>
-      <span class="stat nuevo">Nuevos: {{ stats.nuevos }}</span>
-      <span class="stat advertencia">Advertencias: {{ stats.advertencias }}</span>
-      <span class="stat error">Errores: {{ stats.errores }}</span>
-      <span class="stat total">Total: {{ lineas.length }}</span>
+      <span class="stat ok"><CheckCircle :size="14" /> OK: {{ stats.ok }}</span>
+      <span class="stat nuevo"><PlusCircle :size="14" /> Nuevos: {{ stats.nuevos }}</span>
+      <span class="stat advertencia"><AlertTriangle :size="14" /> Advertencias: {{ stats.advertencias }}</span>
+      <span class="stat error"><XCircle :size="14" /> Errores: {{ stats.errores }}</span>
+      <span class="stat total"><List :size="14" /> Total: {{ lineas.length }}</span>
     </div>
 
-    <table class="preview-table">
-      <thead>
-        <tr>
-          <th><input type="checkbox" v-model="selectAll" @change="toggleAll" /></th>
-          <th>#</th>
-          <th v-for="col in columnas" :key="col.key">{{ col.label }}</th>
-          <th>Estado</th>
-          <th>Mensaje</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr
-          v-for="linea in lineasPaginadas"
-          :key="linea.numeroLinea"
-          :class="rowClass(linea)"
-        >
-          <td><input type="checkbox" v-model="linea.incluir" /></td>
-          <td>{{ linea.numeroLinea }}</td>
-          <td v-for="col in columnas" :key="col.key">
-            <template v-if="col.editable">
-              <input
-                v-model="linea[col.key]"
-                class="inline-edit"
-                :type="col.type || 'text'"
-              />
-            </template>
-            <template v-else>
-              {{ formatValue(linea[col.key], col) }}
-            </template>
-          </td>
-          <td><span :class="'badge ' + linea.estadoLinea.toLowerCase()">{{ linea.estadoLinea }}</span></td>
-          <td class="msg-col">{{ linea.mensaje }}</td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="preview-table-wrapper">
+      <table class="preview-table">
+        <thead>
+          <tr>
+            <th><input type="checkbox" v-model="selectAll" @change="toggleAll" /></th>
+            <th>#</th>
+            <th v-for="col in columnas" :key="col.key">{{ col.label }}</th>
+            <th>Estado</th>
+            <th>Mensaje</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="linea in lineasPaginadas"
+            :key="linea.numeroLinea"
+            :class="rowClass(linea)"
+          >
+            <td><input type="checkbox" v-model="linea.incluir" /></td>
+            <td>{{ linea.numeroLinea }}</td>
+            <td v-for="col in columnas" :key="col.key">
+              <template v-if="col.editable">
+                <input
+                  v-model="linea[col.key]"
+                  class="inline-edit"
+                  :type="col.type || 'text'"
+                />
+              </template>
+              <template v-else>
+                {{ formatValue(linea[col.key], col) }}
+              </template>
+            </td>
+            <td><span :class="'badge ' + linea.estadoLinea.toLowerCase()">{{ linea.estadoLinea }}</span></td>
+            <td class="msg-col">{{ linea.mensaje }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
     <!-- Paginacion del preview -->
     <div v-if="totalPages > 1" class="preview-pagination">
@@ -66,9 +68,11 @@
 
     <div class="preview-actions" v-if="lineas.length > 0">
       <button @click="$emit('confirmar')" class="btn btn-primary" :disabled="!hayLineasIncluidas">
-        Confirmar Importacion ({{ lineasIncluidas }} registros)
+        <Upload :size="16" /> Confirmar Importacion ({{ lineasIncluidas }} registros)
       </button>
-      <button @click="$emit('cancelar')" class="btn btn-secondary">Cancelar</button>
+      <button @click="$emit('cancelar')" class="btn btn-secondary">
+        <X :size="16" /> Cancelar
+      </button>
     </div>
   </div>
 </template>
@@ -77,6 +81,10 @@
 import { ref, computed } from 'vue'
 import { formatearRut } from '../composables/useRut.js'
 import { formatCuenta } from '../composables/useFormato.js'
+import {
+  CheckCircle, PlusCircle, AlertTriangle, XCircle,
+  List, Upload, X
+} from 'lucide-vue-next'
 
 const props = defineProps({
   lineas: { type: Array, default: () => [] },
@@ -126,54 +134,93 @@ function formatValue(val, col) {
 </script>
 
 <style scoped>
-.preview-stats { display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
-.stat { padding: 0.3rem 0.8rem; border-radius: 4px; font-size: 0.85rem; font-weight: 500; }
-.stat.ok { background: #e2efda; color: #2e7d32; }
-.stat.nuevo { background: #dce6f1; color: #1565c0; }
-.stat.advertencia { background: #fff2cc; color: #e65100; }
-.stat.error { background: #fce4d6; color: #c62828; }
-.stat.total { background: #eee; }
+.preview-stats {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+.stat {
+  padding: 0.35rem 0.85rem;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.stat.ok { background: #f0fdf4; color: #166534; }
+.stat.nuevo { background: #f0f9ff; color: #075985; }
+.stat.advertencia { background: #fffbeb; color: #92400e; }
+.stat.error { background: #fef2f2; color: #991b1b; }
+.stat.total { background: #f1f5f9; color: #334155; }
+
+.preview-table-wrapper {
+  overflow-x: auto;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
 
 .preview-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-.preview-table th, .preview-table td { padding: 0.4rem 0.5rem; border: 1px solid #ddd; text-align: left; }
-.preview-table th { background: #f0f0f0; position: sticky; top: 0; }
+.preview-table th, .preview-table td { padding: 0.5rem 0.6rem; border-bottom: 1px solid #f1f5f9; text-align: left; }
+.preview-table th { background: #f8fafc; position: sticky; top: 0; font-weight: 600; color: #64748b; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em; }
+.preview-table tbody tr:last-child td { border-bottom: none; }
 
 .row-ok { background: #fff; }
-.row-nuevo { background: #dce6f1; }
-.row-advertencia { background: #fff2cc; }
-.row-error { background: #fce4d6; }
-.row-excluido { background: #f2f2f2; text-decoration: line-through; color: #999; }
+.row-nuevo { background: #f0f9ff; }
+.row-advertencia { background: #fffbeb; }
+.row-error { background: #fef2f2; }
+.row-excluido { background: #f8fafc; text-decoration: line-through; color: #94a3b8; }
 
-.badge { padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.75rem; font-weight: bold; }
-.badge.ok { background: #4caf50; color: #fff; }
-.badge.nuevo { background: #2196f3; color: #fff; }
-.badge.advertencia { background: #ff9800; color: #fff; }
-.badge.error { background: #f44336; color: #fff; }
+.badge { padding: 0.2rem 0.5rem; border-radius: 12px; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.02em; }
+.badge.ok { background: #16a34a; color: #fff; }
+.badge.nuevo { background: #2563eb; color: #fff; }
+.badge.advertencia { background: #d97706; color: #fff; }
+.badge.error { background: #dc2626; color: #fff; }
 
-.inline-edit { width: 100%; padding: 0.2rem; border: 1px solid #ccc; border-radius: 3px; font-size: 0.85rem; }
-.msg-col { font-size: 0.8rem; color: #666; max-width: 250px; }
+.inline-edit {
+  width: 100%;
+  padding: 0.25rem 0.4rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  transition: border-color 0.2s;
+}
+.inline-edit:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,0.1); }
+.msg-col { font-size: 0.8rem; color: #64748b; max-width: 250px; }
 
 /* Paginacion preview */
 .preview-pagination {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 0.5rem 0; margin-top: 0.5rem; flex-wrap: wrap; gap: 0.5rem;
+  padding: 0.6rem 0; margin-top: 0.5rem; flex-wrap: wrap; gap: 0.5rem;
 }
-.pagination-info { font-size: 0.83rem; color: #666; }
+.pagination-info { font-size: 0.83rem; color: #64748b; }
 .pagination-controls { display: flex; align-items: center; gap: 0.25rem; }
 .page-btn {
-  min-width: 28px; height: 28px; border: 1px solid #ddd; border-radius: 4px;
+  min-width: 28px; height: 28px; border: 1px solid #e2e8f0; border-radius: 6px;
   cursor: pointer; background: #fff; font-size: 0.8rem;
   display: inline-flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
 }
-.page-btn:hover:not(:disabled) { background: #f0f0f0; }
-.page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.page-current { font-size: 0.83rem; color: #333; padding: 0 0.3rem; }
-.page-size-select { padding: 0.2rem; border: 1px solid #ccc; border-radius: 4px; font-size: 0.8rem; margin-left: 0.3rem; }
+.page-btn:hover:not(:disabled) { background: #f1f5f9; }
+.page-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.page-current { font-size: 0.83rem; color: #334155; padding: 0 0.3rem; }
+.page-size-select { padding: 0.2rem; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.8rem; margin-left: 0.3rem; }
 
-.preview-actions { margin-top: 1rem; display: flex; gap: 0.5rem; }
-.btn { padding: 0.6rem 1.2rem; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem; }
-.btn-primary { background: #1976d2; color: #fff; }
-.btn-primary:hover { background: #1565c0; }
-.btn-primary:disabled { background: #ccc; cursor: not-allowed; }
-.btn-secondary { background: #eee; color: #333; }
+.preview-actions {
+  margin-top: 1.25rem;
+  display: flex;
+  gap: 0.6rem;
+}
+.btn {
+  padding: 0.55rem 1.15rem; border: none; border-radius: 8px;
+  cursor: pointer; font-size: 0.88rem; font-weight: 500;
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  transition: all 0.2s;
+}
+.btn-primary { background: #2563eb; color: #fff; }
+.btn-primary:hover { background: #1d4ed8; }
+.btn-primary:disabled { background: #94a3b8; cursor: not-allowed; }
+.btn-secondary { background: #f1f5f9; color: #334155; border: 1px solid #e2e8f0; }
+.btn-secondary:hover { background: #e2e8f0; }
 </style>
