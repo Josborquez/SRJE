@@ -120,25 +120,7 @@ async function ejecutarInactivar() {
 </script>
 
 <style scoped>
+/* Estilos globales aplicados desde assets/styles.css */
+/* Solo overrides especificos de este componente */
 .rut { font-size: 1.2rem; color: #666; margin-bottom: 1rem; }
-.sections { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
-section { background: #fff; padding: 1rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 1rem; }
-h3 { margin-bottom: 0.75rem; color: #1976d2; }
-dl { display: grid; grid-template-columns: auto 1fr; gap: 0.3rem 1rem; }
-dt { font-weight: 500; color: #666; }
-dd { margin: 0; }
-.estado { padding: 0.15rem 0.5rem; border-radius: 3px; font-size: 0.8rem; }
-.estado-a { background: #e8f5e9; color: #2e7d32; }
-.estado-i { background: #ffebee; color: #c62828; }
-.data-table { width: 100%; border-collapse: collapse; }
-.data-table th, .data-table td { padding: 0.5rem; border-bottom: 1px solid #eee; text-align: left; }
-.data-table th { background: #f5f5f5; }
-.actions { display: flex; gap: 0.5rem; margin-top: 1rem; }
-.btn { padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; font-size: 0.9rem; }
-.btn-primary { background: #1976d2; color: #fff; }
-.btn-danger { background: #d32f2f; color: #fff; }
-.btn-danger:hover { background: #c62828; }
-.btn-secondary { background: #eee; color: #333; }
-.loading { padding: 2rem; text-align: center; }
-.error { padding: 1rem; background: #fce4ec; color: #c62828; border-radius: 4px; }
 </style>

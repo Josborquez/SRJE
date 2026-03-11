@@ -126,10 +126,8 @@ function cancelar() {
 </script>
 
 <style scoped>
+/* Estilos globales aplicados desde assets/styles.css */
+/* Solo overrides especificos de este componente */
 .periodo-input { margin: 1rem 0; display: flex; align-items: center; gap: 0.5rem; }
 .periodo-input input { padding: 0.4rem; border: 1px solid #ccc; border-radius: 4px; width: 120px; }
-.loading { padding: 1rem; text-align: center; color: #666; }
-.error { padding: 0.8rem; background: #fce4ec; color: #c62828; border-radius: 4px; margin: 1rem 0; }
-.resultado { margin-top: 1rem; padding: 1rem; background: #e8f5e9; border-radius: 8px; }
-.resultado h3 { color: #2e7d32; margin-bottom: 0.5rem; }
 </style>

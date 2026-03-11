@@ -75,12 +75,7 @@ async function generar() {
 </script>
 
 <style scoped>
+/* Estilos globales aplicados desde assets/styles.css */
+/* Solo overrides especificos de este componente */
 .actions { margin: 1.5rem 0; }
-.btn { padding: 0.7rem 1.5rem; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem; }
-.btn-primary { background: #1976d2; color: #fff; }
-.btn-primary:hover { background: #1565c0; }
-.btn-primary:disabled { background: #ccc; cursor: not-allowed; }
-.error { padding: 0.8rem; background: #fce4ec; color: #c62828; border-radius: 4px; margin: 1rem 0; }
-.resultado { padding: 1.5rem; background: #e8f5e9; border-radius: 8px; margin-top: 1rem; }
-.resultado h3 { color: #2e7d32; }
 </style>

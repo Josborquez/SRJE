@@ -87,10 +87,10 @@ function cancelar() {
 </script>
 
 <style scoped>
+/* Estilos globales aplicados desde assets/styles.css */
+/* Solo overrides especificos de este componente */
 .temge-info { background: #fff; padding: 1rem; border-radius: 8px; margin: 1rem 0; }
 .temge-info p { margin: 0.3rem 0; }
 .ok { color: #2e7d32; font-weight: bold; }
 .fail { color: #c62828; font-weight: bold; }
-.loading { padding: 1rem; text-align: center; }
-.error { padding: 0.8rem; background: #fce4ec; color: #c62828; border-radius: 4px; margin: 1rem 0; }
 </style>
