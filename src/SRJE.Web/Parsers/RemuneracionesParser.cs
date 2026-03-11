@@ -46,7 +46,8 @@ public static class RemuneracionesParser
                 // Truncar a 39 chars para TEMGE
                 if (dto.NombreBeneficiario.Length > 39)
                     dto.NombreBeneficiario = dto.NombreBeneficiario[..39];
-                // Pos 91-98: ID Sistema (informativo, no se almacena)
+                // Pos 91-98: Monto retencion judicial (8 digitos, sin decimales)
+                dto.Monto = FixedWidthHelper.LeerNumero(linea, 90, 8);
                 // Pos 99-109: Codigo Retencion
                 dto.CodRetencion = FixedWidthHelper.LeerTexto(linea, 98, 11);
                 // Pos 110-126: Tipo Pago
