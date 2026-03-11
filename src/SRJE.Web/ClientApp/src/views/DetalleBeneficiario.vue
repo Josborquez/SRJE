@@ -1,15 +1,24 @@
 <template>
   <div class="detalle-beneficiario" v-if="store.detalle">
-    <h1>{{ store.detalle.nombreBeneficiario }}</h1>
-    <p class="rut">{{ store.detalle.rutFormateado }}</p>
+    <div class="page-header">
+      <h1><UserCheck :size="24" /> {{ store.detalle.nombreBeneficiario }}</h1>
+      <p>{{ store.detalle.rutFormateado }}</p>
+    </div>
 
     <AlertMessage v-if="alertMsg" :message="alertMsg" :type="alertType" @close="alertMsg = ''" />
 
     <div class="sections">
       <section>
-        <h3>Datos Personales</h3>
+        <h3><User :size="16" /> Datos Personales</h3>
         <dl>
-          <dt>Estado</dt><dd><span :class="'estado estado-' + store.detalle.estado.toLowerCase()">{{ store.detalle.estado === 'A' ? 'Activo' : 'Inactivo' }}</span></dd>
+          <dt>Estado</dt>
+          <dd>
+            <span :class="'estado estado-' + store.detalle.estado.toLowerCase()">
+              <CircleCheck v-if="store.detalle.estado === 'A'" :size="13" />
+              <CircleX v-else :size="13" />
+              {{ store.detalle.estado === 'A' ? 'Activo' : 'Inactivo' }}
+            </span>
+          </dd>
           <dt>Sexo</dt><dd>{{ store.detalle.sexo === 'M' ? 'Masculino' : store.detalle.sexo === 'F' ? 'Femenino' : '-' }}</dd>
           <dt>Estado Civil</dt><dd>{{ store.detalle.estadoCivil || '-' }}</dd>
           <dt>Domicilio</dt><dd>{{ store.detalle.domicilio || '-' }}</dd>
@@ -19,7 +28,7 @@
       </section>
 
       <section>
-        <h3>Datos del Funcionario</h3>
+        <h3><Briefcase :size="16" /> Datos del Funcionario</h3>
         <dl>
           <dt>RUT Funcionario</dt><dd>{{ store.detalle.rutFuncionarioFormateado || '-' }}</dd>
           <dt>Nombre Funcionario</dt><dd>{{ store.detalle.nombreFuncionario || '-' }}</dd>
@@ -27,7 +36,7 @@
       </section>
 
       <section>
-        <h3>Cuenta Bancaria</h3>
+        <h3><Landmark :size="16" /> Cuenta Bancaria</h3>
         <dl>
           <dt>Banco</dt><dd>{{ store.detalle.nombreBanco || store.detalle.codBanco || '-' }}</dd>
           <dt>Tipo Cuenta</dt><dd>{{ tipoCuentaLabel }}</dd>
@@ -37,8 +46,8 @@
       </section>
     </div>
 
-    <section v-if="store.detalle.retenciones?.length">
-      <h3>Retenciones Activas</h3>
+    <section v-if="store.detalle.retenciones?.length" class="card-section">
+      <h3><Scale :size="16" /> Retenciones Activas</h3>
       <table class="data-table">
         <thead>
           <tr>
@@ -62,22 +71,34 @@
     </section>
 
     <div class="actions">
-      <router-link :to="`/beneficiarios/${rut}/editar`" class="btn btn-primary">Editar</router-link>
-      <button v-if="store.detalle.estado === 'A'" class="btn btn-danger" @click="showConfirm = true">Inactivar</button>
-      <router-link to="/beneficiarios" class="btn btn-secondary">Volver</router-link>
+      <router-link :to="`/beneficiarios/${rut}/editar`" class="btn btn-primary">
+        <Pencil :size="16" /> Editar
+      </router-link>
+      <button v-if="store.detalle.estado === 'A'" class="btn btn-danger" @click="showConfirm = true">
+        <Ban :size="16" /> Inactivar
+      </button>
+      <router-link to="/beneficiarios" class="btn btn-secondary">
+        <ArrowLeft :size="16" /> Volver
+      </router-link>
     </div>
 
     <ConfirmModal
       v-model="showConfirm"
       title="Inactivar Beneficiario"
-      :message="`Esta seguro de inactivar a ${store.detalle.nombreBeneficiario}? Esta accion cambiara su estado a Inactivo.`"
+      :message="`¿Esta seguro de inactivar a ${store.detalle.nombreBeneficiario}? Esta accion cambiara su estado a Inactivo.`"
       confirmText="Si, inactivar"
       variant="danger"
       @confirm="ejecutarInactivar"
     />
   </div>
-  <div v-else-if="store.loading" class="loading">Cargando...</div>
-  <div v-else class="error">Beneficiario no encontrado</div>
+  <div v-else-if="store.loading" class="loading">Cargando datos del beneficiario...</div>
+  <div v-else class="empty-state">
+    <UserX :size="48" class="empty-icon" />
+    <p>Beneficiario no encontrado</p>
+    <router-link to="/beneficiarios" class="btn btn-secondary" style="margin-top:0.5rem">
+      <ArrowLeft :size="16" /> Volver a la lista
+    </router-link>
+  </div>
 </template>
 
 <script setup>
@@ -87,6 +108,10 @@ import { useBeneficiariosStore } from '../stores/beneficiarios.js'
 import { formatCuenta } from '../composables/useFormato.js'
 import AlertMessage from '../components/AlertMessage.vue'
 import ConfirmModal from '../components/ConfirmModal.vue'
+import {
+  UserCheck, User, Briefcase, Landmark, Scale,
+  Pencil, Ban, ArrowLeft, CircleCheck, CircleX, UserX
+} from 'lucide-vue-next'
 
 const props = defineProps({ rut: { type: [String, Number], required: true } })
 const store = useBeneficiariosStore()
@@ -118,9 +143,3 @@ async function ejecutarInactivar() {
   }
 }
 </script>
-
-<style scoped>
-/* Estilos globales aplicados desde assets/styles.css */
-/* Solo overrides especificos de este componente */
-.rut { font-size: 1.2rem; color: #666; margin-bottom: 1rem; }
-</style>

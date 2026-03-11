@@ -1,13 +1,21 @@
 <template>
   <div class="ficha-beneficiario">
-    <h1>{{ isEditing ? 'Editar' : 'Nuevo' }} Beneficiario</h1>
+    <div class="page-header">
+      <h1>
+        <UserPen v-if="isEditing" :size="24" />
+        <UserPlus v-else :size="24" />
+        {{ isEditing ? 'Editar' : 'Nuevo' }} Beneficiario
+      </h1>
+      <p v-if="!isEditing">Complete los datos para registrar un nuevo beneficiario en el sistema.</p>
+      <p v-else>Modifique los campos necesarios y guarde los cambios.</p>
+    </div>
 
     <AlertMessage v-if="alertMsg" :message="alertMsg" :type="alertType" @close="alertMsg = ''" />
 
     <form @submit.prevent="guardar" class="form-ficha">
       <!-- Seccion 1: Datos Personales -->
       <fieldset>
-        <legend>Datos Personales</legend>
+        <legend><User :size="16" /> Datos Personales</legend>
         <div class="form-grid">
           <RutInput
             v-model="form.rutBeneficiario"
@@ -26,7 +34,7 @@
           <div class="field">
             <label>Sexo</label>
             <select v-model="form.sexo">
-              <option value="">--</option>
+              <option value="">-- Seleccionar --</option>
               <option value="M">Masculino</option>
               <option value="F">Femenino</option>
             </select>
@@ -34,7 +42,7 @@
           <div class="field">
             <label>Estado Civil</label>
             <select v-model="form.estadoCivil">
-              <option value="">--</option>
+              <option value="">-- Seleccionar --</option>
               <option>Soltero</option>
               <option>Casado</option>
               <option>Viudo</option>
@@ -43,7 +51,7 @@
           </div>
           <div class="field">
             <label>Domicilio</label>
-            <input v-model="form.domicilio" maxlength="100" />
+            <input v-model="form.domicilio" maxlength="100" placeholder="Direccion completa" />
           </div>
           <div class="field">
             <label>Comuna</label>
@@ -51,14 +59,14 @@
           </div>
           <div class="field">
             <label>Telefono</label>
-            <input v-model="form.telefono" maxlength="20" placeholder="+56XXXXXXXXX" />
+            <input v-model="form.telefono" maxlength="20" placeholder="+56 9 XXXX XXXX" />
           </div>
         </div>
       </fieldset>
 
       <!-- Seccion 2: Datos del Funcionario -->
       <fieldset>
-        <legend>Datos del Funcionario</legend>
+        <legend><Briefcase :size="16" /> Datos del Funcionario</legend>
         <div class="form-grid">
           <RutInput
             v-model="form.rutFuncionario"
@@ -75,12 +83,12 @@
 
       <!-- Seccion 3: Cuenta Bancaria -->
       <fieldset>
-        <legend>Cuenta Bancaria</legend>
+        <legend><Landmark :size="16" /> Cuenta Bancaria</legend>
         <div class="form-grid">
           <div class="field">
             <label>Banco</label>
             <select v-model="form.codBanco" @change="onBancoChange">
-              <option :value="null">-- Seleccionar --</option>
+              <option :value="null">-- Seleccionar banco --</option>
               <option v-for="b in bancos" :key="b.codBanco" :value="b.codBanco">
                 {{ b.codBanco }} - {{ b.nombreBanco }}
               </option>
@@ -89,7 +97,7 @@
           <div class="field">
             <label>Tipo Cuenta</label>
             <select v-model="form.tipoCuenta">
-              <option :value="null">--</option>
+              <option :value="null">-- Seleccionar tipo --</option>
               <option :value="1">01 - Cuenta Corriente</option>
               <option :value="2">02 - Cuenta de Ahorro / CuentaRUT</option>
               <option :value="3">03 - Cuenta Vista</option>
@@ -112,12 +120,15 @@
 
       <div class="form-actions">
         <button type="submit" class="btn btn-primary" :disabled="!rutValido || guardando">
+          <Save :size="16" />
           {{ guardando ? 'Guardando...' : (isEditing ? 'Actualizar' : 'Crear') + ' Beneficiario' }}
         </button>
-        <router-link to="/beneficiarios" class="btn btn-secondary">Cancelar</router-link>
+        <router-link to="/beneficiarios" class="btn btn-secondary">
+          <X :size="16" /> Cancelar
+        </router-link>
       </div>
 
-      <div v-if="store.error" class="error">{{ store.error }}</div>
+      <div v-if="store.error" class="error"><CircleAlert :size="16" /> {{ store.error }}</div>
     </form>
   </div>
 </template>
@@ -130,6 +141,10 @@ import AlertMessage from '../components/AlertMessage.vue'
 import { useBeneficiariosStore } from '../stores/beneficiarios.js'
 import { catalogosApi } from '../api/index.js'
 import { formatCuenta } from '../composables/useFormato.js'
+import {
+  UserPlus, UserPen, User, Briefcase, Landmark,
+  Save, X, CircleAlert
+} from 'lucide-vue-next'
 
 const route = useRoute()
 const router = useRouter()
@@ -170,7 +185,6 @@ onMounted(async () => {
     const detalle = await store.obtener(Number(route.params.rut))
     if (detalle) {
       Object.assign(form.value, detalle)
-      // Corregir numero de cuenta si viene en notacion cientifica
       if (form.value.ctaEstado) {
         form.value.ctaEstado = formatCuenta(form.value.ctaEstado)
         if (form.value.ctaEstado === '-') form.value.ctaEstado = ''
@@ -199,7 +213,6 @@ function onBancoChange() {
 }
 
 function limpiarCuenta(campo) {
-  // Solo permitir digitos en los campos de cuenta
   form.value[campo] = form.value[campo].replace(/[^0-9]/g, '')
 }
 
@@ -226,7 +239,5 @@ async function guardar() {
 </script>
 
 <style scoped>
-/* Estilos globales aplicados desde assets/styles.css */
-/* Solo overrides especificos de este componente */
-.form-ficha { max-width: 800px; }
+.form-ficha { max-width: 860px; margin: 0 auto; }
 </style>

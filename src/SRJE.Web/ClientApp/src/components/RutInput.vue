@@ -2,24 +2,32 @@
   <div class="rut-input">
     <label v-if="label">{{ label }}</label>
     <div class="rut-field">
-      <input
-        type="text"
-        :value="displayValue"
-        @input="onInput"
-        @blur="onBlur"
-        :placeholder="placeholder"
-        :class="{ 'invalid': touched && !isValid, 'valid': touched && isValid }"
-        maxlength="12"
-      />
+      <div class="rut-input-wrapper" :class="{ 'invalid': touched && !isValid, 'valid': touched && isValid }">
+        <Hash :size="16" class="rut-prefix-icon" />
+        <input
+          type="text"
+          :value="displayValue"
+          @input="onInput"
+          @blur="onBlur"
+          :placeholder="placeholder"
+          maxlength="12"
+        />
+      </div>
       <span class="dv-badge" v-if="dv">-{{ dv }}</span>
     </div>
-    <small v-if="touched && !isValid" class="error-msg">RUT invalido</small>
+    <small v-if="touched && !isValid" class="error-msg">
+      <CircleAlert :size="12" /> RUT invalido
+    </small>
+    <small v-if="touched && isValid" class="success-msg">
+      <CircleCheck :size="12" /> RUT valido
+    </small>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { calcularDv, validarRut, formatearRut } from '../composables/useRut.js'
+import { Hash, CircleAlert, CircleCheck } from 'lucide-vue-next'
 
 const props = defineProps({
   modelValue: { type: [Number, String], default: '' },
@@ -71,14 +79,65 @@ watch(() => props.modelValue, (val) => {
 
 <style scoped>
 .rut-input { margin-bottom: 0.75rem; }
-.rut-input label { display: block; font-size: 0.85rem; margin-bottom: 0.25rem; font-weight: 500; }
-.rut-field { display: flex; align-items: center; gap: 0.25rem; }
-.rut-field input {
-  padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;
-  font-size: 0.95rem; width: 160px;
+.rut-input label {
+  display: block;
+  font-size: 0.83rem;
+  margin-bottom: 0.3rem;
+  font-weight: 500;
+  color: var(--text-secondary, #64748b);
 }
-.rut-field input.valid { border-color: #4caf50; }
-.rut-field input.invalid { border-color: #f44336; }
-.dv-badge { font-weight: bold; font-size: 1.1rem; }
-.error-msg { color: #f44336; font-size: 0.8rem; }
+.rut-field { display: flex; align-items: center; gap: 0.3rem; }
+
+.rut-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0 0.6rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.rut-input-wrapper:focus-within {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+.rut-input-wrapper.valid {
+  border-color: #16a34a;
+}
+.rut-input-wrapper.valid:focus-within {
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.1);
+}
+.rut-input-wrapper.invalid {
+  border-color: #dc2626;
+}
+.rut-input-wrapper.invalid:focus-within {
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+.rut-prefix-icon { color: #94a3b8; flex-shrink: 0; }
+.rut-input-wrapper input {
+  padding: 0.5rem 0.3rem;
+  border: none;
+  font-size: 0.95rem;
+  width: 140px;
+  outline: none;
+  background: transparent;
+}
+.dv-badge { font-weight: 700; font-size: 1.1rem; color: #334155; }
+.error-msg {
+  color: #dc2626;
+  font-size: 0.78rem;
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin-top: 0.2rem;
+}
+.success-msg {
+  color: #16a34a;
+  font-size: 0.78rem;
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin-top: 0.2rem;
+}
 </style>

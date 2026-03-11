@@ -1,28 +1,41 @@
 <template>
   <div class="generar-temge">
-    <h1>Generar Archivo TEMGE</h1>
-    <p>Genera el archivo de pago en formato de ancho fijo compatible con el banco.</p>
-    <p>Se incluiran todos los beneficiarios activos con cuenta bancaria y retenciones vigentes.</p>
+    <div class="page-header">
+      <h1><FileDown :size="24" /> Generar Archivo TEMGE</h1>
+      <p>Genera el archivo de pago en formato de ancho fijo compatible con el banco.</p>
+    </div>
+
+    <div class="generar-card">
+      <div class="generar-card-icon">
+        <FileDown :size="40" />
+      </div>
+      <div class="generar-card-content">
+        <h3>Archivo de Pago TEMGE</h3>
+        <p>Se incluiran todos los beneficiarios activos con cuenta bancaria y retenciones vigentes.
+          El archivo se descargara automaticamente en formato de texto.</p>
+      </div>
+    </div>
 
     <AlertMessage v-if="alertMsg" :message="alertMsg" :type="alertType" @close="alertMsg = ''" />
 
     <div class="actions">
       <button @click="showConfirm = true" class="btn btn-primary" :disabled="loading">
-        {{ loading ? 'Generando...' : 'Generar Archivo TEMGE' }}
+        <Download :size="16" />
+        {{ loading ? 'Generando archivo...' : 'Generar Archivo TEMGE' }}
       </button>
     </div>
 
-    <div v-if="error" class="error">{{ error }}</div>
+    <div v-if="error" class="error"><CircleAlert :size="16" /> {{ error }}</div>
 
     <div v-if="generado" class="resultado">
-      <h3>Archivo generado exitosamente</h3>
-      <p>El archivo se descargo automaticamente.</p>
+      <h3><CheckCircle :size="18" /> Archivo generado exitosamente</h3>
+      <p>El archivo se ha descargado automaticamente a su computador.</p>
     </div>
 
     <ConfirmModal
       v-model="showConfirm"
       title="Generar Archivo TEMGE"
-      message="Se generara el archivo TEMGE con todos los beneficiarios activos que tengan cuenta bancaria y retenciones vigentes. Desea continuar?"
+      message="Se generara el archivo TEMGE con todos los beneficiarios activos que tengan cuenta bancaria y retenciones vigentes. ¿Desea continuar?"
       confirmText="Si, generar"
       @confirm="generar"
     />
@@ -34,6 +47,7 @@ import { ref } from 'vue'
 import { archivosApi } from '../api/index.js'
 import AlertMessage from '../components/AlertMessage.vue'
 import ConfirmModal from '../components/ConfirmModal.vue'
+import { FileDown, Download, CircleAlert, CheckCircle } from 'lucide-vue-next'
 
 const loading = ref(false)
 const error = ref(null)
@@ -49,7 +63,6 @@ async function generar() {
   alertMsg.value = ''
   try {
     const response = await archivosApi.generarTemge()
-    // Descargar blob
     const url = window.URL.createObjectURL(new Blob([response.data]))
     const link = document.createElement('a')
     link.href = url
@@ -67,7 +80,7 @@ async function generar() {
   } catch (e) {
     error.value = e.response?.data?.error || e.message
     alertType.value = 'error'
-    alertMsg.value = 'Error al generar el archivo TEMGE.'
+    alertMsg.value = 'Error al generar el archivo TEMGE. Intente nuevamente.'
   } finally {
     loading.value = false
   }
@@ -75,7 +88,34 @@ async function generar() {
 </script>
 
 <style scoped>
-/* Estilos globales aplicados desde assets/styles.css */
-/* Solo overrides especificos de este componente */
-.actions { margin: 1.5rem 0; }
+.generar-card {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  background: var(--bg-card);
+  padding: 1.5rem 2rem;
+  border-radius: var(--border-radius-lg);
+  border: 1px solid var(--border-color);
+  margin-bottom: 1.5rem;
+}
+.generar-card-icon {
+  width: 72px;
+  height: 72px;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.generar-card-content h3 {
+  font-size: 1.05rem;
+  margin-bottom: 0.3rem;
+}
+.generar-card-content p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
 </style>
