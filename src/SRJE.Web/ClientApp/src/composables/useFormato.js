@@ -7,13 +7,15 @@
 export function formatCuenta(val) {
   if (val == null || val === '') return '-'
   const s = String(val)
-  // Si ya es un string limpio sin notacion cientifica, retornar tal cual
-  if (!/e\+/i.test(s) && !/^\d+[.,]\d+$/.test(s)) return s
-  // Convertir notacion cientifica o decimal a entero string sin separadores
+  // Si ya es un string limpio de solo digitos, retornar tal cual
+  if (/^\d+$/.test(s)) return s
+  // Normalizar separador decimal: coma -> punto (locale ES usa coma)
+  const normalized = s.replace(/,/g, '.')
+  // Convertir notacion cientifica o decimal a entero string
   try {
-    const num = Number(val)
+    const num = Number(normalized)
     if (isNaN(num)) return s
-    return num.toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 0 })
+    return num.toFixed(0)
   } catch {
     return s
   }
