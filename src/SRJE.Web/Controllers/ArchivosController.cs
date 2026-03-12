@@ -71,6 +71,16 @@ public class ArchivosController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>POST /api/archivos/temge/confirmar — Confirmar importacion TEMGE</summary>
+    [HttpPost("temge/confirmar")]
+    public async Task<IActionResult> ConfirmarTemge([FromBody] ConfirmarImportacionRequest request)
+    {
+        var usuario = User.Identity?.Name ?? "sistema";
+        var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "";
+        var result = await _service.ConfirmarTemgeAsync(request, usuario, ip);
+        return Ok(result);
+    }
+
     /// <summary>GET /api/archivos/temge/generar — Genera y descarga archivo TEMGE</summary>
     [HttpGet("temge/generar")]
     public async Task<IActionResult> GenerarTemge()

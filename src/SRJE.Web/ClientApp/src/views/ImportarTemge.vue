@@ -48,22 +48,40 @@
       <PreviewImportacion
         :lineas="preview.lineas"
         :columnas="columnas"
-        @confirmar="() => {}"
+        @confirmar="mostrarConfirmacion"
         @cancelar="cancelar"
       />
+
+      <div v-if="resultado" class="resultado">
+        <h3><CheckCircle :size="18" /> Resultado de Importacion</h3>
+        <p>{{ resultado.mensaje }}</p>
+        <p>Actualizados: <strong>{{ resultado.actualizados }}</strong> |
+          Sin beneficiario: <strong>{{ resultado.insertados }}</strong> |
+          Excluidos: <strong>{{ resultado.excluidos }}</strong> |
+          Errores: <strong>{{ resultado.errores }}</strong></p>
+      </div>
     </div>
+
+    <ConfirmModal
+      v-model="showConfirm"
+      title="Confirmar Importacion TEMGE"
+      :message="`Se importaran ${lineasSeleccionadas} registros del archivo TEMGE. ¿Desea continuar?`"
+      confirmText="Si, importar"
+      @confirm="confirmar"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import FileUpload from '../components/FileUpload.vue'
 import PreviewImportacion from '../components/PreviewImportacion.vue'
 import AlertMessage from '../components/AlertMessage.vue'
+import ConfirmModal from '../components/ConfirmModal.vue'
 import { archivosApi } from '../api/index.js'
 import {
   FileInput, CircleAlert, Building, Calendar,
-  Hash, DollarSign, ShieldCheck, ShieldAlert
+  Hash, DollarSign, ShieldCheck, ShieldAlert, CheckCircle
 } from 'lucide-vue-next'
 
 const preview = ref(null)
@@ -71,6 +89,12 @@ const loading = ref(false)
 const error = ref(null)
 const alertMsg = ref('')
 const alertType = ref('info')
+const resultado = ref(null)
+const showConfirm = ref(false)
+
+const lineasSeleccionadas = computed(() =>
+  preview.value?.lineas?.filter(l => l.incluir).length || 0
+)
 
 const columnas = [
   { key: 'rutBeneficiario', label: 'RUT Benef.' },
@@ -105,8 +129,32 @@ async function onFileSelected(file) {
   }
 }
 
+function mostrarConfirmacion() {
+  showConfirm.value = true
+}
+
+async function confirmar() {
+  loading.value = true
+  alertMsg.value = ''
+  try {
+    const { data } = await archivosApi.confirmarTemge({
+      lineas: preview.value.lineas.filter(l => l.incluir)
+    })
+    resultado.value = data
+    alertType.value = 'success'
+    alertMsg.value = `Importacion completada: ${data.actualizados} actualizados, ${data.insertados} sin beneficiario en BD.`
+  } catch (e) {
+    error.value = e.response?.data?.error || e.message
+    alertType.value = 'error'
+    alertMsg.value = 'Error al confirmar la importacion TEMGE.'
+  } finally {
+    loading.value = false
+  }
+}
+
 function cancelar() {
   preview.value = null
+  resultado.value = null
   alertMsg.value = ''
 }
 </script>

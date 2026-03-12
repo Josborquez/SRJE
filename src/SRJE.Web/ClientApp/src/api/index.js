@@ -29,6 +29,7 @@ export const archivosApi = {
     form.append('archivo', file)
     return api.post('/archivos/temge/preview', form)
   },
+  confirmarTemge: (data) => api.post('/archivos/temge/confirmar', data),
   previewNuevasCuentas: (file) => {
     const form = new FormData()
     form.append('archivo', file)

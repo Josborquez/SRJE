@@ -10,5 +10,6 @@ public interface IArchivoService
     Task<ArchivoPreviewDto> PreviewNuevasCuentasAsync(Stream stream, string nombreArchivo);
     Task<ResultadoImportacionDto> ConfirmarRemuneracionesAsync(ConfirmarImportacionRequest request, string usuario, string ip);
     Task<ResultadoImportacionDto> ConfirmarNuevasCuentasAsync(ConfirmarImportacionRequest request, string usuario, string ip);
+    Task<ResultadoImportacionDto> ConfirmarTemgeAsync(ConfirmarImportacionRequest request, string usuario, string ip);
     Task<byte[]> GenerarTemgeAsync(string usuario);
 }

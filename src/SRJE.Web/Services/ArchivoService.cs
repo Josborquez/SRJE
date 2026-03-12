@@ -297,6 +297,106 @@ public class ArchivoService : IArchivoService
         };
     }
 
+    public async Task<ResultadoImportacionDto> ConfirmarTemgeAsync(
+        ConfirmarImportacionRequest request, string usuario, string ip)
+    {
+        var inicio = DateTime.Now;
+        var logCarga = new LogCarga
+        {
+            TipoCarga = "TEMGE_IMPORTACION",
+            Usuario = usuario,
+            IpUsuario = ip,
+            TotalLineas = request.Lineas.Count
+        };
+        _db.LogCargas.Add(logCarga);
+        await _db.SaveChangesAsync();
+
+        int insertados = 0, actualizados = 0, excluidos = 0, errores = 0;
+        decimal montoTotal = 0;
+
+        // Registrar en historial
+        var historial = new HistorialPagosTemge
+        {
+            FechaProceso = inicio,
+            HoraProceso = inicio.ToString("HHmmss"),
+            CodEmpresa = "06110104519640100572",
+            Estado = "I",
+            UsuarioGenera = usuario
+        };
+        _db.HistorialPagosTemge.Add(historial);
+        await _db.SaveChangesAsync();
+
+        foreach (var linea in request.Lineas)
+        {
+            if (!linea.Incluir) { excluidos++; continue; }
+
+            try
+            {
+                // Registrar detalle del pago importado
+                _db.DetallePagosTemge.Add(new DetallePagoTemge
+                {
+                    IdHistorial = historial.Id,
+                    RutBeneficiario = linea.RutBeneficiario,
+                    MontoPagado = linea.Monto ?? 0,
+                    CodBanco = linea.CodBanco ?? 12,
+                    TipoCuenta = linea.TipoCuenta ?? 2
+                });
+
+                // Actualizar cuenta del beneficiario si existe
+                var beneficiario = await _db.Beneficiarios
+                    .FirstOrDefaultAsync(b => b.RutBeneficiario == linea.RutBeneficiario);
+
+                if (beneficiario != null)
+                {
+                    beneficiario.CodBanco = linea.CodBanco;
+                    beneficiario.TipoCuenta = linea.TipoCuenta;
+                    if (linea.CodBanco == 12)
+                        beneficiario.CtaEstado = linea.NumeroCuenta;
+                    else
+                        beneficiario.CtaOtBanco = linea.NumeroCuenta;
+                    beneficiario.FechaModificacion = DateTime.Now;
+                    actualizados++;
+                }
+                else
+                {
+                    insertados++;
+                }
+
+                montoTotal += linea.Monto ?? 0;
+            }
+            catch
+            {
+                errores++;
+            }
+        }
+
+        await _db.SaveChangesAsync();
+
+        historial.MontoTotal = montoTotal;
+        historial.CantidadRegistros = insertados + actualizados;
+
+        logCarga.Estado = "C";
+        logCarga.FechaFin = DateTime.Now;
+        logCarga.DuracionMs = (long)(logCarga.FechaFin.Value - inicio).TotalMilliseconds;
+        logCarga.RegistrosInsertados = insertados;
+        logCarga.RegistrosActualizados = actualizados;
+        logCarga.RegistrosExcluidos = excluidos;
+        logCarga.RegistrosError = errores;
+        logCarga.MontoTotal = montoTotal;
+        await _db.SaveChangesAsync();
+
+        return new ResultadoImportacionDto
+        {
+            IdCarga = logCarga.Id,
+            Insertados = insertados,
+            Actualizados = actualizados,
+            Excluidos = excluidos,
+            Errores = errores,
+            MontoTotal = montoTotal,
+            Mensaje = $"Importacion TEMGE completada: {actualizados} actualizados, {insertados} sin beneficiario en BD"
+        };
+    }
+
     public async Task<byte[]> GenerarTemgeAsync(string usuario)
     {
         // Obtener beneficiarios activos con retencion activa y cuenta valida.
