@@ -1,8 +1,10 @@
 -- ============================================================================
 -- SRJE - Sistema de Retenciones Judiciales de Empleados
--- Script 06: Ampliar columna CTA_ESTADO de NCHAR(11) a NVARCHAR2(15)
+-- Script 06: Asegurar columna CTA_ESTADO como NVARCHAR2(15)
 -- Motivo: Cuentas BancoEstado pueden tener hasta 15 caracteres
--- Error: ORA-12899 al insertar valores mayores a 11 caracteres
+-- NOTA: El script 01 ya define CTA_ESTADO como NVARCHAR2(15).
+--       Este ALTER es idempotente y solo es necesario si se ejecuto
+--       una version anterior del script 01 que definia NCHAR(11).
 -- ============================================================================
 
 ALTER TABLE BENEFICIARIOS MODIFY CTA_ESTADO NVARCHAR2(15);

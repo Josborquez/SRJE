@@ -43,7 +43,14 @@ public class TemgeService : ITemgeService
             }
         }
 
+        // Solo cargar los RUTs necesarios en lugar de toda la tabla
+        var rutsArchivo = resultado.Lineas
+            .Where(l => l.EstadoLinea == "OK")
+            .Select(l => l.RutBeneficiario)
+            .Distinct()
+            .ToList();
         var rutsExistentes = (await _db.Beneficiarios
+            .Where(b => rutsArchivo.Contains(b.RutBeneficiario))
             .Select(b => b.RutBeneficiario)
             .ToListAsync())
             .ToHashSet();
@@ -135,9 +142,15 @@ public class TemgeService : ITemgeService
                         beneficiario.CodBanco = linea.CodBanco;
                         beneficiario.TipoCuenta = linea.TipoCuenta;
                         if (linea.CodBanco == 12)
+                        {
                             beneficiario.CtaEstado = linea.NumeroCuenta;
+                            beneficiario.CtaOtBanco = null;
+                        }
                         else
+                        {
                             beneficiario.CtaOtBanco = linea.NumeroCuenta;
+                            beneficiario.CtaEstado = null;
+                        }
                         beneficiario.FechaModificacion = DateTime.Now;
                         actualizados++;
                         accion = "ACTUALIZAR";
