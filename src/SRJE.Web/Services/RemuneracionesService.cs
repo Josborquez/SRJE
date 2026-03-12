@@ -103,6 +103,14 @@ public class RemuneracionesService : IRemuneracionesService
                 if (!linea.Incluir)
                 {
                     excluidos++;
+                    _db.LogCargaDetalles.Add(new LogCargaDetalle
+                    {
+                        IdCarga = logCarga.Id,
+                        NumeroLinea = linea.NumeroLinea,
+                        RutReferencia = $"{linea.RutBeneficiario}-{linea.DvBeneficiario}",
+                        Accion = "EXCLUIR",
+                        Estado = "OK"
+                    });
                     continue;
                 }
 
@@ -144,6 +152,7 @@ public class RemuneracionesService : IRemuneracionesService
                     }
 
                     // Upsert retencion (pre-cargado)
+                    string accion;
                     var key = (linea.RutBeneficiario, linea.RutFuncionario ?? 0);
                     if (retencionesDict.TryGetValue(key, out var retencion))
                     {
@@ -151,6 +160,7 @@ public class RemuneracionesService : IRemuneracionesService
                         retencion.CodRetencion = linea.CodRetencion;
                         retencion.TipoPago = linea.TipoPago;
                         actualizados++;
+                        accion = "ACTUALIZAR";
                     }
                     else
                     {
@@ -167,7 +177,18 @@ public class RemuneracionesService : IRemuneracionesService
                             PeriodoProceso = request.PeriodoProceso
                         });
                         insertados++;
+                        accion = "INSERTAR";
                     }
+
+                    _db.LogCargaDetalles.Add(new LogCargaDetalle
+                    {
+                        IdCarga = logCarga.Id,
+                        NumeroLinea = linea.NumeroLinea,
+                        RutReferencia = $"{linea.RutBeneficiario}-{linea.DvBeneficiario}",
+                        Accion = accion,
+                        Estado = "OK",
+                        Mensajes = linea.Mensaje
+                    });
 
                     montoTotal += linea.Monto ?? 0;
                 }
@@ -176,6 +197,15 @@ public class RemuneracionesService : IRemuneracionesService
                     _logger.LogError(ex, "Error procesando linea {NumLinea} RUT {Rut} en remuneraciones",
                         linea.NumeroLinea, linea.RutBeneficiario);
                     errores++;
+                    _db.LogCargaDetalles.Add(new LogCargaDetalle
+                    {
+                        IdCarga = logCarga.Id,
+                        NumeroLinea = linea.NumeroLinea,
+                        RutReferencia = $"{linea.RutBeneficiario}-{linea.DvBeneficiario}",
+                        Accion = "ERROR",
+                        Estado = "E",
+                        Mensajes = ex.Message
+                    });
                 }
             }
 

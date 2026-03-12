@@ -104,7 +104,19 @@ public class TemgeService : ITemgeService
 
             foreach (var linea in request.Lineas)
             {
-                if (!linea.Incluir) { excluidos++; continue; }
+                if (!linea.Incluir)
+                {
+                    excluidos++;
+                    _db.LogCargaDetalles.Add(new LogCargaDetalle
+                    {
+                        IdCarga = logCarga.Id,
+                        NumeroLinea = linea.NumeroLinea,
+                        RutReferencia = $"{linea.RutBeneficiario}-{linea.DvBeneficiario}",
+                        Accion = "EXCLUIR",
+                        Estado = "OK"
+                    });
+                    continue;
+                }
 
                 try
                 {
@@ -117,6 +129,7 @@ public class TemgeService : ITemgeService
                         TipoCuenta = linea.TipoCuenta ?? 2
                     });
 
+                    string accion;
                     if (beneficiariosDict.TryGetValue(linea.RutBeneficiario, out var beneficiario))
                     {
                         beneficiario.CodBanco = linea.CodBanco;
@@ -127,11 +140,23 @@ public class TemgeService : ITemgeService
                             beneficiario.CtaOtBanco = linea.NumeroCuenta;
                         beneficiario.FechaModificacion = DateTime.Now;
                         actualizados++;
+                        accion = "ACTUALIZAR";
                     }
                     else
                     {
                         insertados++;
+                        accion = "INSERTAR";
                     }
+
+                    _db.LogCargaDetalles.Add(new LogCargaDetalle
+                    {
+                        IdCarga = logCarga.Id,
+                        NumeroLinea = linea.NumeroLinea,
+                        RutReferencia = $"{linea.RutBeneficiario}-{linea.DvBeneficiario}",
+                        Accion = accion,
+                        Estado = "OK",
+                        Mensajes = linea.Mensaje
+                    });
 
                     montoTotal += linea.Monto ?? 0;
                 }
@@ -140,6 +165,15 @@ public class TemgeService : ITemgeService
                     _logger.LogError(ex, "Error procesando linea TEMGE {NumLinea} RUT {Rut}",
                         linea.NumeroLinea, linea.RutBeneficiario);
                     errores++;
+                    _db.LogCargaDetalles.Add(new LogCargaDetalle
+                    {
+                        IdCarga = logCarga.Id,
+                        NumeroLinea = linea.NumeroLinea,
+                        RutReferencia = $"{linea.RutBeneficiario}-{linea.DvBeneficiario}",
+                        Accion = "ERROR",
+                        Estado = "E",
+                        Mensajes = ex.Message
+                    });
                 }
             }
 
