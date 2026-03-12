@@ -60,6 +60,7 @@ public class TemgeBuilder
 
             if (reg.CodBanco == CodBancoEstado)
             {
+                // TEMGE format allows 11 chars; DB stores up to 15 — TextoDer truncates if longer
                 sb.Append(FixedWidthHelper.TextoDer(reg.CtaEstado, 11));      // Pos 84-94
             }
             else

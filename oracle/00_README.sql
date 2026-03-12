@@ -11,8 +11,10 @@
 --                                    AUDITORIA_CAMBIOS, API_CLIENTES, LOG_API_ACCESOS)
 --   3. 03_indices.sql             — Indices de rendimiento
 --   4. 04_datos_catalogo.sql      — Datos iniciales (13 bancos + 13 tipos retencion)
+--   5. 05_add_funcionario_to_beneficiarios.sql — Agrega columnas de funcionario a BENEFICIARIOS
+--   6. 06_ampliar_cta_estado.sql  — Amplia CTA_ESTADO de NCHAR(11) a NVARCHAR2(15)
 --
--- TOTAL: 12 tablas + indices + datos de catalogo
+-- TOTAL: 10 tablas + indices + datos de catalogo
 --
 -- NOTAS:
 --   - Ejecutar con usuario propietario del esquema SRJE

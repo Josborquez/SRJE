@@ -41,6 +41,20 @@ public class BeneficiarioService : IBeneficiarioService
             .Select(b => MapToDto(b))
             .ToListAsync();
 
+        // Enriquecer con nombres de banco
+        var codsBanco = items.Where(i => i.CodBanco.HasValue).Select(i => i.CodBanco!.Value).Distinct().ToList();
+        if (codsBanco.Count > 0)
+        {
+            var bancos = await _db.Bancos
+                .Where(b => codsBanco.Contains(b.CodBanco))
+                .ToDictionaryAsync(b => b.CodBanco, b => b.NombreBanco);
+            foreach (var item in items)
+            {
+                if (item.CodBanco.HasValue && bancos.TryGetValue(item.CodBanco.Value, out var nombre))
+                    item.NombreBanco = nombre;
+            }
+        }
+
         return new PagedResult<BeneficiarioDto>
         {
             Items = items,
@@ -62,6 +76,13 @@ public class BeneficiarioService : IBeneficiarioService
             .Where(r => r.RutBeneficiario == rut && r.Estado == "A")
             .ToListAsync();
 
+        // Obtener nombre del banco si existe
+        string? nombreBanco = null;
+        if (beneficiario.CodBanco.HasValue)
+        {
+            nombreBanco = (await _db.Bancos.FindAsync(beneficiario.CodBanco.Value))?.NombreBanco;
+        }
+
         var dto = new BeneficiarioDetalleDto
         {
             Id = beneficiario.Id,
@@ -77,7 +98,15 @@ public class BeneficiarioService : IBeneficiarioService
             Telefono = beneficiario.Telefono,
             CtaOtBanco = beneficiario.CtaOtBanco,
             TipoCuenta = beneficiario.TipoCuenta,
+            TipoCuentaDescripcion = beneficiario.TipoCuenta switch
+            {
+                1 => "Cuenta Corriente",
+                2 => "Cuenta de Ahorro / CuentaRUT",
+                3 => "Cuenta Vista",
+                _ => null
+            },
             CodBanco = beneficiario.CodBanco,
+            NombreBanco = nombreBanco,
             CtaEstado = beneficiario.CtaEstado,
             Sucursal = beneficiario.Sucursal,
             RutFuncionario = beneficiario.RutFuncionario,
@@ -140,10 +169,10 @@ public class BeneficiarioService : IBeneficiarioService
             Domicilio = request.Domicilio,
             Comuna = request.Comuna,
             Telefono = request.Telefono,
-            CtaOtBanco = request.CtaOtBanco,
             TipoCuenta = request.TipoCuenta,
             CodBanco = request.CodBanco,
             CtaEstado = request.CodBanco == 12 ? request.CtaEstado : null,
+            CtaOtBanco = request.CodBanco != 12 ? request.CtaOtBanco : null,
             Sucursal = request.Sucursal,
             RutFuncionario = request.RutFuncionario,
             DvFuncionario = request.DvFuncionario?.ToUpper(),
@@ -185,15 +214,25 @@ public class BeneficiarioService : IBeneficiarioService
         entity.Domicilio = request.Domicilio;
         entity.Comuna = request.Comuna;
         entity.Telefono = request.Telefono;
-        entity.CtaOtBanco = request.CtaOtBanco;
         entity.TipoCuenta = request.TipoCuenta;
         entity.CodBanco = request.CodBanco;
         entity.CtaEstado = request.CodBanco == 12 ? request.CtaEstado : null;
+        entity.CtaOtBanco = request.CodBanco != 12 ? request.CtaOtBanco : null;
         entity.Sucursal = request.Sucursal;
         entity.RutFuncionario = request.RutFuncionario;
         entity.DvFuncionario = request.DvFuncionario?.ToUpper();
         entity.NombreFuncionario = request.NombreFuncionario;
         entity.FechaModificacion = DateTime.Now;
+
+        _db.AuditoriaCambios.Add(new AuditoriaCambios
+        {
+            Entidad = "BENEFICIARIO",
+            IdEntidad = entity.Id,
+            RutAfectado = RutHelper.Formatear(entity.RutBeneficiario, entity.DvBeneficiario),
+            Accion = "ACTUALIZAR",
+            Usuario = usuario,
+            Fecha = DateTime.Now
+        });
 
         await _db.SaveChangesAsync();
         return MapToDto(entity);
@@ -271,6 +310,13 @@ public class BeneficiarioService : IBeneficiarioService
         Telefono = b.Telefono,
         CtaOtBanco = b.CtaOtBanco,
         TipoCuenta = b.TipoCuenta,
+        TipoCuentaDescripcion = b.TipoCuenta switch
+        {
+            1 => "Cuenta Corriente",
+            2 => "Cuenta de Ahorro / CuentaRUT",
+            3 => "Cuenta Vista",
+            _ => null
+        },
         CodBanco = b.CodBanco,
         CtaEstado = b.CtaEstado,
         Sucursal = b.Sucursal,

@@ -27,7 +27,14 @@ public class RemuneracionesService : IRemuneracionesService
     {
         var lineas = RemuneracionesParser.Parsear(stream);
 
+        // Solo cargar los RUTs necesarios en lugar de toda la tabla
+        var rutsArchivo = lineas
+            .Where(l => l.EstadoLinea != "ERROR")
+            .Select(l => l.RutBeneficiario)
+            .Distinct()
+            .ToList();
         var rutsExistentes = (await _db.Beneficiarios
+            .Where(b => rutsArchivo.Contains(b.RutBeneficiario))
             .Select(b => b.RutBeneficiario)
             .ToListAsync())
             .ToHashSet();
@@ -74,7 +81,12 @@ public class RemuneracionesService : IRemuneracionesService
             // Pre-cargar datos necesarios para evitar N+1
             var lineasIncluidas = request.Lineas.Where(l => l.Incluir).ToList();
 
+            var rutsBenefLineas = lineasIncluidas
+                .Select(l => l.RutBeneficiario)
+                .Distinct()
+                .ToList();
             var rutsExistentes = (await _db.Beneficiarios
+                .Where(b => rutsBenefLineas.Contains(b.RutBeneficiario))
                 .Select(b => b.RutBeneficiario)
                 .ToListAsync())
                 .ToHashSet();

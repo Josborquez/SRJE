@@ -32,7 +32,7 @@ public class CrearBeneficiarioRequest
     public long? TipoCuenta { get; set; }
     public long? CodBanco { get; set; }
 
-    [MaxLength(11)]
+    [MaxLength(15)]
     public string? CtaEstado { get; set; }
 
     [MaxLength(60)]
