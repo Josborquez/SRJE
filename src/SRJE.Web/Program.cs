@@ -1,8 +1,19 @@
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 using SRJE.Web.Infrastructure.Data;
+using SRJE.Web.Middleware;
 using SRJE.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((context, services, configuration) => configuration
+    .ReadFrom.Configuration(context.Configuration)
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .WriteTo.File("logs/srje-.log",
+        rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 30,
+        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}"));
 
 // Oracle DbContext
 builder.Services.AddDbContext<SrjeDbContext>(options =>
@@ -10,7 +21,9 @@ builder.Services.AddDbContext<SrjeDbContext>(options =>
 
 // Services (DI)
 builder.Services.AddScoped<IBeneficiarioService, BeneficiarioService>();
-builder.Services.AddScoped<IArchivoService, ArchivoService>();
+builder.Services.AddScoped<IRemuneracionesService, RemuneracionesService>();
+builder.Services.AddScoped<ITemgeService, TemgeService>();
+builder.Services.AddScoped<INuevasCuentasService, NuevasCuentasService>();
 
 // MVC + JSON
 builder.Services.AddControllers()
@@ -30,6 +43,9 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+app.UseMiddleware<GlobalExceptionMiddleware>();
+app.UseSerilogRequestLogging();
 
 if (app.Environment.IsDevelopment())
 {
