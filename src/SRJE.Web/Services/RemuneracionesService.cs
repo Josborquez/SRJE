@@ -108,7 +108,8 @@ public class RemuneracionesService : IRemuneracionesService
                 .Where(r => r.PeriodoProceso == request.PeriodoProceso)
                 .ToListAsync();
             var retencionesDict = retencionesExistentes
-                .ToDictionary(r => (r.RutBeneficiario, r.RutTitular));
+                .GroupBy(r => (r.RutBeneficiario, r.RutTitular))
+                .ToDictionary(g => g.Key, g => g.OrderByDescending(r => r.Id).First());
 
             foreach (var linea in request.Lineas)
             {
@@ -176,7 +177,7 @@ public class RemuneracionesService : IRemuneracionesService
                     }
                     else
                     {
-                        _db.RetenidosJudiciales.Add(new RetenidoJudicial
+                        var nuevaRetencion = new RetenidoJudicial
                         {
                             IdRetencion = 0,
                             RutTitular = linea.RutFuncionario ?? 0,
@@ -187,7 +188,9 @@ public class RemuneracionesService : IRemuneracionesService
                             CodRetencion = linea.CodRetencion,
                             TipoPago = linea.TipoPago,
                             PeriodoProceso = request.PeriodoProceso
-                        });
+                        };
+                        _db.RetenidosJudiciales.Add(nuevaRetencion);
+                        retencionesDict[key] = nuevaRetencion;
                         insertados++;
                         accion = "INSERTAR";
                     }
