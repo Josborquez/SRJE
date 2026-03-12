@@ -8,11 +8,18 @@ namespace SRJE.Web.Controllers;
 [Route("api/[controller]")]
 public class ArchivosController : ControllerBase
 {
-    private readonly IArchivoService _service;
+    private readonly IRemuneracionesService _remuneraciones;
+    private readonly ITemgeService _temge;
+    private readonly INuevasCuentasService _nuevasCuentas;
 
-    public ArchivosController(IArchivoService service)
+    public ArchivosController(
+        IRemuneracionesService remuneraciones,
+        ITemgeService temge,
+        INuevasCuentasService nuevasCuentas)
     {
-        _service = service;
+        _remuneraciones = remuneraciones;
+        _temge = temge;
+        _nuevasCuentas = nuevasCuentas;
     }
 
     /// <summary>POST /api/archivos/remuneraciones/preview — Parsear sin persistir</summary>
@@ -23,7 +30,7 @@ public class ArchivosController : ControllerBase
             return BadRequest(new { error = "Archivo requerido" });
 
         using var stream = archivo.OpenReadStream();
-        var result = await _service.PreviewRemuneracionesAsync(stream, archivo.FileName);
+        var result = await _remuneraciones.PreviewRemuneracionesAsync(stream, archivo.FileName);
         return Ok(result);
     }
 
@@ -33,7 +40,7 @@ public class ArchivosController : ControllerBase
     {
         var usuario = User.Identity?.Name ?? "sistema";
         var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "";
-        var result = await _service.ConfirmarRemuneracionesAsync(request, usuario, ip);
+        var result = await _remuneraciones.ConfirmarRemuneracionesAsync(request, usuario, ip);
         return Ok(result);
     }
 
@@ -45,7 +52,7 @@ public class ArchivosController : ControllerBase
             return BadRequest(new { error = "Archivo requerido" });
 
         using var stream = archivo.OpenReadStream();
-        var result = await _service.PreviewTemgeAsync(stream, archivo.FileName);
+        var result = await _temge.PreviewTemgeAsync(stream, archivo.FileName);
         return Ok(result);
     }
 
@@ -57,7 +64,7 @@ public class ArchivosController : ControllerBase
             return BadRequest(new { error = "Archivo requerido" });
 
         using var stream = archivo.OpenReadStream();
-        var result = await _service.PreviewNuevasCuentasAsync(stream, archivo.FileName);
+        var result = await _nuevasCuentas.PreviewNuevasCuentasAsync(stream, archivo.FileName);
         return Ok(result);
     }
 
@@ -67,7 +74,7 @@ public class ArchivosController : ControllerBase
     {
         var usuario = User.Identity?.Name ?? "sistema";
         var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "";
-        var result = await _service.ConfirmarNuevasCuentasAsync(request, usuario, ip);
+        var result = await _nuevasCuentas.ConfirmarNuevasCuentasAsync(request, usuario, ip);
         return Ok(result);
     }
 
@@ -77,7 +84,7 @@ public class ArchivosController : ControllerBase
     {
         var usuario = User.Identity?.Name ?? "sistema";
         var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "";
-        var result = await _service.ConfirmarTemgeAsync(request, usuario, ip);
+        var result = await _temge.ConfirmarTemgeAsync(request, usuario, ip);
         return Ok(result);
     }
 
@@ -86,7 +93,7 @@ public class ArchivosController : ControllerBase
     public async Task<IActionResult> GenerarTemge()
     {
         var usuario = User.Identity?.Name ?? "sistema";
-        var archivo = await _service.GenerarTemgeAsync(usuario);
+        var archivo = await _temge.GenerarTemgeAsync(usuario);
         var nombre = $"TEMGE_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
         return File(archivo, "text/plain", nombre);
     }

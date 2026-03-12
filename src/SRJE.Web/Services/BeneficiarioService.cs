@@ -151,10 +151,12 @@ public class BeneficiarioService : IBeneficiarioService
             UsuarioCreacion = usuario
         };
 
+        await using var transaction = await _db.Database.BeginTransactionAsync();
+
         _db.Beneficiarios.Add(entity);
         await _db.SaveChangesAsync();
 
-        // Auditoria
+        // Auditoria (necesita entity.Id generado por DB)
         _db.AuditoriaCambios.Add(new AuditoriaCambios
         {
             Entidad = "BENEFICIARIO",
@@ -165,6 +167,7 @@ public class BeneficiarioService : IBeneficiarioService
             Fecha = DateTime.Now
         });
         await _db.SaveChangesAsync();
+        await transaction.CommitAsync();
 
         return MapToDto(entity);
     }
