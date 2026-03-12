@@ -303,7 +303,7 @@ public class ArchivoService : IArchivoService
         var inicio = DateTime.Now;
         var logCarga = new LogCarga
         {
-            TipoCarga = "TEMGE_IMPORTACION",
+            TipoCarga = "TEMGE_ENTRADA",
             Usuario = usuario,
             IpUsuario = ip,
             TotalLineas = request.Lineas.Count
