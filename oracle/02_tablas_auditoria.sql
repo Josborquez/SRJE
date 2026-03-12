@@ -80,40 +80,7 @@ CREATE TABLE AUDITORIA_CAMBIOS (
 COMMENT ON TABLE AUDITORIA_CAMBIOS IS 'Log de cambios manuales en fichas de beneficiarios';
 
 -- --------------------------------------------------------------------------
--- 4. API_CLIENTES — Clientes autorizados para API publica
+-- NOTA: Las tablas API_CLIENTES y LOG_API_ACCESOS fueron eliminadas del script
+-- de creacion ya que no tienen implementacion en el backend.
+-- Se reimplementaran cuando se defina el modulo de autenticacion/API publica.
 -- --------------------------------------------------------------------------
-CREATE TABLE API_CLIENTES (
-    ID                    NUMBER(18)          GENERATED ALWAYS AS IDENTITY,
-    NOMBRE_CLIENTE        NVARCHAR2(100)      NOT NULL,
-    API_KEY               NVARCHAR2(64)       NOT NULL,    -- Hash SHA-256 de la clave
-    PERMISOS              NVARCHAR2(200)      NULL,        -- JSON array: ["beneficiarios","retenciones","pagos"]
-    ACTIVO                NCHAR(1)            DEFAULT 'S', -- S=Activo, N=Revocado
-    FECHA_EXPIRA          DATE                NULL,
-    IP_PERMITIDAS         NVARCHAR2(500)      NULL,        -- CSV de IPs autorizadas, NULL=todas
-    ULTIMO_ACCESO         DATE                NULL,
-    CONSTRAINT PK_API_CLIENTES PRIMARY KEY (ID),
-    CONSTRAINT UK_API_CLIENTES_KEY UNIQUE (API_KEY),
-    CONSTRAINT CK_API_CLIENTES_ACTIVO CHECK (ACTIVO IN ('S', 'N'))
-);
-
-COMMENT ON TABLE API_CLIENTES IS 'Clientes autorizados para API publica de consultas';
-
--- --------------------------------------------------------------------------
--- 5. LOG_API_ACCESOS — Auditoria de accesos API externa
--- --------------------------------------------------------------------------
-CREATE TABLE LOG_API_ACCESOS (
-    ID                    NUMBER(18)          GENERATED ALWAYS AS IDENTITY,
-    ID_CLIENTE            NUMBER(18,0)        NULL,
-    FECHA_ACCESO          TIMESTAMP           DEFAULT SYSTIMESTAMP,
-    ENDPOINT              NVARCHAR2(200)      NULL,
-    METODO_HTTP           NCHAR(6)            NULL,        -- GET, POST, etc.
-    PARAMETROS            NVARCHAR2(500)      NULL,        -- Sin datos sensibles
-    IP_ORIGEN             NVARCHAR2(50)       NULL,
-    COD_RESPUESTA         NUMBER(3,0)         NULL,        -- HTTP status code
-    TIEMPO_MS             NUMBER(10,0)        NULL,
-    RUT_CONSULTADO        NVARCHAR2(15)       NULL,        -- Para auditoria de datos personales
-    CONSTRAINT PK_LOG_API_ACCESOS PRIMARY KEY (ID),
-    CONSTRAINT FK_LOG_API_CLIENTE FOREIGN KEY (ID_CLIENTE) REFERENCES API_CLIENTES(ID)
-);
-
-COMMENT ON TABLE LOG_API_ACCESOS IS 'Log de accesos a la API publica';

@@ -92,10 +92,23 @@ public class NuevasCuentasService : INuevasCuentasService
 
             foreach (var linea in request.Lineas)
             {
-                if (!linea.Incluir) { excluidos++; continue; }
+                if (!linea.Incluir)
+                {
+                    excluidos++;
+                    _db.LogCargaDetalles.Add(new LogCargaDetalle
+                    {
+                        IdCarga = logCarga.Id,
+                        NumeroLinea = linea.NumeroLinea,
+                        RutReferencia = $"{linea.RutBeneficiario}-{linea.DvBeneficiario}",
+                        Accion = "EXCLUIR",
+                        Estado = "OK"
+                    });
+                    continue;
+                }
 
                 try
                 {
+                    string accion;
                     if (beneficiariosDict.TryGetValue(linea.RutBeneficiario, out var beneficiario))
                     {
                         beneficiario.CodBanco = linea.CodBanco;
@@ -104,6 +117,7 @@ public class NuevasCuentasService : INuevasCuentasService
                         beneficiario.CtaOtBanco = linea.CodBanco != 12 ? linea.NumeroCuenta : null;
                         beneficiario.FechaModificacion = DateTime.Now;
                         actualizados++;
+                        accion = "ACTUALIZAR";
                     }
                     else
                     {
@@ -119,15 +133,34 @@ public class NuevasCuentasService : INuevasCuentasService
                             UsuarioCreacion = usuario
                         };
                         _db.Beneficiarios.Add(nuevo);
-                        // Agregar al dict para evitar duplicados en el mismo batch
                         beneficiariosDict[linea.RutBeneficiario] = nuevo;
                         insertados++;
+                        accion = "INSERTAR";
                     }
+
+                    _db.LogCargaDetalles.Add(new LogCargaDetalle
+                    {
+                        IdCarga = logCarga.Id,
+                        NumeroLinea = linea.NumeroLinea,
+                        RutReferencia = $"{linea.RutBeneficiario}-{linea.DvBeneficiario}",
+                        Accion = accion,
+                        Estado = "OK",
+                        Mensajes = linea.Mensaje
+                    });
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error procesando linea nuevas cuentas RUT {Rut}", linea.RutBeneficiario);
                     errores++;
+                    _db.LogCargaDetalles.Add(new LogCargaDetalle
+                    {
+                        IdCarga = logCarga.Id,
+                        NumeroLinea = linea.NumeroLinea,
+                        RutReferencia = $"{linea.RutBeneficiario}-{linea.DvBeneficiario}",
+                        Accion = "ERROR",
+                        Estado = "E",
+                        Mensajes = ex.Message
+                    });
                 }
             }
 
