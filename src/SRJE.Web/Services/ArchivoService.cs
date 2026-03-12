@@ -320,7 +320,7 @@ public class ArchivoService : IArchivoService
             FechaProceso = inicio,
             HoraProceso = inicio.ToString("HHmmss"),
             CodEmpresa = "06110104519640100572",
-            Estado = "I",
+            Estado = "G",
             UsuarioGenera = usuario
         };
         _db.HistorialPagosTemge.Add(historial);
