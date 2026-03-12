@@ -123,8 +123,15 @@ public class ArchivoService : IArchivoService
         int insertados = 0, actualizados = 0, excluidos = 0, errores = 0;
         decimal montoTotal = 0;
 
-        // Track funcionarios already processed in this batch to avoid duplicate inserts
+        // Track funcionarios and beneficiarios already processed in this batch to avoid duplicate inserts
         var funcionariosEnBatch = new Dictionary<long, Funcionario>();
+        var beneficiariosEnBatch = new HashSet<long>();
+
+        // Pre-load existing beneficiario RUTs to avoid N+1 queries
+        var rutsExistentes = (await _db.Beneficiarios
+            .Select(b => b.RutBeneficiario)
+            .ToListAsync())
+            .ToHashSet();
 
         foreach (var linea in request.Lineas)
         {
@@ -155,6 +162,20 @@ public class ArchivoService : IArchivoService
                     }
 
                     funcionariosEnBatch[linea.RutFuncionario.Value] = funcionario;
+                }
+
+                // Crear beneficiario si no existe (cumplir promesa del preview)
+                if (!rutsExistentes.Contains(linea.RutBeneficiario)
+                    && !beneficiariosEnBatch.Contains(linea.RutBeneficiario))
+                {
+                    _db.Beneficiarios.Add(new Beneficiario
+                    {
+                        RutBeneficiario = linea.RutBeneficiario,
+                        DvBeneficiario = linea.DvBeneficiario,
+                        NombreBeneficiario = linea.NombreBeneficiario,
+                        UsuarioCreacion = usuario
+                    });
+                    beneficiariosEnBatch.Add(linea.RutBeneficiario);
                 }
 
                 // Upsert retencion
@@ -399,42 +420,36 @@ public class ArchivoService : IArchivoService
 
     public async Task<byte[]> GenerarTemgeAsync(string usuario)
     {
-        // Obtener beneficiarios activos con retencion activa y cuenta valida.
-        // Se materializa el JOIN primero y se agrupa en memoria para evitar
-        // problemas de traduccion del GROUP BY en Oracle EF Core provider.
-        var filas = await (
-            from b in _db.Beneficiarios
-            join r in _db.RetenidosJudiciales on b.RutBeneficiario equals r.RutBeneficiario
-            where b.Estado == "A" && r.Estado == "A"
-                && (b.CtaEstado != null || b.CtaOtBanco != null)
-            select new
-            {
-                b.RutBeneficiario,
-                b.DvBeneficiario,
-                b.NombreBeneficiario,
-                b.CodBanco,
-                b.TipoCuenta,
-                b.CtaOtBanco,
-                b.CtaEstado,
-                MontoRetencion = r.Monto
-            }).ToListAsync();
+        // Obtener beneficiarios activos con cuenta valida.
+        // Se usan consultas separadas y JOIN en memoria para evitar
+        // problemas de traduccion del INNER JOIN en Oracle EF Core provider.
+        var beneficiarios = await _db.Beneficiarios
+            .Where(b => b.Estado == "A"
+                && (b.CtaEstado != null || b.CtaOtBanco != null))
+            .ToDictionaryAsync(b => b.RutBeneficiario);
 
-        // Agrupar por beneficiario y sumar montos en memoria
-        var datos = filas
-            .GroupBy(f => f.RutBeneficiario)
+        // Obtener todas las retenciones activas
+        var retenciones = await _db.RetenidosJudiciales
+            .Where(r => r.Estado == "A")
+            .ToListAsync();
+
+        // Agrupar retenciones por beneficiario y cruzar con beneficiarios en memoria
+        var datos = retenciones
+            .Where(r => beneficiarios.ContainsKey(r.RutBeneficiario))
+            .GroupBy(r => r.RutBeneficiario)
             .Select(g =>
             {
-                var first = g.First();
+                var benef = beneficiarios[g.Key];
                 return new RegistroTemge
                 {
-                    RutBeneficiario = first.RutBeneficiario,
-                    DvBeneficiario = first.DvBeneficiario,
-                    NombreBeneficiario = first.NombreBeneficiario,
-                    CodBanco = first.CodBanco ?? 12,
-                    TipoCuenta = first.TipoCuenta ?? 2,
-                    NumeroCuenta = first.CtaOtBanco,
-                    CtaEstado = first.CtaEstado,
-                    Monto = g.Sum(f => f.MontoRetencion)
+                    RutBeneficiario = benef.RutBeneficiario,
+                    DvBeneficiario = benef.DvBeneficiario,
+                    NombreBeneficiario = benef.NombreBeneficiario,
+                    CodBanco = benef.CodBanco ?? 12,
+                    TipoCuenta = benef.TipoCuenta ?? 2,
+                    NumeroCuenta = benef.CtaOtBanco,
+                    CtaEstado = benef.CtaEstado,
+                    Monto = g.Sum(r => r.Monto)
                 };
             }).ToList();
 
