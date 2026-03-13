@@ -60,7 +60,7 @@
         </thead>
         <tbody>
           <tr v-for="r in store.detalle.retenciones" :key="r.id">
-            <td>{{ r.nombreFuncionario || r.rutTitular }}</td>
+            <td>{{ r.nombreFuncionario || r.rutTitularFormateado }}</td>
             <td>${{ r.monto?.toLocaleString('es-CL') }}</td>
             <td>{{ r.codRetencion }}</td>
             <td>{{ r.tipoPago }}</td>

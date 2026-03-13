@@ -160,6 +160,8 @@ public class RemuneracionesService : IRemuneracionesService
                             RutBeneficiario = linea.RutBeneficiario,
                             DvBeneficiario = linea.DvBeneficiario,
                             NombreBeneficiario = linea.NombreBeneficiario,
+                            RutFuncionario = linea.RutFuncionario,
+                            DvFuncionario = linea.DvFuncionario,
                             UsuarioCreacion = usuario
                         });
                         beneficiariosEnBatch.Add(linea.RutBeneficiario);

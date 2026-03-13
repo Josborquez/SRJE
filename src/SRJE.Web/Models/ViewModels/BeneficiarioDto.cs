@@ -41,6 +41,7 @@ public class RetencionDto
     public long IdRetencion { get; set; }
     public long RutTitular { get; set; }
     public string DvTitular { get; set; } = string.Empty;
+    public string? RutTitularFormateado { get; set; }
     public string? NombreFuncionario { get; set; }
     public decimal Monto { get; set; }
     public string? CodRetencion { get; set; }

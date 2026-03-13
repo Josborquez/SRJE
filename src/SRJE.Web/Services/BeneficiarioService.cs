@@ -129,6 +129,7 @@ public class BeneficiarioService : IBeneficiarioService
                 IdRetencion = r.IdRetencion,
                 RutTitular = r.RutTitular,
                 DvTitular = r.DvTitular,
+                RutTitularFormateado = RutHelper.Formatear(r.RutTitular, r.DvTitular),
                 Monto = r.Monto,
                 CodRetencion = r.CodRetencion,
                 TipoPago = r.TipoPago,
@@ -137,8 +138,11 @@ public class BeneficiarioService : IBeneficiarioService
             }).ToList()
         };
 
-        // Obtener nombres de funcionarios
+        // Obtener nombres de funcionarios (para retenciones y para la ficha)
         var rutsTitulares = retenciones.Select(r => r.RutTitular).Distinct().ToList();
+        if (beneficiario.RutFuncionario.HasValue && !rutsTitulares.Contains(beneficiario.RutFuncionario.Value))
+            rutsTitulares.Add(beneficiario.RutFuncionario.Value);
+
         var funcionarios = await _db.Funcionarios
             .Where(f => rutsTitulares.Contains(f.RutFuncionario))
             .ToDictionaryAsync(f => f.RutFuncionario);
@@ -147,6 +151,13 @@ public class BeneficiarioService : IBeneficiarioService
         {
             if (funcionarios.TryGetValue(ret.RutTitular, out var func))
                 ret.NombreFuncionario = $"{func.ApellidoPaterno} {func.ApellidoMaterno} {func.Nombres}".Trim();
+        }
+
+        // Enriquecer datos del funcionario en la ficha si no tiene nombre guardado
+        if (string.IsNullOrEmpty(dto.NombreFuncionario) && beneficiario.RutFuncionario.HasValue
+            && funcionarios.TryGetValue(beneficiario.RutFuncionario.Value, out var funcBenef))
+        {
+            dto.NombreFuncionario = $"{funcBenef.ApellidoPaterno} {funcBenef.ApellidoMaterno} {funcBenef.Nombres}".Trim();
         }
 
         return dto;
