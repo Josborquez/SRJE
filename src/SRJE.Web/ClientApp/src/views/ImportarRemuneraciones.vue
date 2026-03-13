@@ -47,15 +47,22 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import FileUpload from '../components/FileUpload.vue'
 import PreviewImportacion from '../components/PreviewImportacion.vue'
 import AlertMessage from '../components/AlertMessage.vue'
 import ConfirmModal from '../components/ConfirmModal.vue'
-import { archivosApi } from '../api/index.js'
+import { archivosApi, catalogosApi } from '../api/index.js'
 import { FileSpreadsheet, CircleAlert, Calendar, CheckCircle } from 'lucide-vue-next'
 
 const preview = ref(null)
+const opcionesCodRetencion = ref([])
+const opcionesTipoPago = ref([
+  { value: 'DEPOSITO A CUENTA', label: 'DEPOSITO A CUENTA' },
+  { value: 'VALE VISTA', label: 'VALE VISTA' },
+  { value: 'CHEQUE', label: 'CHEQUE' },
+  { value: 'TRANSFERENCIA', label: 'TRANSFERENCIA' }
+])
 const loading = ref(false)
 const error = ref(null)
 const periodo = ref('')
@@ -64,18 +71,30 @@ const alertMsg = ref('')
 const alertType = ref('info')
 const showConfirm = ref(false)
 
-const columnas = [
+const columnas = computed(() => [
   { key: 'rutBeneficiario', label: 'RUT Benef.', format: 'rut' },
   { key: 'dvBeneficiario', label: 'DV' },
   { key: 'nombreBeneficiario', label: 'Nombre' },
   { key: 'rutFuncionario', label: 'RUT Func.' },
-  { key: 'codRetencion', label: 'Cod. Retencion', editable: true },
-  { key: 'tipoPago', label: 'Tipo Pago', editable: true }
-]
+  { key: 'codRetencion', label: 'Cod. Retencion', editable: true, options: opcionesCodRetencion.value },
+  { key: 'tipoPago', label: 'Tipo Pago', editable: true, options: opcionesTipoPago.value }
+])
 
 const lineasSeleccionadas = computed(() =>
   preview.value?.lineas?.filter(l => l.incluir).length || 0
 )
+
+onMounted(async () => {
+  try {
+    const { data } = await catalogosApi.tiposRetencion()
+    opcionesCodRetencion.value = data.map(t => ({
+      value: t.codRetencion,
+      label: `${t.codRetencion} - ${t.descripcion}`
+    }))
+  } catch (e) {
+    console.error('Error cargando tipos de retencion:', e)
+  }
+})
 
 async function onFileSelected(file) {
   if (!file) return

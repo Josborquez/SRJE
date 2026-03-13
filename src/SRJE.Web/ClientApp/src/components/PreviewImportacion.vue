@@ -28,7 +28,20 @@
             <td><input type="checkbox" v-model="linea.incluir" /></td>
             <td>{{ linea.numeroLinea }}</td>
             <td v-for="col in columnas" :key="col.key">
-              <template v-if="col.editable">
+              <template v-if="col.editable && col.options">
+                <select
+                  :value="linea[col.key]"
+                  @change="linea[col.key] = $event.target.value"
+                  class="inline-select"
+                >
+                  <option
+                    v-for="opt in col.options"
+                    :key="opt.value"
+                    :value="opt.value"
+                  >{{ opt.label }}</option>
+                </select>
+              </template>
+              <template v-else-if="col.editable">
                 <input
                   v-model="linea[col.key]"
                   class="inline-edit"
@@ -187,6 +200,17 @@ function formatValue(val, col) {
   transition: border-color 0.2s;
 }
 .inline-edit:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,0.1); }
+.inline-select {
+  width: 100%;
+  padding: 0.25rem 0.4rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.inline-select:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,0.1); }
 .msg-col { font-size: 0.8rem; color: #64748b; max-width: 250px; }
 
 /* Paginacion preview */
