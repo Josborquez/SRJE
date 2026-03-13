@@ -1,4 +1,5 @@
 using System.Text;
+using SRJE.Web.Models;
 using SRJE.Web.Parsers;
 
 namespace SRJE.Tests.Parsers;
@@ -27,7 +28,7 @@ public class TemgeBuilderTests
     public void Generar_DeberiaCrearArchivoCon3Secciones()
     {
         var registros = new List<RegistroTemge> { CrearRegistro() };
-        var builder = new TemgeBuilder();
+        var builder = new TemgeBuilder(new SrjeSettings());
         var fecha = new DateTime(2026, 3, 12, 10, 30, 0);
 
         var bytes = builder.Generar(registros, fecha);
@@ -44,7 +45,7 @@ public class TemgeBuilderTests
     public void Generar_CabeceraDeberiaContenerFechaYHora()
     {
         var registros = new List<RegistroTemge> { CrearRegistro() };
-        var builder = new TemgeBuilder();
+        var builder = new TemgeBuilder(new SrjeSettings());
         var fecha = new DateTime(2026, 3, 12, 14, 25, 30);
 
         var bytes = builder.Generar(registros, fecha);
@@ -59,7 +60,7 @@ public class TemgeBuilderTests
     public void Generar_CabeceraDeberiaContenerCodEmpresa()
     {
         var registros = new List<RegistroTemge> { CrearRegistro() };
-        var builder = new TemgeBuilder();
+        var builder = new TemgeBuilder(new SrjeSettings());
 
         var bytes = builder.Generar(registros, DateTime.Now);
         var contenido = Encoding.Latin1.GetString(bytes);
@@ -75,7 +76,7 @@ public class TemgeBuilderTests
             CrearRegistro(monto: 100000),
             CrearRegistro(rut: 12345678, dv: "5", monto: 200000)
         };
-        var builder = new TemgeBuilder();
+        var builder = new TemgeBuilder(new SrjeSettings());
 
         var bytes = builder.Generar(registros, DateTime.Now);
         var contenido = Encoding.Latin1.GetString(bytes);
@@ -95,7 +96,7 @@ public class TemgeBuilderTests
     public void Generar_BancoEstado_DeberiaUsarCtaEstadoYEspacioEnIndicador()
     {
         var reg = CrearRegistro(codBanco: 12, ctaEstado: "41762633599");
-        var builder = new TemgeBuilder();
+        var builder = new TemgeBuilder(new SrjeSettings());
 
         var bytes = builder.Generar(new List<RegistroTemge> { reg }, DateTime.Now);
         var contenido = Encoding.Latin1.GetString(bytes);
@@ -111,7 +112,7 @@ public class TemgeBuilderTests
     public void Generar_OtroBanco_DeberiaUsarCtaOtBancoEIgualEnIndicador()
     {
         var reg = CrearRegistro(codBanco: 1, numeroCuenta: "12345678901", ctaEstado: null);
-        var builder = new TemgeBuilder();
+        var builder = new TemgeBuilder(new SrjeSettings());
 
         var bytes = builder.Generar(new List<RegistroTemge> { reg }, DateTime.Now);
         var contenido = Encoding.Latin1.GetString(bytes);
@@ -125,7 +126,7 @@ public class TemgeBuilderTests
     public void Generar_DeberiaUsarEncodingLatin1()
     {
         var reg = CrearRegistro(nombre: "MUNOZ GONZALEZ JOSE");
-        var builder = new TemgeBuilder();
+        var builder = new TemgeBuilder(new SrjeSettings());
 
         var bytes = builder.Generar(new List<RegistroTemge> { reg }, DateTime.Now);
 
@@ -137,7 +138,7 @@ public class TemgeBuilderTests
     [Fact]
     public void Generar_SinRegistros_DeberiaTenerSoloCabeceraYCierre()
     {
-        var builder = new TemgeBuilder();
+        var builder = new TemgeBuilder(new SrjeSettings());
 
         var bytes = builder.Generar(new List<RegistroTemge>(), DateTime.Now);
         var contenido = Encoding.Latin1.GetString(bytes);

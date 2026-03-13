@@ -2,8 +2,27 @@ import axios from 'axios'
 
 const api = axios.create({
   baseURL: '/api',
-  timeout: 30000
+  timeout: 30000,
+  withCredentials: true
 })
+
+// Interceptor: redirigir a login si la sesion expiro (401)
+api.interceptors.response.use(
+  response => response,
+  error => {
+    if (error.response?.status === 401 && !error.config.url?.includes('/auth/')) {
+      window.location.href = '/login'
+    }
+    return Promise.reject(error)
+  }
+)
+
+// Auth
+export const authApi = {
+  login: (data) => api.post('/auth/login', data),
+  logout: () => api.post('/auth/logout'),
+  me: () => api.get('/auth/me')
+}
 
 // Beneficiarios
 export const beneficiariosApi = {

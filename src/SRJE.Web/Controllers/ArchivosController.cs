@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SRJE.Web.Models.ViewModels;
 using SRJE.Web.Services;
@@ -6,6 +7,7 @@ namespace SRJE.Web.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class ArchivosController : ControllerBase
 {
     private readonly IRemuneracionesService _remuneraciones;

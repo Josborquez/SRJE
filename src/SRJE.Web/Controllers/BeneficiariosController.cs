@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SRJE.Web.Models.Requests;
 using SRJE.Web.Services;
@@ -6,6 +7,7 @@ namespace SRJE.Web.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class BeneficiariosController : ControllerBase
 {
     private readonly IBeneficiarioService _service;

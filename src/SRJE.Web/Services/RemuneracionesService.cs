@@ -60,6 +60,7 @@ public class RemuneracionesService : IRemuneracionesService
         var logCarga = new LogCarga
         {
             TipoCarga = "REMUNERACIONES",
+            NombreArchivo = "Remuneraciones_importacion",
             PeriodoProceso = request.PeriodoProceso,
             Usuario = usuario,
             IpUsuario = ip,

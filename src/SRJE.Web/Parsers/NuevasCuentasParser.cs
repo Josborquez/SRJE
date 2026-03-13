@@ -16,7 +16,7 @@ public static class NuevasCuentasParser
         ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
     }
 
-    public static List<PreviewLineaDto> Parsear(Stream stream)
+    public static List<PreviewLineaDto> Parsear(Stream stream, long codBancoEstado = 12)
     {
         var resultado = new List<PreviewLineaDto>();
 
@@ -53,8 +53,8 @@ public static class NuevasCuentasParser
                 dto.TipoCuenta = tipoCuenta;
                 dto.CodBanco = codBanco;
 
-                // BancoEstado (cod 12): usar CTA_ESTADO (hasta 15 chars)
-                if (codBanco == 12)
+                // BancoEstado: usar CTA_ESTADO (hasta 15 chars)
+                if (codBanco == codBancoEstado)
                 {
                     dto.NumeroCuenta = ctaEstado;
                 }
@@ -72,7 +72,7 @@ public static class NuevasCuentasParser
                 }
 
                 // Validar cuenta BancoEstado: hasta 15 digitos numericos
-                if (codBanco == 12 && (string.IsNullOrEmpty(dto.NumeroCuenta) ||
+                if (codBanco == codBancoEstado && (string.IsNullOrEmpty(dto.NumeroCuenta) ||
                     dto.NumeroCuenta.Length > 15 || !dto.NumeroCuenta.All(char.IsDigit)))
                 {
                     dto.EstadoLinea = "ADVERTENCIA";

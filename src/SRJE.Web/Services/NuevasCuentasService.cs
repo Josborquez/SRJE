@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using SRJE.Web.Infrastructure.Data;
+using SRJE.Web.Models;
 using SRJE.Web.Models.Entities;
 using SRJE.Web.Models.ViewModels;
 using SRJE.Web.Parsers;
@@ -16,16 +18,18 @@ public class NuevasCuentasService : INuevasCuentasService
 {
     private readonly SrjeDbContext _db;
     private readonly ILogger<NuevasCuentasService> _logger;
+    private readonly SrjeSettings _settings;
 
-    public NuevasCuentasService(SrjeDbContext db, ILogger<NuevasCuentasService> logger)
+    public NuevasCuentasService(SrjeDbContext db, ILogger<NuevasCuentasService> logger, IOptions<SrjeSettings> settings)
     {
         _db = db;
         _logger = logger;
+        _settings = settings.Value;
     }
 
     public async Task<ArchivoPreviewDto> PreviewNuevasCuentasAsync(Stream stream, string nombreArchivo)
     {
-        var lineas = NuevasCuentasParser.Parsear(stream);
+        var lineas = NuevasCuentasParser.Parsear(stream, _settings.CodBancoEstado);
 
         // Solo cargar los RUTs necesarios en lugar de toda la tabla
         var rutsArchivo = lineas
@@ -67,6 +71,7 @@ public class NuevasCuentasService : INuevasCuentasService
         var logCarga = new LogCarga
         {
             TipoCarga = "NUEVAS_CUENTAS",
+            NombreArchivo = "NuevasCuentas_importacion",
             Usuario = usuario,
             IpUsuario = ip,
             TotalLineas = request.Lineas.Count
@@ -113,7 +118,7 @@ public class NuevasCuentasService : INuevasCuentasService
                     {
                         beneficiario.CodBanco = linea.CodBanco;
                         beneficiario.TipoCuenta = linea.TipoCuenta;
-                        beneficiario.CtaEstado = linea.CodBanco == 12 ? linea.NumeroCuenta : null;
+                        beneficiario.CtaEstado = linea.CodBanco == _settings.CodBancoEstado ? linea.NumeroCuenta : null;
                         beneficiario.CtaOtBanco = linea.CodBanco != 12 ? linea.NumeroCuenta : null;
                         beneficiario.FechaModificacion = DateTime.Now;
                         actualizados++;
@@ -128,7 +133,7 @@ public class NuevasCuentasService : INuevasCuentasService
                             NombreBeneficiario = linea.NombreBeneficiario,
                             CodBanco = linea.CodBanco,
                             TipoCuenta = linea.TipoCuenta,
-                            CtaEstado = linea.CodBanco == 12 ? linea.NumeroCuenta : null,
+                            CtaEstado = linea.CodBanco == _settings.CodBancoEstado ? linea.NumeroCuenta : null,
                             CtaOtBanco = linea.CodBanco != 12 ? linea.NumeroCuenta : null,
                             UsuarioCreacion = usuario
                         };

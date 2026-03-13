@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using SRJE.Web.Infrastructure.Data;
+using SRJE.Web.Models;
 using SRJE.Web.Models.Entities;
 using SRJE.Web.Models.Requests;
 using SRJE.Web.Services;
@@ -18,7 +20,8 @@ public class BeneficiarioServiceTests : IDisposable
             .Options;
 
         _db = new SrjeDbContext(options);
-        _service = new BeneficiarioService(_db);
+        var settings = Options.Create(new SrjeSettings());
+        _service = new BeneficiarioService(_db, settings);
     }
 
     public void Dispose()

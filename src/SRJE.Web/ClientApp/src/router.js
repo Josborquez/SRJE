@@ -2,6 +2,12 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [
   {
+    path: '/login',
+    name: 'login',
+    component: () => import('./views/Login.vue'),
+    meta: { public: true }
+  },
+  {
     path: '/',
     name: 'dashboard',
     component: () => import('./views/Dashboard.vue')
@@ -50,7 +56,29 @@ const routes = [
   }
 ]
 
-export default createRouter({
+const router = createRouter({
   history: createWebHistory(),
   routes
 })
+
+// Guard de navegacion: redirige a login si no esta autenticado
+router.beforeEach(async (to) => {
+  if (to.meta.public) return true
+
+  // Importar store dinamicamente para evitar dependencia circular
+  const { useAuthStore } = await import('./stores/auth.js')
+  const authStore = useAuthStore()
+
+  // Primera carga: verificar sesion con el backend
+  if (authStore.cargando) {
+    await authStore.verificarSesion()
+  }
+
+  if (!authStore.estaAutenticado()) {
+    return { name: 'login' }
+  }
+
+  return true
+})
+
+export default router

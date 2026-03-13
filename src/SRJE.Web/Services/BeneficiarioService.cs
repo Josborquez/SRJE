@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using SRJE.Web.Helpers;
 using SRJE.Web.Infrastructure.Data;
+using SRJE.Web.Models;
 using SRJE.Web.Models.Entities;
 using SRJE.Web.Models.Requests;
 using SRJE.Web.Models.ViewModels;
@@ -10,10 +12,12 @@ namespace SRJE.Web.Services;
 public class BeneficiarioService : IBeneficiarioService
 {
     private readonly SrjeDbContext _db;
+    private readonly SrjeSettings _settings;
 
-    public BeneficiarioService(SrjeDbContext db)
+    public BeneficiarioService(SrjeDbContext db, IOptions<SrjeSettings> settings)
     {
         _db = db;
+        _settings = settings.Value;
     }
 
     public async Task<PagedResult<BeneficiarioDto>> ListarAsync(BuscarBeneficiarioQuery query)
@@ -171,8 +175,8 @@ public class BeneficiarioService : IBeneficiarioService
             Telefono = request.Telefono,
             TipoCuenta = request.TipoCuenta,
             CodBanco = request.CodBanco,
-            CtaEstado = request.CodBanco == 12 ? request.CtaEstado : null,
-            CtaOtBanco = request.CodBanco != 12 ? request.CtaOtBanco : null,
+            CtaEstado = request.CodBanco == _settings.CodBancoEstado ? request.CtaEstado : null,
+            CtaOtBanco = request.CodBanco != _settings.CodBancoEstado ? request.CtaOtBanco : null,
             Sucursal = request.Sucursal,
             RutFuncionario = request.RutFuncionario,
             DvFuncionario = request.DvFuncionario?.ToUpper(),
@@ -216,8 +220,8 @@ public class BeneficiarioService : IBeneficiarioService
         entity.Telefono = request.Telefono;
         entity.TipoCuenta = request.TipoCuenta;
         entity.CodBanco = request.CodBanco;
-        entity.CtaEstado = request.CodBanco == 12 ? request.CtaEstado : null;
-        entity.CtaOtBanco = request.CodBanco != 12 ? request.CtaOtBanco : null;
+        entity.CtaEstado = request.CodBanco == _settings.CodBancoEstado ? request.CtaEstado : null;
+        entity.CtaOtBanco = request.CodBanco != _settings.CodBancoEstado ? request.CtaOtBanco : null;
         entity.Sucursal = request.Sucursal;
         entity.RutFuncionario = request.RutFuncionario;
         entity.DvFuncionario = request.DvFuncionario?.ToUpper();

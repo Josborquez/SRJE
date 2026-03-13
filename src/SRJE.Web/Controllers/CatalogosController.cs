@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SRJE.Web.Infrastructure.Data;
@@ -6,6 +7,7 @@ namespace SRJE.Web.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class CatalogosController : ControllerBase
 {
     private readonly SrjeDbContext _db;

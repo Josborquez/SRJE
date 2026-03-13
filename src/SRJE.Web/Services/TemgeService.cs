@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using SRJE.Web.Infrastructure.Data;
+using SRJE.Web.Models;
 using SRJE.Web.Models.Entities;
 using SRJE.Web.Models.ViewModels;
 using SRJE.Web.Parsers;
@@ -17,11 +19,13 @@ public class TemgeService : ITemgeService
 {
     private readonly SrjeDbContext _db;
     private readonly ILogger<TemgeService> _logger;
+    private readonly SrjeSettings _settings;
 
-    public TemgeService(SrjeDbContext db, ILogger<TemgeService> logger)
+    public TemgeService(SrjeDbContext db, ILogger<TemgeService> logger, IOptions<SrjeSettings> settings)
     {
         _db = db;
         _logger = logger;
+        _settings = settings.Value;
     }
 
     public async Task<TemgeArchivoDto> PreviewTemgeAsync(Stream stream, string nombreArchivo)
@@ -74,6 +78,7 @@ public class TemgeService : ITemgeService
         var logCarga = new LogCarga
         {
             TipoCarga = "TEMGE_ENTRADA",
+            NombreArchivo = "TEMGE_importacion",
             Usuario = usuario,
             IpUsuario = ip,
             TotalLineas = request.Lineas.Count
@@ -92,7 +97,7 @@ public class TemgeService : ITemgeService
             {
                 FechaProceso = inicio,
                 HoraProceso = inicio.ToString("HHmmss"),
-                CodEmpresa = "06110104519640100572",
+                CodEmpresa = _settings.CodEmpresa,
                 Estado = "G",
                 UsuarioGenera = usuario
             };
@@ -132,7 +137,7 @@ public class TemgeService : ITemgeService
                         IdHistorial = historial.Id,
                         RutBeneficiario = linea.RutBeneficiario,
                         MontoPagado = linea.Monto ?? 0,
-                        CodBanco = linea.CodBanco ?? 12,
+                        CodBanco = linea.CodBanco ?? _settings.CodBancoEstado,
                         TipoCuenta = linea.TipoCuenta ?? 2
                     });
 
@@ -141,7 +146,7 @@ public class TemgeService : ITemgeService
                     {
                         beneficiario.CodBanco = linea.CodBanco;
                         beneficiario.TipoCuenta = linea.TipoCuenta;
-                        if (linea.CodBanco == 12)
+                        if (linea.CodBanco == _settings.CodBancoEstado)
                         {
                             beneficiario.CtaEstado = linea.NumeroCuenta;
                             beneficiario.CtaOtBanco = null;
@@ -206,7 +211,7 @@ public class TemgeService : ITemgeService
             await transaction.CommitAsync();
 
             _logger.LogInformation(
-                "Importacion TEMGE completada: {Actualizados} actualizados, {Insertados} sin beneficiario, {Errores} errores",
+                "Importacion TEMGE completada: {Actualizados} actualizados, {SinBeneficiario} sin beneficiario en BD, {Errores} errores",
                 actualizados, insertados, errores);
 
             return new ResultadoImportacionDto
@@ -217,7 +222,7 @@ public class TemgeService : ITemgeService
                 Excluidos = excluidos,
                 Errores = errores,
                 MontoTotal = montoTotal,
-                Mensaje = $"Importacion TEMGE completada: {actualizados} actualizados, {insertados} sin beneficiario en BD"
+                Mensaje = $"Importacion TEMGE completada: {actualizados} actualizados, {insertados} omitidos (sin beneficiario en BD)"
             };
         }
         catch (Exception ex)
@@ -253,7 +258,7 @@ public class TemgeService : ITemgeService
                         RutBeneficiario = benef.RutBeneficiario,
                         DvBeneficiario = benef.DvBeneficiario,
                         NombreBeneficiario = benef.NombreBeneficiario,
-                        CodBanco = benef.CodBanco ?? 12,
+                        CodBanco = benef.CodBanco ?? _settings.CodBancoEstado,
                         TipoCuenta = benef.TipoCuenta ?? 2,
                         NumeroCuenta = benef.CtaOtBanco,
                         CtaEstado = benef.CtaEstado,
@@ -261,15 +266,15 @@ public class TemgeService : ITemgeService
                     };
                 }).ToList();
 
-            var builder = new TemgeBuilder();
+            var temgeBuilder = new TemgeBuilder(_settings);
             var fechaProceso = DateTime.Now;
-            var archivo = builder.Generar(datos, fechaProceso);
+            var archivo = temgeBuilder.Generar(datos, fechaProceso);
 
             var historial = new HistorialPagosTemge
             {
                 FechaProceso = fechaProceso,
                 HoraProceso = fechaProceso.ToString("HHmmss"),
-                CodEmpresa = "06110104519640100572",
+                CodEmpresa = _settings.CodEmpresa,
                 MontoTotal = datos.Sum(d => d.Monto),
                 CantidadRegistros = datos.Count,
                 NombreArchivo = $"TEMGE_{fechaProceso:yyyyMMdd_HHmmss}.txt",

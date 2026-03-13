@@ -1,5 +1,6 @@
 using System.Text;
 using SRJE.Web.Helpers;
+using SRJE.Web.Models;
 using SRJE.Web.Models.Entities;
 
 namespace SRJE.Web.Parsers;
@@ -11,8 +12,14 @@ namespace SRJE.Web.Parsers;
 /// </summary>
 public class TemgeBuilder
 {
-    private const string CodEmpresa = "06110104519640100572"; // 20 chars
-    private const long CodBancoEstado = 12;
+    private readonly string _codEmpresa;
+    private readonly long _codBancoEstado;
+
+    public TemgeBuilder(SrjeSettings settings)
+    {
+        _codEmpresa = settings.CodEmpresa;
+        _codBancoEstado = settings.CodBancoEstado;
+    }
 
     public byte[] Generar(List<RegistroTemge> registros, DateTime fechaProceso)
     {
@@ -22,7 +29,7 @@ public class TemgeBuilder
 
         // --- CABECERA (Tipo 1) - 129 chars ---
         sb.Append('1');                                      // Pos 1:    Tipo registro
-        sb.Append(CodEmpresa);                               // Pos 2-21: Cod empresa (20 chars)
+        sb.Append(_codEmpresa);                              // Pos 2-21: Cod empresa (20 chars)
         sb.Append(FixedWidthHelper.Espacios(11));            // Pos 22-32: Espacios
         sb.Append(fecha);                                    // Pos 33-40: Fecha 1
         sb.Append(fecha);                                    // Pos 41-48: Fecha 2 (duplicado)
@@ -42,7 +49,7 @@ public class TemgeBuilder
             sb.Append(FixedWidthHelper.TextoDer(reg.NombreBeneficiario, 39)); // Pos 12-50
             sb.Append('*');                                                    // Pos 51
 
-            if (reg.CodBanco == CodBancoEstado)
+            if (reg.CodBanco == _codBancoEstado)
             {
                 sb.Append(' ');                                                // Pos 52: espacio
                 sb.Append(FixedWidthHelper.Ceros(15));                         // Pos 53-67: ceros
@@ -58,7 +65,7 @@ public class TemgeBuilder
             sb.Append(FixedWidthHelper.NumIzq(reg.TipoCuenta, 2));            // Pos 79-80
             sb.Append(FixedWidthHelper.NumIzq(reg.CodBanco, 3));              // Pos 81-83
 
-            if (reg.CodBanco == CodBancoEstado)
+            if (reg.CodBanco == _codBancoEstado)
             {
                 // TEMGE format allows 11 chars; DB stores up to 15 — TextoDer truncates if longer
                 sb.Append(FixedWidthHelper.TextoDer(reg.CtaEstado, 11));      // Pos 84-94
