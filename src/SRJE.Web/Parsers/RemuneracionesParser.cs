@@ -28,14 +28,14 @@ public static class RemuneracionesParser
 
             try
             {
-                // Pos 1-9: RUT Beneficiario (0-based: 0..8)
-                dto.RutBeneficiario = FixedWidthHelper.LeerNumero(linea, 0, 9);
-                // Pos 10: DV Beneficiario (0-based: 9)
-                dto.DvBeneficiario = FixedWidthHelper.LeerTexto(linea, 9, 1);
-                // Pos 11-19: RUT Funcionario (0-based: 10..18)
-                dto.RutFuncionario = FixedWidthHelper.LeerNumero(linea, 10, 9);
-                // Pos 20: DV Funcionario (0-based: 19)
-                dto.DvFuncionario = FixedWidthHelper.LeerTexto(linea, 19, 1);
+                // Pos 1-9: RUT Funcionario/Titular (0-based: 0..8)
+                dto.RutFuncionario = FixedWidthHelper.LeerNumero(linea, 0, 9);
+                // Pos 10: DV Funcionario (0-based: 9)
+                dto.DvFuncionario = FixedWidthHelper.LeerTexto(linea, 9, 1);
+                // Pos 11-19: RUT Beneficiario (0-based: 10..18)
+                dto.RutBeneficiario = FixedWidthHelper.LeerNumero(linea, 10, 9);
+                // Pos 20: DV Beneficiario (0-based: 19)
+                dto.DvBeneficiario = FixedWidthHelper.LeerTexto(linea, 19, 1);
                 // Pos 21-40: Apellido Paterno (no se almacena directo, se usa para nombre completo)
                 var apPaterno = FixedWidthHelper.LeerTexto(linea, 20, 20);
                 // Pos 41-60: Apellido Materno

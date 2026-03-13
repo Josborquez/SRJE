@@ -9,11 +9,12 @@ public class RemuneracionesParserTests
 
     /// <summary>
     /// Construye una linea de ancho fijo de 126 chars con los datos indicados.
-    /// Layout: RUT(9) DV(1) RUT_FUNC(9) DV_FUNC(1) AP_PAT(20) AP_MAT(20) NOMBRES(30) MONTO(8) COD_RET(11) TIPO_PAGO(17)
+    /// Layout real: RUT_FUNC(9) DV_FUNC(1) RUT_BENEF(9) DV_BENEF(1) AP_PAT(20) AP_MAT(20) NOMBRES(30) MONTO(8) COD_RET(11) TIPO_PAGO(17)
+    /// Nota: en el archivo, primero viene el funcionario (titular retenido) y luego el beneficiario.
     /// </summary>
     private static string BuildLinea(
-        long rutBenef = 7051537, string dvBenef = "7",
         long rutFunc = 12345678, string dvFunc = "5",
+        long rutBenef = 7051537, string dvBenef = "7",
         string apPaterno = "MORENO", string apMaterno = "PEREZ",
         string nombres = "JUAN CARLOS",
         long monto = 272116,
@@ -21,10 +22,10 @@ public class RemuneracionesParserTests
         string tipoPago = "PERMANENTE SR    ")
     {
         var sb = new StringBuilder();
-        sb.Append(rutBenef.ToString().PadLeft(9, '0'));       // 0-8
-        sb.Append(dvBenef.PadRight(1));                        // 9
-        sb.Append(rutFunc.ToString().PadLeft(9, '0'));         // 10-18
-        sb.Append(dvFunc.PadRight(1));                         // 19
+        sb.Append(rutFunc.ToString().PadLeft(9, '0'));         // 0-8: Funcionario
+        sb.Append(dvFunc.PadRight(1));                         // 9
+        sb.Append(rutBenef.ToString().PadLeft(9, '0'));        // 10-18: Beneficiario
+        sb.Append(dvBenef.PadRight(1));                        // 19
         sb.Append(apPaterno.PadRight(20));                     // 20-39
         sb.Append(apMaterno.PadRight(20));                     // 40-59
         sb.Append(nombres.PadRight(30));                       // 60-89
@@ -79,7 +80,7 @@ public class RemuneracionesParserTests
     [Fact]
     public void Parsear_DeberiaMarcarAdvertencia_CuandoRutEsInvalido()
     {
-        // RUT 7051537 con DV incorrecto "0" (real es "7")
+        // RUT beneficiario 7051537 con DV incorrecto "0" (real es "7")
         var linea = BuildLinea(dvBenef: "0");
         using var stream = ToStream(linea);
 

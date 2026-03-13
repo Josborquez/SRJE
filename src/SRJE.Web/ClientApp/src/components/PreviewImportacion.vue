@@ -35,6 +35,10 @@
                   class="inline-select"
                 >
                   <option
+                    v-if="linea[col.key] && !col.options.some(o => o.value === linea[col.key])"
+                    :value="linea[col.key]"
+                  >{{ linea[col.key] }}</option>
+                  <option
                     v-for="opt in col.options"
                     :key="opt.value"
                     :value="opt.value"
