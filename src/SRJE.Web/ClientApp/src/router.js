@@ -53,6 +53,16 @@ const routes = [
     path: '/archivos/generar-temge',
     name: 'generar-temge',
     component: () => import('./views/GenerarTemge.vue')
+  },
+  {
+    path: '/mantenedores/bancos',
+    name: 'mantenedor-bancos',
+    component: () => import('./views/MantenedorBancos.vue')
+  },
+  {
+    path: '/mantenedores/tipos-cuenta',
+    name: 'mantenedor-tipos-cuenta',
+    component: () => import('./views/MantenedorTiposCuenta.vue')
   }
 ]
 

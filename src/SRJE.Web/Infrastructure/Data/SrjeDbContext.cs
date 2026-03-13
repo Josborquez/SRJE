@@ -17,6 +17,7 @@ public class SrjeDbContext : DbContext
     public DbSet<LogCarga> LogCargas => Set<LogCarga>();
     public DbSet<LogCargaDetalle> LogCargaDetalles => Set<LogCargaDetalle>();
     public DbSet<AuditoriaCambios> AuditoriaCambios => Set<AuditoriaCambios>();
+    public DbSet<TipoCuenta> TiposCuenta => Set<TipoCuenta>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -127,6 +128,16 @@ public class SrjeDbContext : DbContext
             e.Property(x => x.CodBanco).HasColumnName("COD_BANCO");
             e.Property(x => x.NombreBanco).HasColumnName("NOMBRE_BANCO").HasMaxLength(100).IsRequired();
             e.Property(x => x.UsaCtaOtBanco).HasColumnName("USA_CTA_OT_BANCO").HasMaxLength(1).HasDefaultValue("S");
+            e.Property(x => x.Activo).HasColumnName("ACTIVO").HasMaxLength(1).HasDefaultValue("S");
+        });
+
+        // TIPOS_CUENTA
+        modelBuilder.Entity<TipoCuenta>(e =>
+        {
+            e.ToTable("TIPOS_CUENTA");
+            e.HasKey(x => x.CodTipoCuenta);
+            e.Property(x => x.CodTipoCuenta).HasColumnName("COD_TIPO_CUENTA");
+            e.Property(x => x.Descripcion).HasColumnName("DESCRIPCION").HasMaxLength(100).IsRequired();
             e.Property(x => x.Activo).HasColumnName("ACTIVO").HasMaxLength(1).HasDefaultValue("S");
         });
 

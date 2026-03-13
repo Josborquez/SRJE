@@ -58,6 +58,22 @@ export const archivosApi = {
   generarTemge: () => api.get('/archivos/temge/generar', { responseType: 'blob' })
 }
 
+// Mantenedores
+export const mantenedoresApi = {
+  // Bancos
+  listarBancos: () => api.get('/mantenedores/bancos'),
+  obtenerBanco: (cod) => api.get(`/mantenedores/bancos/${cod}`),
+  crearBanco: (data) => api.post('/mantenedores/bancos', data),
+  actualizarBanco: (cod, data) => api.put(`/mantenedores/bancos/${cod}`, data),
+  toggleBanco: (cod) => api.patch(`/mantenedores/bancos/${cod}/toggle`),
+  // Tipos de cuenta
+  listarTiposCuenta: () => api.get('/mantenedores/tipos-cuenta'),
+  obtenerTipoCuenta: (cod) => api.get(`/mantenedores/tipos-cuenta/${cod}`),
+  crearTipoCuenta: (data) => api.post('/mantenedores/tipos-cuenta', data),
+  actualizarTipoCuenta: (cod, data) => api.put(`/mantenedores/tipos-cuenta/${cod}`, data),
+  toggleTipoCuenta: (cod) => api.patch(`/mantenedores/tipos-cuenta/${cod}/toggle`)
+}
+
 // Catalogos
 export const catalogosApi = {
   bancos: () => api.get('/catalogos/bancos'),

@@ -43,14 +43,13 @@ public class CatalogosController : ControllerBase
 
     /// <summary>GET /api/catalogos/tipos-cuenta</summary>
     [HttpGet("tipos-cuenta")]
-    public IActionResult TiposCuenta()
+    public async Task<IActionResult> TiposCuenta()
     {
-        var tipos = new[]
-        {
-            new { Codigo = 1, Descripcion = "Cuenta Corriente" },
-            new { Codigo = 2, Descripcion = "Cuenta de Ahorro / CuentaRUT" },
-            new { Codigo = 3, Descripcion = "Cuenta Vista" }
-        };
+        var tipos = await _db.TiposCuenta
+            .Where(t => t.Activo == "S")
+            .OrderBy(t => t.CodTipoCuenta)
+            .Select(t => new { Codigo = t.CodTipoCuenta, t.Descripcion })
+            .ToListAsync();
         return Ok(tipos);
     }
 }

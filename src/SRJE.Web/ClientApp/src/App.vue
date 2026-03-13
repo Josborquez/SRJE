@@ -75,6 +75,19 @@
               Generar TEMGE
             </router-link>
           </li>
+          <li class="nav-section">Mantenedores</li>
+          <li>
+            <router-link to="/mantenedores/bancos" @click="sidebarOpen = false">
+              <Building2 :size="18" class="nav-icon" />
+              Bancos
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/mantenedores/tipos-cuenta" @click="sidebarOpen = false">
+              <Wallet :size="18" class="nav-icon" />
+              Tipos de Cuenta
+            </router-link>
+          </li>
         </ul>
         <div class="sidebar-footer">
           <div class="user-info">
@@ -108,7 +121,9 @@ import {
   FileDown,
   Menu,
   User,
-  LogOut
+  LogOut,
+  Building2,
+  Wallet
 } from 'lucide-vue-next'
 
 const route = useRoute()
