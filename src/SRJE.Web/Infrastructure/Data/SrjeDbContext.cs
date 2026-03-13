@@ -49,6 +49,7 @@ public class SrjeDbContext : DbContext
             e.Property(x => x.FechaModificacion).HasColumnName("FECHA_MODIFICACION");
             e.Property(x => x.UsuarioCreacion).HasColumnName("USUARIO_CREACION").HasMaxLength(50);
             e.HasIndex(x => x.RutBeneficiario).IsUnique();
+            // TipoCuenta validado por tabla catalogo TIPOS_CUENTA, sin CHECK constraint
         });
 
         // FUNCIONARIOS

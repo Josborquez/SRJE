@@ -45,7 +45,7 @@ public class BeneficiarioService : IBeneficiarioService
             .Select(b => MapToDto(b))
             .ToListAsync();
 
-        // Enriquecer con nombres de banco
+        // Enriquecer con nombres de banco y tipos de cuenta
         var codsBanco = items.Where(i => i.CodBanco.HasValue).Select(i => i.CodBanco!.Value).Distinct().ToList();
         if (codsBanco.Count > 0)
         {
@@ -56,6 +56,19 @@ public class BeneficiarioService : IBeneficiarioService
             {
                 if (item.CodBanco.HasValue && bancos.TryGetValue(item.CodBanco.Value, out var nombre))
                     item.NombreBanco = nombre;
+            }
+        }
+
+        var codsTipoCuenta = items.Where(i => i.TipoCuenta.HasValue).Select(i => i.TipoCuenta!.Value).Distinct().ToList();
+        if (codsTipoCuenta.Count > 0)
+        {
+            var tiposCuenta = await _db.TiposCuenta
+                .Where(t => codsTipoCuenta.Contains(t.CodTipoCuenta))
+                .ToDictionaryAsync(t => t.CodTipoCuenta, t => t.Descripcion);
+            foreach (var item in items)
+            {
+                if (item.TipoCuenta.HasValue && tiposCuenta.TryGetValue(item.TipoCuenta.Value, out var desc))
+                    item.TipoCuentaDescripcion = desc;
             }
         }
 
@@ -87,6 +100,13 @@ public class BeneficiarioService : IBeneficiarioService
             nombreBanco = (await _db.Bancos.FindAsync(beneficiario.CodBanco.Value))?.NombreBanco;
         }
 
+        // Obtener descripcion del tipo de cuenta desde catalogo
+        string? tipoCuentaDescripcion = null;
+        if (beneficiario.TipoCuenta.HasValue)
+        {
+            tipoCuentaDescripcion = (await _db.TiposCuenta.FindAsync(beneficiario.TipoCuenta.Value))?.Descripcion;
+        }
+
         var dto = new BeneficiarioDetalleDto
         {
             Id = beneficiario.Id,
@@ -102,13 +122,7 @@ public class BeneficiarioService : IBeneficiarioService
             Telefono = beneficiario.Telefono,
             CtaOtBanco = beneficiario.CtaOtBanco,
             TipoCuenta = beneficiario.TipoCuenta,
-            TipoCuentaDescripcion = beneficiario.TipoCuenta switch
-            {
-                1 => "Cuenta Corriente",
-                2 => "Cuenta de Ahorro / CuentaRUT",
-                3 => "Cuenta Vista",
-                _ => null
-            },
+            TipoCuentaDescripcion = tipoCuentaDescripcion,
             CodBanco = beneficiario.CodBanco,
             NombreBanco = nombreBanco,
             CtaEstado = beneficiario.CtaEstado,
