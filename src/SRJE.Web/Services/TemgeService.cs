@@ -53,7 +53,7 @@ public class TemgeService : ITemgeService
             .Select(l => l.RutBeneficiario)
             .Distinct()
             .ToList();
-        var rutsExistentes = (await _db.Beneficiarios
+        var rutsExistentes = (await _db.Beneficiarios.AsNoTracking()
             .Where(b => rutsArchivo.Contains(b.RutBeneficiario))
             .Select(b => b.RutBeneficiario)
             .ToListAsync())
@@ -238,21 +238,25 @@ public class TemgeService : ITemgeService
         await using var transaction = await _db.Database.BeginTransactionAsync();
         try
         {
-            var beneficiarios = await _db.Beneficiarios
+            var beneficiarios = await _db.Beneficiarios.AsNoTracking()
                 .Where(b => b.Estado == "A"
                     && (b.CtaEstado != null || b.CtaOtBanco != null))
                 .ToDictionaryAsync(b => b.RutBeneficiario);
 
-            var retenciones = await _db.RetenidosJudiciales
-                .Where(r => r.Estado == "A")
+            var rutsBenefActivos = beneficiarios.Keys.ToList();
+
+            // Agrupar y sumar montos en la BD en lugar de cargar todas las retenciones en memoria
+            var retencionesAgrupadas = await _db.RetenidosJudiciales.AsNoTracking()
+                .Where(r => r.Estado == "A" && rutsBenefActivos.Contains(r.RutBeneficiario))
+                .GroupBy(r => r.RutBeneficiario)
+                .Select(g => new { RutBeneficiario = g.Key, MontoTotal = g.Sum(r => r.Monto) })
                 .ToListAsync();
 
-            var datos = retenciones
+            var datos = retencionesAgrupadas
                 .Where(r => beneficiarios.ContainsKey(r.RutBeneficiario))
-                .GroupBy(r => r.RutBeneficiario)
-                .Select(g =>
+                .Select(r =>
                 {
-                    var benef = beneficiarios[g.Key];
+                    var benef = beneficiarios[r.RutBeneficiario];
                     return new RegistroTemge
                     {
                         RutBeneficiario = benef.RutBeneficiario,
@@ -262,7 +266,7 @@ public class TemgeService : ITemgeService
                         TipoCuenta = benef.TipoCuenta ?? 2,
                         NumeroCuenta = benef.CtaOtBanco,
                         CtaEstado = benef.CtaEstado,
-                        Monto = g.Sum(r => r.Monto)
+                        Monto = r.MontoTotal
                     };
                 }).ToList();
 

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using SRJE.Web.Infrastructure.Data;
 using SRJE.Web.Models;
 using SRJE.Web.Models.Entities;
+using SRJE.Web.Models.Exceptions;
 using SRJE.Web.Models.Requests;
 using SRJE.Web.Services;
 
@@ -210,7 +211,7 @@ public class BeneficiarioServiceTests : IDisposable
             NombreBeneficiario = "DUPLICADO"
         };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CrearAsync(request, "test"));
+        await Assert.ThrowsAsync<BusinessConflictException>(() => _service.CrearAsync(request, "test"));
     }
 
     // --- ActualizarAsync ---

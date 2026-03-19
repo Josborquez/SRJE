@@ -112,6 +112,7 @@ public class SrjeDbContext : DbContext
             e.HasKey(x => x.Id);
             e.Property(x => x.Id).HasColumnName("ID");
             e.Property(x => x.IdHistorial).HasColumnName("ID_HISTORIAL").IsRequired();
+            e.HasIndex(x => x.IdHistorial);
             e.Property(x => x.IdRetenidoJudicial).HasColumnName("ID_RETENIDO_JUDICIAL");
             e.Property(x => x.RutBeneficiario).HasColumnName("RUT_BENEFICIARIO").IsRequired();
             e.Property(x => x.MontoPagado).HasColumnName("MONTO_PAGADO").HasColumnType("NUMBER(18,2)");
@@ -188,6 +189,7 @@ public class SrjeDbContext : DbContext
             e.HasKey(x => x.Id);
             e.Property(x => x.Id).HasColumnName("ID");
             e.Property(x => x.IdCarga).HasColumnName("ID_CARGA").IsRequired();
+            e.HasIndex(x => x.IdCarga);
             e.Property(x => x.NumeroLinea).HasColumnName("NUMERO_LINEA");
             e.Property(x => x.RutReferencia).HasColumnName("RUT_REFERENCIA").HasMaxLength(15);
             e.Property(x => x.Accion).HasColumnName("ACCION").HasMaxLength(15);
@@ -215,6 +217,8 @@ public class SrjeDbContext : DbContext
             e.Property(x => x.Fecha).HasColumnName("FECHA");
             e.Property(x => x.Ip).HasColumnName("IP").HasMaxLength(50);
             e.Property(x => x.Motivo).HasColumnName("MOTIVO").HasMaxLength(500);
+            e.HasIndex(x => new { x.Entidad, x.IdEntidad });
+            e.HasIndex(x => x.RutAfectado);
         });
     }
 }

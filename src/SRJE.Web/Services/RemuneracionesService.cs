@@ -33,7 +33,7 @@ public class RemuneracionesService : IRemuneracionesService
             .Select(l => l.RutBeneficiario)
             .Distinct()
             .ToList();
-        var rutsExistentes = (await _db.Beneficiarios
+        var rutsExistentes = (await _db.Beneficiarios.AsNoTracking()
             .Where(b => rutsArchivo.Contains(b.RutBeneficiario))
             .Select(b => b.RutBeneficiario)
             .ToListAsync())
@@ -86,7 +86,7 @@ public class RemuneracionesService : IRemuneracionesService
                 .Select(l => l.RutBeneficiario)
                 .Distinct()
                 .ToList();
-            var rutsExistentes = (await _db.Beneficiarios
+            var rutsExistentes = (await _db.Beneficiarios.AsNoTracking()
                 .Where(b => rutsBenefLineas.Contains(b.RutBeneficiario))
                 .Select(b => b.RutBeneficiario)
                 .ToListAsync())

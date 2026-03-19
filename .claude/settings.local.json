@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(cd \"C:/Users/Terry/Documents/GitHub/SRJE\" && dotnet build src/SRJE.Web/SRJE.Web.csproj 2>&1)"
+      "Bash(cd \"C:/Users/Terry/Documents/GitHub/SRJE\" && dotnet build src/SRJE.Web/SRJE.Web.csproj 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\Terry\\\\Documents\\\\GitHub\\\\SRJE\" && dotnet build src/SRJE.Web/SRJE.Web.csproj 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\Terry\\\\Documents\\\\GitHub\\\\SRJE\" && dotnet test tests/SRJE.Tests/SRJE.Tests.csproj 2>&1)"
     ]
   }
 }

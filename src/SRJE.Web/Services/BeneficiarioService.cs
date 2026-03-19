@@ -4,6 +4,7 @@ using SRJE.Web.Helpers;
 using SRJE.Web.Infrastructure.Data;
 using SRJE.Web.Models;
 using SRJE.Web.Models.Entities;
+using SRJE.Web.Models.Exceptions;
 using SRJE.Web.Models.Requests;
 using SRJE.Web.Models.ViewModels;
 
@@ -22,7 +23,7 @@ public class BeneficiarioService : IBeneficiarioService
 
     public async Task<PagedResult<BeneficiarioDto>> ListarAsync(BuscarBeneficiarioQuery query)
     {
-        var q = _db.Beneficiarios.AsQueryable();
+        var q = _db.Beneficiarios.AsNoTracking().AsQueryable();
 
         if (!string.IsNullOrEmpty(query.Q))
         {
@@ -49,7 +50,7 @@ public class BeneficiarioService : IBeneficiarioService
         var codsBanco = items.Where(i => i.CodBanco.HasValue).Select(i => i.CodBanco!.Value).Distinct().ToList();
         if (codsBanco.Count > 0)
         {
-            var bancos = await _db.Bancos
+            var bancos = await _db.Bancos.AsNoTracking()
                 .Where(b => codsBanco.Contains(b.CodBanco))
                 .ToDictionaryAsync(b => b.CodBanco, b => b.NombreBanco);
             foreach (var item in items)
@@ -62,7 +63,7 @@ public class BeneficiarioService : IBeneficiarioService
         var codsTipoCuenta = items.Where(i => i.TipoCuenta.HasValue).Select(i => i.TipoCuenta!.Value).Distinct().ToList();
         if (codsTipoCuenta.Count > 0)
         {
-            var tiposCuenta = await _db.TiposCuenta
+            var tiposCuenta = await _db.TiposCuenta.AsNoTracking()
                 .Where(t => codsTipoCuenta.Contains(t.CodTipoCuenta))
                 .ToDictionaryAsync(t => t.CodTipoCuenta, t => t.Descripcion);
             foreach (var item in items)
@@ -83,28 +84,32 @@ public class BeneficiarioService : IBeneficiarioService
 
     public async Task<BeneficiarioDetalleDto?> ObtenerPorRutAsync(long rut)
     {
-        var beneficiario = await _db.Beneficiarios
+        var beneficiario = await _db.Beneficiarios.AsNoTracking()
             .FirstOrDefaultAsync(b => b.RutBeneficiario == rut);
 
         if (beneficiario == null)
             return null;
 
-        var retenciones = await _db.RetenidosJudiciales
+        var retenciones = await _db.RetenidosJudiciales.AsNoTracking()
             .Where(r => r.RutBeneficiario == rut && r.Estado == "A")
             .ToListAsync();
 
-        // Obtener nombre del banco si existe
+        // Obtener nombre del banco y tipo de cuenta en una sola consulta batch
         string? nombreBanco = null;
+        string? tipoCuentaDescripcion = null;
         if (beneficiario.CodBanco.HasValue)
         {
-            nombreBanco = (await _db.Bancos.FindAsync(beneficiario.CodBanco.Value))?.NombreBanco;
+            nombreBanco = await _db.Bancos.AsNoTracking()
+                .Where(b => b.CodBanco == beneficiario.CodBanco.Value)
+                .Select(b => b.NombreBanco)
+                .FirstOrDefaultAsync();
         }
-
-        // Obtener descripcion del tipo de cuenta desde catalogo
-        string? tipoCuentaDescripcion = null;
         if (beneficiario.TipoCuenta.HasValue)
         {
-            tipoCuentaDescripcion = (await _db.TiposCuenta.FindAsync(beneficiario.TipoCuenta.Value))?.Descripcion;
+            tipoCuentaDescripcion = await _db.TiposCuenta.AsNoTracking()
+                .Where(t => t.CodTipoCuenta == beneficiario.TipoCuenta.Value)
+                .Select(t => t.Descripcion)
+                .FirstOrDefaultAsync();
         }
 
         var dto = new BeneficiarioDetalleDto
@@ -157,7 +162,7 @@ public class BeneficiarioService : IBeneficiarioService
         if (beneficiario.RutFuncionario.HasValue && !rutsTitulares.Contains(beneficiario.RutFuncionario.Value))
             rutsTitulares.Add(beneficiario.RutFuncionario.Value);
 
-        var funcionarios = await _db.Funcionarios
+        var funcionarios = await _db.Funcionarios.AsNoTracking()
             .Where(f => rutsTitulares.Contains(f.RutFuncionario))
             .ToDictionaryAsync(f => f.RutFuncionario);
 
@@ -185,7 +190,7 @@ public class BeneficiarioService : IBeneficiarioService
         var existe = await _db.Beneficiarios
             .AnyAsync(b => b.RutBeneficiario == request.RutBeneficiario);
         if (existe)
-            throw new InvalidOperationException("Ya existe un beneficiario con ese RUT");
+            throw new BusinessConflictException("Ya existe un beneficiario con ese RUT");
 
         var entity = new Beneficiario
         {
@@ -296,7 +301,7 @@ public class BeneficiarioService : IBeneficiarioService
 
     public async Task<List<RetencionDto>> ObtenerRetencionesAsync(long rut)
     {
-        return await _db.RetenidosJudiciales
+        return await _db.RetenidosJudiciales.AsNoTracking()
             .Where(r => r.RutBeneficiario == rut)
             .Select(r => new RetencionDto
             {
@@ -316,7 +321,7 @@ public class BeneficiarioService : IBeneficiarioService
     public async Task<List<BeneficiarioDto>> BuscarAsync(string query)
     {
         var busqueda = query.Trim().ToUpper();
-        return await _db.Beneficiarios
+        return await _db.Beneficiarios.AsNoTracking()
             .Where(b => b.Estado == "A" &&
                 (b.NombreBeneficiario.ToUpper().Contains(busqueda) ||
                  b.RutBeneficiario.ToString().Contains(busqueda)))

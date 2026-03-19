@@ -38,7 +38,7 @@ public class NuevasCuentasService : INuevasCuentasService
             .Distinct()
             .ToList();
 
-        var beneficiariosExistentes = await _db.Beneficiarios
+        var beneficiariosExistentes = await _db.Beneficiarios.AsNoTracking()
             .Where(b => rutsArchivo.Contains(b.RutBeneficiario))
             .ToDictionaryAsync(b => b.RutBeneficiario);
 
