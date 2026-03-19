@@ -45,10 +45,10 @@ public static class NuevasCuentasParser
                 if (dto.NombreBeneficiario.Length > 39)
                     dto.NombreBeneficiario = dto.NombreBeneficiario[..39];
 
-                var ctaOtBanco = ws.Cells[row, 6].Text?.Trim() ?? "0";
+                var ctaOtBanco = ObtenerCuentaComoCadena(ws.Cells[row, 6]);
                 var tipoCuenta = long.TryParse(ws.Cells[row, 7].Text?.Trim(), out var tc) ? tc : 0;
                 var codBanco = long.TryParse(ws.Cells[row, 8].Text?.Trim(), out var cb) ? cb : 0;
-                var ctaEstado = ws.Cells[row, 9].Text?.Trim() ?? "";
+                var ctaEstado = ObtenerCuentaComoCadena(ws.Cells[row, 9]);
 
                 dto.TipoCuenta = tipoCuenta;
                 dto.CodBanco = codBanco;
@@ -89,5 +89,26 @@ public static class NuevasCuentasParser
         }
 
         return resultado;
+    }
+
+    /// <summary>
+    /// Extrae el valor de una celda como cadena numérica, evitando la notación científica
+    /// que EPPlus devuelve con .Text cuando Excel formatea números grandes como "6.29671E+10".
+    /// </summary>
+    private static string ObtenerCuentaComoCadena(ExcelRange cell)
+    {
+        var value = cell.Value;
+        if (value == null)
+            return "";
+
+        // Si el valor subyacente es numérico, convertir sin formato decimal
+        if (value is double d)
+            return ((long)d).ToString();
+        if (value is decimal m)
+            return ((long)m).ToString();
+
+        // Para cualquier otro tipo (string, etc.), usar Text
+        var text = cell.Text?.Trim() ?? "";
+        return text;
     }
 }

@@ -4,6 +4,30 @@
       <h1><Users :size="24" /> Beneficiarios</h1>
     </div>
 
+    <div v-if="store.totalInscritos > 0" class="stats-bar">
+      <div class="stat-card">
+        <Users :size="18" class="stat-icon" />
+        <div class="stat-content">
+          <span class="stat-value">{{ store.totalInscritos.toLocaleString('es-CL') }}</span>
+          <span class="stat-label">Total Inscritos</span>
+        </div>
+      </div>
+      <div class="stat-card stat-activos">
+        <CircleCheck :size="18" class="stat-icon" />
+        <div class="stat-content">
+          <span class="stat-value">{{ store.totalActivos.toLocaleString('es-CL') }}</span>
+          <span class="stat-label">Activos</span>
+        </div>
+      </div>
+      <div class="stat-card stat-inactivos">
+        <CircleX :size="18" class="stat-icon" />
+        <div class="stat-content">
+          <span class="stat-value">{{ store.totalInactivos.toLocaleString('es-CL') }}</span>
+          <span class="stat-label">Inactivos</span>
+        </div>
+      </div>
+    </div>
+
     <div class="toolbar">
       <div class="search-wrapper">
         <Search :size="18" class="search-icon" />

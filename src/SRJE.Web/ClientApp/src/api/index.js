@@ -55,7 +55,22 @@ export const archivosApi = {
     return api.post('/archivos/nuevas-cuentas/preview', form)
   },
   confirmarNuevasCuentas: (data) => api.post('/archivos/nuevas-cuentas/confirmar', data),
-  generarTemge: () => api.get('/archivos/temge/generar', { responseType: 'blob' })
+  generarTemge: () => api.get('/archivos/temge/generar', { responseType: 'blob' }),
+  compararAuditoria: (file) => {
+    const form = new FormData()
+    form.append('archivo', file)
+    return api.post('/archivos/auditoria/comparar', form)
+  },
+  exportarAuditoriaExcel: (file) => {
+    const form = new FormData()
+    form.append('archivo', file)
+    return api.post('/archivos/auditoria/exportar-excel', form, { responseType: 'blob' })
+  },
+  exportarAuditoriaCsv: (file) => {
+    const form = new FormData()
+    form.append('archivo', file)
+    return api.post('/archivos/auditoria/exportar-csv', form, { responseType: 'blob' })
+  }
 }
 
 // Mantenedores

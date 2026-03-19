@@ -55,6 +55,11 @@ const routes = [
     component: () => import('./views/GenerarTemge.vue')
   },
   {
+    path: '/archivos/auditoria-beneficiarios',
+    name: 'auditoria-beneficiarios',
+    component: () => import('./views/AuditoriaBeneficiarios.vue')
+  },
+  {
     path: '/mantenedores/bancos',
     name: 'mantenedor-bancos',
     component: () => import('./views/MantenedorBancos.vue')

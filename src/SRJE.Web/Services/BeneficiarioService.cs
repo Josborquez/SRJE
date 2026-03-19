@@ -39,6 +39,10 @@ public class BeneficiarioService : IBeneficiarioService
 
         var total = await q.CountAsync();
 
+        // Contadores globales (sin filtro de busqueda ni estado)
+        var totalInscritos = await _db.Beneficiarios.AsNoTracking().CountAsync();
+        var totalActivos = await _db.Beneficiarios.AsNoTracking().CountAsync(b => b.Estado == "A");
+
         var items = await q
             .OrderBy(b => b.NombreBeneficiario)
             .Skip((query.Page - 1) * query.PageSize)
@@ -78,7 +82,10 @@ public class BeneficiarioService : IBeneficiarioService
             Items = items,
             TotalCount = total,
             Page = query.Page,
-            PageSize = query.PageSize
+            PageSize = query.PageSize,
+            TotalInscritos = totalInscritos,
+            TotalActivos = totalActivos,
+            TotalInactivos = totalInscritos - totalActivos
         };
     }
 

@@ -5,6 +5,9 @@ import { beneficiariosApi } from '../api/index.js'
 export const useBeneficiariosStore = defineStore('beneficiarios', () => {
   const items = ref([])
   const totalCount = ref(0)
+  const totalInscritos = ref(0)
+  const totalActivos = ref(0)
+  const totalInactivos = ref(0)
   const page = ref(1)
   const pageSize = ref(20)
   const loading = ref(false)
@@ -24,6 +27,9 @@ export const useBeneficiariosStore = defineStore('beneficiarios', () => {
       })
       items.value = data.items
       totalCount.value = data.totalCount
+      totalInscritos.value = data.totalInscritos
+      totalActivos.value = data.totalActivos
+      totalInactivos.value = data.totalInactivos
     } catch (e) {
       error.value = e.response?.data?.error || e.message
     } finally {
@@ -85,7 +91,8 @@ export const useBeneficiariosStore = defineStore('beneficiarios', () => {
   }
 
   return {
-    items, totalCount, page, pageSize, loading, error, detalle, totalPages,
+    items, totalCount, totalInscritos, totalActivos, totalInactivos,
+    page, pageSize, loading, error, detalle, totalPages,
     listar, obtener, crear, actualizar, inactivar
   }
 })

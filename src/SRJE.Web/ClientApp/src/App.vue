@@ -75,6 +75,12 @@
               Generar TEMGE
             </router-link>
           </li>
+          <li>
+            <router-link to="/archivos/auditoria-beneficiarios" @click="sidebarOpen = false">
+              <FileSearch :size="18" class="nav-icon" />
+              Auditoria Beneficiarios
+            </router-link>
+          </li>
           <li class="nav-section">Mantenedores</li>
           <li>
             <router-link to="/mantenedores/bancos" @click="sidebarOpen = false">
@@ -119,6 +125,7 @@ import {
   FileInput,
   CreditCard,
   FileDown,
+  FileSearch,
   Menu,
   User,
   LogOut,

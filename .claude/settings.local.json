@@ -3,7 +3,13 @@
     "allow": [
       "Bash(cd \"C:/Users/Terry/Documents/GitHub/SRJE\" && dotnet build src/SRJE.Web/SRJE.Web.csproj 2>&1)",
       "Bash(cd \"C:\\\\Users\\\\Terry\\\\Documents\\\\GitHub\\\\SRJE\" && dotnet build src/SRJE.Web/SRJE.Web.csproj 2>&1)",
-      "Bash(cd \"C:\\\\Users\\\\Terry\\\\Documents\\\\GitHub\\\\SRJE\" && dotnet test tests/SRJE.Tests/SRJE.Tests.csproj 2>&1)"
+      "Bash(cd \"C:\\\\Users\\\\Terry\\\\Documents\\\\GitHub\\\\SRJE\" && dotnet test tests/SRJE.Tests/SRJE.Tests.csproj 2>&1)",
+      "Bash(find /c/Users/Terry/Documents/GitHub/SRJE -type f -name \"*.cs\" | xargs grep -l \"NumeroCuenta\\\\|PreviewLineaDto\" | head -20)",
+      "Bash(find /c/Users/Terry/Documents/GitHub/SRJE -type f -name \"*.cs\" -path \"*/Models/*\" | xargs grep -l \"PreviewLineaDto\" | head -10)",
+      "Bash(find /c/Users/Terry/Documents/GitHub/SRJE -type f -name \"*.cs\" -path \"*/Models/Entities/*\" | xargs grep -l \"Beneficiario\")",
+      "Bash(find /c/Users/Terry/Documents/GitHub/SRJE -type f -name \"*Test*\" | xargs grep -l \"NuevasCuentas\" -i)",
+      "Bash(find /c/Users/Terry/Documents/GitHub/SRJE -type f -name \"*.xlsx\" -o -name \"*.xls\" 2>/dev/null | head -10)",
+      "Bash(taskkill //F //IM \"SRJE.Web.exe\" 2>&1; sleep 2; cd \"C:\\\\Users\\\\Terry\\\\Documents\\\\GitHub\\\\SRJE\" && dotnet build src/SRJE.Web/SRJE.Web.csproj 2>&1)"
     ]
   }
 }

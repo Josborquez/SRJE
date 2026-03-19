@@ -13,15 +13,18 @@ public class ArchivosController : ControllerBase
     private readonly IRemuneracionesService _remuneraciones;
     private readonly ITemgeService _temge;
     private readonly INuevasCuentasService _nuevasCuentas;
+    private readonly IAuditoriaBeneficiariosService _auditoria;
 
     public ArchivosController(
         IRemuneracionesService remuneraciones,
         ITemgeService temge,
-        INuevasCuentasService nuevasCuentas)
+        INuevasCuentasService nuevasCuentas,
+        IAuditoriaBeneficiariosService auditoria)
     {
         _remuneraciones = remuneraciones;
         _temge = temge;
         _nuevasCuentas = nuevasCuentas;
+        _auditoria = auditoria;
     }
 
     /// <summary>POST /api/archivos/remuneraciones/preview — Parsear sin persistir</summary>
@@ -98,5 +101,43 @@ public class ArchivosController : ControllerBase
         var archivo = await _temge.GenerarTemgeAsync(usuario);
         var nombre = $"TEMGE_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
         return File(archivo, "text/plain", nombre);
+    }
+
+    /// <summary>POST /api/archivos/auditoria/comparar — Comparar archivo vs BD</summary>
+    [HttpPost("auditoria/comparar")]
+    public async Task<IActionResult> CompararBeneficiarios(IFormFile archivo)
+    {
+        if (archivo == null || archivo.Length == 0)
+            return BadRequest(new { error = "Archivo requerido" });
+
+        using var stream = archivo.OpenReadStream();
+        var result = await _auditoria.CompararAsync(stream);
+        return Ok(result);
+    }
+
+    /// <summary>POST /api/archivos/auditoria/exportar-excel — Exportar comparacion a Excel</summary>
+    [HttpPost("auditoria/exportar-excel")]
+    public async Task<IActionResult> ExportarAuditoriaExcel(IFormFile archivo)
+    {
+        if (archivo == null || archivo.Length == 0)
+            return BadRequest(new { error = "Archivo requerido" });
+
+        using var stream = archivo.OpenReadStream();
+        var bytes = await _auditoria.ExportarExcelAsync(stream);
+        return File(bytes,
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            $"Auditoria_Beneficiarios_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx");
+    }
+
+    /// <summary>POST /api/archivos/auditoria/exportar-csv — Exportar comparacion a CSV</summary>
+    [HttpPost("auditoria/exportar-csv")]
+    public async Task<IActionResult> ExportarAuditoriaCsv(IFormFile archivo)
+    {
+        if (archivo == null || archivo.Length == 0)
+            return BadRequest(new { error = "Archivo requerido" });
+
+        using var stream = archivo.OpenReadStream();
+        var bytes = await _auditoria.ExportarCsvAsync(stream);
+        return File(bytes, "text/csv", $"Auditoria_Beneficiarios_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
     }
 }

@@ -533,6 +533,37 @@ section.card-section h3 {
 .sections dt { font-weight: 500; color: var(--text-secondary); font-size: 0.85rem; }
 .sections dd { margin: 0; font-size: 0.9rem; }
 
+/* --- Stats bar (contadores de beneficiarios) --- */
+.stats-bar {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 0.65rem 1.1rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.stat-card .stat-icon { color: var(--color-primary); flex-shrink: 0; }
+.stat-card.stat-activos .stat-icon { color: var(--color-success); }
+.stat-card.stat-inactivos .stat-icon { color: var(--color-danger); }
+
+.stat-content { display: flex; flex-direction: column; line-height: 1.2; }
+.stat-value { font-size: 1.15rem; font-weight: 700; color: var(--text-primary); }
+.stat-label { font-size: 0.75rem; color: var(--text-secondary); }
+
+@media (max-width: 768px) {
+  .stats-bar { flex-wrap: wrap; }
+  .stat-card { flex: 1; min-width: 120px; }
+}
+
 /* --- Toolbar --- */
 .toolbar {
   display: flex;
