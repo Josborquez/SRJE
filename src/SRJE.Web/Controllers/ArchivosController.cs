@@ -93,13 +93,14 @@ public class ArchivosController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>GET /api/archivos/temge/generar — Genera y descarga archivo TEMGE</summary>
+    /// <summary>GET /api/archivos/temge/generar — Genera y descarga archivo TEMGE para un periodo</summary>
     [HttpGet("temge/generar")]
-    public async Task<IActionResult> GenerarTemge()
+    public async Task<IActionResult> GenerarTemge([FromQuery] string? periodo = null)
     {
         var usuario = User.Identity?.Name ?? "sistema";
-        var archivo = await _temge.GenerarTemgeAsync(usuario);
-        var nombre = $"TEMGE_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
+        var archivo = await _temge.GenerarTemgeAsync(usuario, periodo);
+        var sufijo = !string.IsNullOrEmpty(periodo) ? periodo : DateTime.Now.ToString("yyyyMMdd_HHmmss");
+        var nombre = $"TEMGE_{sufijo}.txt";
         return File(archivo, "text/plain", nombre);
     }
 

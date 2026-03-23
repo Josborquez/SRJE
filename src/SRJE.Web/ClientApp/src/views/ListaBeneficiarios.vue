@@ -63,6 +63,8 @@
           <th>Nombre Funcionario</th>
           <th>Banco</th>
           <th>Cuenta</th>
+          <th>Retenciones</th>
+          <th>Monto Mensual</th>
           <th>Estado</th>
           <th>Acciones</th>
         </tr>
@@ -75,6 +77,8 @@
           <td>{{ b.nombreFuncionario || '-' }}</td>
           <td>{{ b.nombreBanco || b.codBanco || '-' }}</td>
           <td>{{ formatCuenta(b.ctaEstado || b.ctaOtBanco) }}</td>
+          <td class="text-center">{{ b.cantidadRetenciones || 0 }}</td>
+          <td class="text-right">{{ b.montoTotalRetenciones ? '$' + b.montoTotalRetenciones.toLocaleString('es-CL') : '-' }}</td>
           <td>
             <span :class="'estado estado-' + b.estado.toLowerCase()">
               <CircleCheck v-if="b.estado === 'A'" :size="13" />

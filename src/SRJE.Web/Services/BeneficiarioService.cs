@@ -77,6 +77,39 @@ public class BeneficiarioService : IBeneficiarioService
             }
         }
 
+        // Enriquecer con retenciones activas del ultimo periodo
+        var rutsItems = items.Select(i => i.RutBeneficiario).ToList();
+        if (rutsItems.Count > 0)
+        {
+            // Obtener el ultimo periodo disponible
+            var ultimoPeriodo = await _db.RetenidosJudiciales.AsNoTracking()
+                .Where(r => r.Estado == "A")
+                .OrderByDescending(r => r.PeriodoProceso)
+                .Select(r => r.PeriodoProceso)
+                .FirstOrDefaultAsync();
+
+            if (ultimoPeriodo != null)
+            {
+                var retencionesPorRut = await _db.RetenidosJudiciales.AsNoTracking()
+                    .Where(r => r.Estado == "A"
+                        && r.PeriodoProceso == ultimoPeriodo
+                        && rutsItems.Contains(r.RutBeneficiario))
+                    .GroupBy(r => r.RutBeneficiario)
+                    .Select(g => new { Rut = g.Key, Cantidad = g.Count(), Monto = g.Sum(r => r.Monto) })
+                    .ToListAsync();
+
+                var retDict = retencionesPorRut.ToDictionary(r => r.Rut);
+                foreach (var item in items)
+                {
+                    if (retDict.TryGetValue(item.RutBeneficiario, out var ret))
+                    {
+                        item.CantidadRetenciones = ret.Cantidad;
+                        item.MontoTotalRetenciones = ret.Monto;
+                    }
+                }
+            }
+        }
+
         return new PagedResult<BeneficiarioDto>
         {
             Items = items,

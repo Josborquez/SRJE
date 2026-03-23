@@ -14,4 +14,8 @@ public class RetenidoJudicial
     public string Estado { get; set; } = "A";
     public DateTime? FechaVigencia { get; set; }
     public string? PeriodoProceso { get; set; }
+    public long? CodBanco { get; set; }
+    public long? TipoCuenta { get; set; }
+    public string? CtaEstado { get; set; }
+    public string? CtaOtBanco { get; set; }
 }

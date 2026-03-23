@@ -11,15 +11,23 @@
       </div>
       <div class="generar-card-content">
         <h3>Archivo de Pago TEMGE</h3>
-        <p>Se incluiran todos los beneficiarios activos con cuenta bancaria y retenciones vigentes.
-          El archivo se descargara automaticamente en formato de texto.</p>
+        <p>Se incluiran los beneficiarios activos con cuenta bancaria y retenciones vigentes
+          del periodo seleccionado. El archivo se descargara automaticamente en formato de texto.</p>
       </div>
+    </div>
+
+    <div class="periodo-input">
+      <label><Calendar :size="16" /> Periodo Proceso (AAAAMM):</label>
+      <input v-model="periodo" placeholder="Ej: 202603" maxlength="6" />
+      <span v-if="periodo && !periodoValido" class="periodo-error">
+        Formato invalido. Use AAAAMM (ej: 202603)
+      </span>
     </div>
 
     <AlertMessage v-if="alertMsg" :message="alertMsg" :type="alertType" @close="alertMsg = ''" />
 
     <div class="actions">
-      <button @click="showConfirm = true" class="btn btn-primary" :disabled="loading">
+      <button @click="showConfirm = true" class="btn btn-primary" :disabled="loading || !periodoValido">
         <Download :size="16" />
         {{ loading ? 'Generando archivo...' : 'Generar Archivo TEMGE' }}
       </button>
@@ -35,7 +43,7 @@
     <ConfirmModal
       v-model="showConfirm"
       title="Generar Archivo TEMGE"
-      message="Se generara el archivo TEMGE con todos los beneficiarios activos que tengan cuenta bancaria y retenciones vigentes. ¿Desea continuar?"
+      :message="`Se generara el archivo TEMGE para el periodo ${periodo} con los beneficiarios activos que tengan cuenta bancaria y retenciones vigentes. ¿Desea continuar?`"
       confirmText="Si, generar"
       @confirm="generar"
     />
@@ -43,11 +51,11 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { archivosApi } from '../api/index.js'
 import AlertMessage from '../components/AlertMessage.vue'
 import ConfirmModal from '../components/ConfirmModal.vue'
-import { FileDown, Download, CircleAlert, CheckCircle } from 'lucide-vue-next'
+import { FileDown, Download, CircleAlert, CheckCircle, Calendar } from 'lucide-vue-next'
 
 const loading = ref(false)
 const error = ref(null)
@@ -55,6 +63,12 @@ const generado = ref(false)
 const alertMsg = ref('')
 const alertType = ref('info')
 const showConfirm = ref(false)
+const periodo = ref('')
+
+const periodoValido = computed(() => {
+  if (!periodo.value) return false
+  return /^\d{6}$/.test(periodo.value)
+})
 
 async function generar() {
   loading.value = true
@@ -62,13 +76,13 @@ async function generar() {
   generado.value = false
   alertMsg.value = ''
   try {
-    const response = await archivosApi.generarTemge()
+    const response = await archivosApi.generarTemge(periodo.value)
     const url = window.URL.createObjectURL(new Blob([response.data]))
     const link = document.createElement('a')
     link.href = url
     const filename = response.headers['content-disposition']
       ?.match(/filename="?(.+)"?/)?.[1]
-      || `TEMGE_${new Date().toISOString().slice(0,10)}.txt`
+      || `TEMGE_${periodo.value}.txt`
     link.setAttribute('download', filename)
     document.body.appendChild(link)
     link.click()
@@ -76,7 +90,7 @@ async function generar() {
     window.URL.revokeObjectURL(url)
     generado.value = true
     alertType.value = 'success'
-    alertMsg.value = 'Archivo TEMGE generado y descargado exitosamente.'
+    alertMsg.value = `Archivo TEMGE generado y descargado exitosamente para el periodo ${periodo.value}.`
   } catch (e) {
     error.value = e.response?.data?.error || e.message
     alertType.value = 'error'
@@ -117,5 +131,31 @@ async function generar() {
   color: var(--text-secondary);
   font-size: 0.9rem;
   line-height: 1.5;
+}
+.periodo-input {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+.periodo-input label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.periodo-input input {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: 0.95rem;
+  width: 140px;
+  font-family: var(--font-mono, monospace);
+}
+.periodo-error {
+  color: var(--color-danger, #e53e3e);
+  font-size: 0.85rem;
 }
 </style>

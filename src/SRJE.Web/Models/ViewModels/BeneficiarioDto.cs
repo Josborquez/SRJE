@@ -25,6 +25,8 @@ public class BeneficiarioDto
     public string? NombreFuncionario { get; set; }
     public string Estado { get; set; } = "A";
     public DateTime? FechaCreacion { get; set; }
+    public int CantidadRetenciones { get; set; }
+    public decimal MontoTotalRetenciones { get; set; }
 }
 
 public class BeneficiarioDetalleDto : BeneficiarioDto

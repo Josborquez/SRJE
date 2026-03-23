@@ -9,7 +9,24 @@
       "Bash(find /c/Users/Terry/Documents/GitHub/SRJE -type f -name \"*.cs\" -path \"*/Models/Entities/*\" | xargs grep -l \"Beneficiario\")",
       "Bash(find /c/Users/Terry/Documents/GitHub/SRJE -type f -name \"*Test*\" | xargs grep -l \"NuevasCuentas\" -i)",
       "Bash(find /c/Users/Terry/Documents/GitHub/SRJE -type f -name \"*.xlsx\" -o -name \"*.xls\" 2>/dev/null | head -10)",
-      "Bash(taskkill //F //IM \"SRJE.Web.exe\" 2>&1; sleep 2; cd \"C:\\\\Users\\\\Terry\\\\Documents\\\\GitHub\\\\SRJE\" && dotnet build src/SRJE.Web/SRJE.Web.csproj 2>&1)"
+      "Bash(taskkill //F //IM \"SRJE.Web.exe\" 2>&1; sleep 2; cd \"C:\\\\Users\\\\Terry\\\\Documents\\\\GitHub\\\\SRJE\" && dotnet build src/SRJE.Web/SRJE.Web.csproj 2>&1)",
+      "Bash(wc -l \"C:/Users/Terry/Documents/GitHub/SRJE/legado/PAGO RETJUD_MAR 2026\\(1\\).txt\" 2>/dev/null || wc -l \"C:/Users/Terry/Documents/GitHub/SRJE/legado/PAGO RETJUD_MAR 2026\\(1\\).csv\" 2>/dev/null || ls \"C:/Users/Terry/Documents/GitHub/SRJE/legado/PAGO\"* 2>/dev/null || ls \"C:/Users/Terry/Documents/GitHub/SRJE/legado/\"*PAGO* 2>/dev/null || ls \"C:/Users/Terry/Documents/GitHub/SRJE/legado/\"*MAR* 2>/dev/null)",
+      "Bash(head -1 \"C:/Users/Terry/Documents/GitHub/SRJE/legado/PAGO RETJUD_MAR 2026\\(1\\).txt\" | wc -c)",
+      "Bash(tail -3 \"C:/Users/Terry/Documents/GitHub/SRJE/legado/PAGO RETJUD_MAR 2026\\(1\\).txt\")",
+      "Bash(cd C:/Users/Terry/Documents/GitHub/SRJE && dotnet build src/SRJE.Web/SRJE.Web.csproj 2>&1 | tail -20)",
+      "Bash(cd C:/Users/Terry/Documents/GitHub/SRJE && dotnet build tests/SRJE.Tests/SRJE.Tests.csproj 2>&1 | tail -5)",
+      "Bash(taskkill //PID 2672 //F 2>&1)",
+      "Bash(cd C:/Users/Terry/Documents/GitHub/SRJE && dotnet build src/SRJE.Web/SRJE.Web.csproj 2>&1 | tail -5)",
+      "Bash(cd C:/Users/Terry/Documents/GitHub/SRJE && dotnet test tests/SRJE.Tests/SRJE.Tests.csproj 2>&1 | tail -15)",
+      "Bash(cd C:/Users/Terry/Documents/GitHub/SRJE && dotnet restore tests/SRJE.Tests/SRJE.Tests.csproj 2>&1 | tail -5 && dotnet test tests/SRJE.Tests/SRJE.Tests.csproj --no-restore 2>&1 | tail -20)",
+      "Bash(cd C:/Users/Terry/Documents/GitHub/SRJE && dotnet test tests/SRJE.Tests/SRJE.Tests.csproj 2>&1 | grep -c \"error CS\")",
+      "Bash(cd C:/Users/Terry/Documents/GitHub/SRJE && dotnet test tests/SRJE.Tests/SRJE.Tests.csproj 2>&1 | tail -10)",
+      "Bash(cd C:/Users/Terry/Documents/GitHub/SRJE && dotnet test tests/SRJE.Tests/SRJE.Tests.csproj --filter \"FullyQualifiedName~TemgeServiceTests\" 2>&1)",
+      "Bash(cd C:/Users/Terry/Documents/GitHub/SRJE && dotnet test tests/SRJE.Tests/SRJE.Tests.csproj 2>&1 | tail -3)",
+      "Bash(tasklist | grep -i srje)",
+      "Bash(taskkill //PID 23232 //F 2>&1 && cd C:/Users/Terry/Documents/GitHub/SRJE && dotnet build src/SRJE.Web/SRJE.Web.csproj 2>&1 | tail -5)",
+      "Bash(cd C:/Users/Terry/Documents/GitHub/SRJE && dotnet test tests/SRJE.Tests/SRJE.Tests.csproj --filter \"FullyQualifiedName~TemgeServiceTests\" 2>&1 | tail -5)",
+      "Bash(cd C:/Users/Terry/Documents/GitHub/SRJE/src/SRJE.Web/ClientApp && npm run build 2>&1 | tail -10)"
     ]
   }
 }

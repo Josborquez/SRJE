@@ -12,7 +12,7 @@ public interface ITemgeService
 {
     Task<TemgeArchivoDto> PreviewTemgeAsync(Stream stream, string nombreArchivo);
     Task<ResultadoImportacionDto> ConfirmarTemgeAsync(ConfirmarImportacionRequest request, string usuario, string ip);
-    Task<byte[]> GenerarTemgeAsync(string usuario);
+    Task<byte[]> GenerarTemgeAsync(string usuario, string? periodoProceso = null);
 }
 
 public class TemgeService : ITemgeService
@@ -233,65 +233,80 @@ public class TemgeService : ITemgeService
         }
     }
 
-    public async Task<byte[]> GenerarTemgeAsync(string usuario)
+    public async Task<byte[]> GenerarTemgeAsync(string usuario, string? periodoProceso = null)
     {
         await using var transaction = await _db.Database.BeginTransactionAsync();
         try
         {
+            // Cargar retenciones activas del periodo (sin agrupar: 1 linea por retencion)
+            var queryRetenciones = _db.RetenidosJudiciales.AsNoTracking()
+                .Where(r => r.Estado == "A");
+
+            if (!string.IsNullOrEmpty(periodoProceso))
+                queryRetenciones = queryRetenciones.Where(r => r.PeriodoProceso == periodoProceso);
+
+            var retenciones = await queryRetenciones.ToListAsync();
+
+            var rutsBenef = retenciones.Select(r => r.RutBeneficiario).Distinct().ToList();
+
             var beneficiarios = await _db.Beneficiarios.AsNoTracking()
-                .Where(b => b.Estado == "A"
-                    && (b.CtaEstado != null || b.CtaOtBanco != null))
+                .Where(b => b.Estado == "A" && rutsBenef.Contains(b.RutBeneficiario))
                 .ToDictionaryAsync(b => b.RutBeneficiario);
 
-            var rutsBenefActivos = beneficiarios.Keys.ToList();
+            // Construir 1 registro por retencion, con fallback: retencion -> beneficiario -> default
+            var datos = new List<(RegistroTemge Registro, long IdRetencion)>();
 
-            // Agrupar y sumar montos en la BD en lugar de cargar todas las retenciones en memoria
-            var retencionesAgrupadas = await _db.RetenidosJudiciales.AsNoTracking()
-                .Where(r => r.Estado == "A" && rutsBenefActivos.Contains(r.RutBeneficiario))
-                .GroupBy(r => r.RutBeneficiario)
-                .Select(g => new { RutBeneficiario = g.Key, MontoTotal = g.Sum(r => r.Monto) })
-                .ToListAsync();
+            foreach (var ret in retenciones)
+            {
+                if (!beneficiarios.TryGetValue(ret.RutBeneficiario, out var benef))
+                    continue;
 
-            var datos = retencionesAgrupadas
-                .Where(r => beneficiarios.ContainsKey(r.RutBeneficiario))
-                .Select(r =>
+                var codBanco = ret.CodBanco ?? benef.CodBanco ?? _settings.CodBancoEstado;
+                var tipoCuenta = ret.TipoCuenta ?? benef.TipoCuenta ?? 2;
+                var ctaEstado = ret.CtaEstado ?? benef.CtaEstado;
+                var ctaOtBanco = ret.CtaOtBanco ?? benef.CtaOtBanco;
+
+                // Debe tener al menos un numero de cuenta
+                if (ctaEstado == null && ctaOtBanco == null)
+                    continue;
+
+                datos.Add((new RegistroTemge
                 {
-                    var benef = beneficiarios[r.RutBeneficiario];
-                    return new RegistroTemge
-                    {
-                        RutBeneficiario = benef.RutBeneficiario,
-                        DvBeneficiario = benef.DvBeneficiario,
-                        NombreBeneficiario = benef.NombreBeneficiario,
-                        CodBanco = benef.CodBanco ?? _settings.CodBancoEstado,
-                        TipoCuenta = benef.TipoCuenta ?? 2,
-                        NumeroCuenta = benef.CtaOtBanco,
-                        CtaEstado = benef.CtaEstado,
-                        Monto = r.MontoTotal
-                    };
-                }).ToList();
+                    RutBeneficiario = benef.RutBeneficiario,
+                    DvBeneficiario = benef.DvBeneficiario,
+                    NombreBeneficiario = benef.NombreBeneficiario,
+                    CodBanco = codBanco,
+                    TipoCuenta = tipoCuenta,
+                    NumeroCuenta = ctaOtBanco,
+                    CtaEstado = ctaEstado,
+                    Monto = ret.Monto
+                }, ret.Id));
+            }
 
+            var registros = datos.Select(d => d.Registro).ToList();
             var temgeBuilder = new TemgeBuilder(_settings);
             var fechaProceso = DateTime.Now;
-            var archivo = temgeBuilder.Generar(datos, fechaProceso);
+            var archivo = temgeBuilder.Generar(registros, fechaProceso);
 
             var historial = new HistorialPagosTemge
             {
                 FechaProceso = fechaProceso,
                 HoraProceso = fechaProceso.ToString("HHmmss"),
                 CodEmpresa = _settings.CodEmpresa,
-                MontoTotal = datos.Sum(d => d.Monto),
-                CantidadRegistros = datos.Count,
+                MontoTotal = registros.Sum(d => d.Monto),
+                CantidadRegistros = registros.Count,
                 NombreArchivo = $"TEMGE_{fechaProceso:yyyyMMdd_HHmmss}.txt",
                 UsuarioGenera = usuario
             };
             _db.HistorialPagosTemge.Add(historial);
             await _db.SaveChangesAsync();
 
-            foreach (var reg in datos)
+            foreach (var (reg, idRet) in datos)
             {
                 _db.DetallePagosTemge.Add(new DetallePagoTemge
                 {
                     IdHistorial = historial.Id,
+                    IdRetenidoJudicial = idRet,
                     RutBeneficiario = reg.RutBeneficiario,
                     MontoPagado = reg.Monto,
                     CodBanco = reg.CodBanco,
@@ -303,7 +318,7 @@ public class TemgeService : ITemgeService
 
             _logger.LogInformation(
                 "Archivo TEMGE generado: {CantRegistros} registros, monto total {MontoTotal}, archivo {NombreArchivo}",
-                datos.Count, datos.Sum(d => d.Monto), historial.NombreArchivo);
+                registros.Count, registros.Sum(d => d.Monto), historial.NombreArchivo);
 
             return archivo;
         }

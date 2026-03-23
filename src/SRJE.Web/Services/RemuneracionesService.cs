@@ -86,11 +86,10 @@ public class RemuneracionesService : IRemuneracionesService
                 .Select(l => l.RutBeneficiario)
                 .Distinct()
                 .ToList();
-            var rutsExistentes = (await _db.Beneficiarios.AsNoTracking()
+            var beneficiariosDict = await _db.Beneficiarios.AsNoTracking()
                 .Where(b => rutsBenefLineas.Contains(b.RutBeneficiario))
-                .Select(b => b.RutBeneficiario)
-                .ToListAsync())
-                .ToHashSet();
+                .ToDictionaryAsync(b => b.RutBeneficiario);
+            var rutsExistentes = beneficiariosDict.Keys.ToHashSet();
 
             var rutsFuncionarios = lineasIncluidas
                 .Where(l => l.RutFuncionario.HasValue)
@@ -170,11 +169,22 @@ public class RemuneracionesService : IRemuneracionesService
                     // Upsert retencion (pre-cargado)
                     string accion;
                     var key = (linea.RutBeneficiario, linea.RutFuncionario ?? 0);
+                    // Resolver datos bancarios del beneficiario para copiar a la retencion
+                    beneficiariosDict.TryGetValue(linea.RutBeneficiario, out var benefBanco);
+
                     if (retencionesDict.TryGetValue(key, out var retencion))
                     {
                         retencion.Monto = linea.Monto ?? 0;
                         retencion.CodRetencion = linea.CodRetencion;
                         retencion.TipoPago = linea.TipoPago;
+                        // Copiar datos bancarios solo si la retencion no tiene propios
+                        if (retencion.CodBanco == null && benefBanco != null)
+                        {
+                            retencion.CodBanco = benefBanco.CodBanco;
+                            retencion.TipoCuenta = benefBanco.TipoCuenta;
+                            retencion.CtaEstado = benefBanco.CtaEstado;
+                            retencion.CtaOtBanco = benefBanco.CtaOtBanco;
+                        }
                         actualizados++;
                         accion = "ACTUALIZAR";
                     }
@@ -190,7 +200,11 @@ public class RemuneracionesService : IRemuneracionesService
                             Monto = linea.Monto ?? 0,
                             CodRetencion = linea.CodRetencion,
                             TipoPago = linea.TipoPago,
-                            PeriodoProceso = request.PeriodoProceso
+                            PeriodoProceso = request.PeriodoProceso,
+                            CodBanco = benefBanco?.CodBanco,
+                            TipoCuenta = benefBanco?.TipoCuenta,
+                            CtaEstado = benefBanco?.CtaEstado,
+                            CtaOtBanco = benefBanco?.CtaOtBanco
                         };
                         _db.RetenidosJudiciales.Add(nuevaRetencion);
                         retencionesDict[key] = nuevaRetencion;
