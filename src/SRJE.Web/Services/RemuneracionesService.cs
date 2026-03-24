@@ -100,16 +100,18 @@ public class RemuneracionesService : IRemuneracionesService
                 .Where(f => rutsFuncionarios.Contains(f.RutFuncionario))
                 .ToDictionaryAsync(f => f.RutFuncionario);
 
-            // Pre-cargar retenciones existentes para el periodo
-            var rutsRetencionKey = lineasIncluidas
-                .Select(l => new { l.RutBeneficiario, RutFuncionario = l.RutFuncionario ?? 0 })
-                .ToList();
+            // Pre-cargar retenciones existentes para el periodo (cola por key para soportar duplicados)
             var retencionesExistentes = await _db.RetenidosJudiciales
                 .Where(r => r.PeriodoProceso == request.PeriodoProceso)
                 .ToListAsync();
-            var retencionesDict = retencionesExistentes
-                .GroupBy(r => (r.RutBeneficiario, r.RutTitular))
-                .ToDictionary(g => g.Key, g => g.OrderByDescending(r => r.Id).First());
+            var retencionesColas = new Dictionary<(long, long), Queue<RetenidoJudicial>>();
+            foreach (var r in retencionesExistentes)
+            {
+                var k = (r.RutBeneficiario, r.RutTitular);
+                if (!retencionesColas.ContainsKey(k))
+                    retencionesColas[k] = new Queue<RetenidoJudicial>();
+                retencionesColas[k].Enqueue(r);
+            }
 
             foreach (var linea in request.Lineas)
             {
@@ -166,14 +168,15 @@ public class RemuneracionesService : IRemuneracionesService
                         beneficiariosEnBatch.Add(linea.RutBeneficiario);
                     }
 
-                    // Upsert retencion (pre-cargado)
+                    // Upsert retencion: cola por key para soportar multiples retenciones mismo par
                     string accion;
                     var key = (linea.RutBeneficiario, linea.RutFuncionario ?? 0);
                     // Resolver datos bancarios del beneficiario para copiar a la retencion
                     beneficiariosDict.TryGetValue(linea.RutBeneficiario, out var benefBanco);
 
-                    if (retencionesDict.TryGetValue(key, out var retencion))
+                    if (retencionesColas.TryGetValue(key, out var cola) && cola.Count > 0)
                     {
+                        var retencion = cola.Dequeue();
                         retencion.Monto = linea.Monto ?? 0;
                         retencion.CodRetencion = linea.CodRetencion;
                         retencion.TipoPago = linea.TipoPago;
@@ -207,7 +210,6 @@ public class RemuneracionesService : IRemuneracionesService
                             CtaOtBanco = benefBanco?.CtaOtBanco
                         };
                         _db.RetenidosJudiciales.Add(nuevaRetencion);
-                        retencionesDict[key] = nuevaRetencion;
                         insertados++;
                         accion = "INSERTAR";
                     }

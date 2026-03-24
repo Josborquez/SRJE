@@ -97,4 +97,22 @@ public class BeneficiariosController : ControllerBase
         var result = await _service.BuscarAsync(q);
         return Ok(result);
     }
+
+    /// <summary>GET /api/beneficiarios/exportar/excel — Exportar a Excel</summary>
+    [HttpGet("exportar/excel")]
+    public async Task<IActionResult> ExportarExcel([FromQuery] string? estado = null)
+    {
+        var bytes = await _service.ExportarExcelAsync(estado);
+        return File(bytes,
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            $"Beneficiarios_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx");
+    }
+
+    /// <summary>GET /api/beneficiarios/exportar/csv — Exportar a CSV</summary>
+    [HttpGet("exportar/csv")]
+    public async Task<IActionResult> ExportarCsv([FromQuery] string? estado = null)
+    {
+        var bytes = await _service.ExportarCsvAsync(estado);
+        return File(bytes, "text/csv", $"Beneficiarios_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
+    }
 }

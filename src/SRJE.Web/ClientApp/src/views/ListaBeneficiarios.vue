@@ -38,9 +38,19 @@
           class="search-input"
         />
       </div>
-      <router-link to="/beneficiarios/nuevo" class="btn btn-primary">
-        <UserPlus :size="16" /> Nuevo Beneficiario
-      </router-link>
+      <div class="toolbar-actions">
+        <div class="export-group">
+          <button @click="exportar('excel')" class="btn btn-secondary" :disabled="exportando">
+            <FileSpreadsheet :size="16" /> Excel
+          </button>
+          <button @click="exportar('csv')" class="btn btn-secondary" :disabled="exportando">
+            <FileText :size="16" /> CSV
+          </button>
+        </div>
+        <router-link to="/beneficiarios/nuevo" class="btn btn-primary">
+          <UserPlus :size="16" /> Nuevo Beneficiario
+        </router-link>
+      </div>
     </div>
 
     <AlertMessage v-if="alertMsg" :message="alertMsg" :type="alertType" @close="alertMsg = ''" />
@@ -140,12 +150,14 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useBeneficiariosStore } from '../stores/beneficiarios.js'
+import { beneficiariosApi } from '../api/index.js'
 import AlertMessage from '../components/AlertMessage.vue'
 import ConfirmModal from '../components/ConfirmModal.vue'
 import { formatCuenta } from '../composables/useFormato.js'
 import {
   Users, Search, UserPlus, Eye, Pencil, Ban,
-  CircleCheck, CircleX, CircleAlert, Inbox
+  CircleCheck, CircleX, CircleAlert, Inbox,
+  FileSpreadsheet, FileText
 } from 'lucide-vue-next'
 
 const store = useBeneficiariosStore()
@@ -155,6 +167,7 @@ const alertMsg = ref('')
 const alertType = ref('info')
 const showConfirmInactivar = ref(false)
 const beneficiarioAInactivar = ref(null)
+const exportando = ref(false)
 let debounceTimer = null
 
 onMounted(() => store.listar())
@@ -191,6 +204,33 @@ const paginasVisibles = computed(() => {
   }
   return Array.from(pages).sort((a, b) => a - b)
 })
+
+async function exportar(formato) {
+  exportando.value = true
+  try {
+    const response = formato === 'excel'
+      ? await beneficiariosApi.exportarExcel()
+      : await beneficiariosApi.exportarCsv()
+    const url = window.URL.createObjectURL(new Blob([response.data]))
+    const link = document.createElement('a')
+    link.href = url
+    const filename = response.headers['content-disposition']
+      ?.match(/filename="?(.+)"?/)?.[1]
+      || `Beneficiarios.${formato === 'excel' ? 'xlsx' : 'csv'}`
+    link.setAttribute('download', filename)
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+    alertType.value = 'success'
+    alertMsg.value = `Archivo ${formato.toUpperCase()} exportado exitosamente.`
+  } catch (e) {
+    alertType.value = 'error'
+    alertMsg.value = `Error al exportar: ${e.message}`
+  } finally {
+    exportando.value = false
+  }
+}
 
 function confirmarInactivar(b) {
   beneficiarioAInactivar.value = b

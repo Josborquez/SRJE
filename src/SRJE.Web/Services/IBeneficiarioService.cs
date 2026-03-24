@@ -12,4 +12,6 @@ public interface IBeneficiarioService
     Task<bool> InactivarAsync(long rut, string usuario);
     Task<List<RetencionDto>> ObtenerRetencionesAsync(long rut);
     Task<List<BeneficiarioDto>> BuscarAsync(string query);
+    Task<byte[]> ExportarExcelAsync(string? estado = null);
+    Task<byte[]> ExportarCsvAsync(string? estado = null);
 }

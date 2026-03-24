@@ -1,5 +1,7 @@
+using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using OfficeOpenXml;
 using SRJE.Web.Helpers;
 using SRJE.Web.Infrastructure.Data;
 using SRJE.Web.Models;
@@ -368,6 +370,133 @@ public class BeneficiarioService : IBeneficiarioService
             .Take(20)
             .Select(b => MapToDto(b))
             .ToListAsync();
+    }
+
+    public async Task<byte[]> ExportarExcelAsync(string? estado = null)
+    {
+        var beneficiarios = await ObtenerBeneficiariosParaExportar(estado);
+
+        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        using var package = new ExcelPackage();
+        var ws = package.Workbook.Worksheets.Add("Beneficiarios");
+
+        // Headers
+        var headers = new[] { "RUT", "Nombre", "Estado", "Banco", "Tipo Cuenta",
+            "Cta Banco Estado", "Cta Otro Banco", "RUT Funcionario", "Nombre Funcionario",
+            "Retenciones", "Monto Retenciones", "Fecha Creacion" };
+        for (int c = 0; c < headers.Length; c++)
+        {
+            ws.Cells[1, c + 1].Value = headers[c];
+            ws.Cells[1, c + 1].Style.Font.Bold = true;
+            ws.Cells[1, c + 1].Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+            ws.Cells[1, c + 1].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(44, 62, 80));
+            ws.Cells[1, c + 1].Style.Font.Color.SetColor(System.Drawing.Color.White);
+        }
+
+        for (int i = 0; i < beneficiarios.Count; i++)
+        {
+            var b = beneficiarios[i];
+            int row = i + 2;
+            ws.Cells[row, 1].Value = b.RutFormateado;
+            ws.Cells[row, 2].Value = b.NombreBeneficiario;
+            ws.Cells[row, 3].Value = b.Estado == "A" ? "Activo" : "Inactivo";
+            ws.Cells[row, 4].Value = b.NombreBanco ?? b.CodBanco?.ToString();
+            ws.Cells[row, 5].Value = b.TipoCuentaDescripcion;
+            ws.Cells[row, 6].Value = b.CtaEstado;
+            ws.Cells[row, 7].Value = b.CtaOtBanco;
+            ws.Cells[row, 8].Value = b.RutFuncionarioFormateado;
+            ws.Cells[row, 9].Value = b.NombreFuncionario;
+            ws.Cells[row, 10].Value = b.CantidadRetenciones;
+            ws.Cells[row, 11].Value = b.MontoTotalRetenciones;
+            ws.Cells[row, 11].Style.Numberformat.Format = "#,##0";
+            ws.Cells[row, 12].Value = b.FechaCreacion?.ToString("dd/MM/yyyy");
+        }
+
+        ws.Cells[ws.Dimension.Address].AutoFitColumns();
+        return package.GetAsByteArray();
+    }
+
+    public async Task<byte[]> ExportarCsvAsync(string? estado = null)
+    {
+        var beneficiarios = await ObtenerBeneficiariosParaExportar(estado);
+
+        var sb = new StringBuilder();
+        sb.AppendLine("RUT;Nombre;Estado;Banco;Tipo Cuenta;Cta Banco Estado;Cta Otro Banco;RUT Funcionario;Nombre Funcionario;Retenciones;Monto Retenciones;Fecha Creacion");
+
+        foreach (var b in beneficiarios)
+        {
+            sb.AppendLine(string.Join(";",
+                b.RutFormateado,
+                b.NombreBeneficiario,
+                b.Estado == "A" ? "Activo" : "Inactivo",
+                b.NombreBanco ?? b.CodBanco?.ToString() ?? "",
+                b.TipoCuentaDescripcion ?? "",
+                b.CtaEstado ?? "",
+                b.CtaOtBanco ?? "",
+                b.RutFuncionarioFormateado ?? "",
+                b.NombreFuncionario ?? "",
+                b.CantidadRetenciones,
+                b.MontoTotalRetenciones,
+                b.FechaCreacion?.ToString("dd/MM/yyyy") ?? ""
+            ));
+        }
+
+        return Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(sb.ToString())).ToArray();
+    }
+
+    private async Task<List<BeneficiarioDto>> ObtenerBeneficiariosParaExportar(string? estado)
+    {
+        var q = _db.Beneficiarios.AsNoTracking().AsQueryable();
+        if (!string.IsNullOrEmpty(estado))
+            q = q.Where(b => b.Estado == estado);
+
+        var items = await q.OrderBy(b => b.NombreBeneficiario)
+            .Select(b => MapToDto(b))
+            .ToListAsync();
+
+        // Enriquecer con bancos
+        var codsBanco = items.Where(i => i.CodBanco.HasValue).Select(i => i.CodBanco!.Value).Distinct().ToList();
+        if (codsBanco.Count > 0)
+        {
+            var bancos = await _db.Bancos.AsNoTracking()
+                .Where(b => codsBanco.Contains(b.CodBanco))
+                .ToDictionaryAsync(b => b.CodBanco, b => b.NombreBanco);
+            foreach (var item in items)
+            {
+                if (item.CodBanco.HasValue && bancos.TryGetValue(item.CodBanco.Value, out var nombre))
+                    item.NombreBanco = nombre;
+            }
+        }
+
+        // Enriquecer con retenciones del ultimo periodo
+        var ultimoPeriodo = await _db.RetenidosJudiciales.AsNoTracking()
+            .Where(r => r.Estado == "A")
+            .OrderByDescending(r => r.PeriodoProceso)
+            .Select(r => r.PeriodoProceso)
+            .FirstOrDefaultAsync();
+
+        if (ultimoPeriodo != null)
+        {
+            var rutsItems = items.Select(i => i.RutBeneficiario).ToList();
+            var retencionesPorRut = await _db.RetenidosJudiciales.AsNoTracking()
+                .Where(r => r.Estado == "A" && r.PeriodoProceso == ultimoPeriodo
+                    && rutsItems.Contains(r.RutBeneficiario))
+                .GroupBy(r => r.RutBeneficiario)
+                .Select(g => new { Rut = g.Key, Cantidad = g.Count(), Monto = g.Sum(r => r.Monto) })
+                .ToListAsync();
+
+            var retDict = retencionesPorRut.ToDictionary(r => r.Rut);
+            foreach (var item in items)
+            {
+                if (retDict.TryGetValue(item.RutBeneficiario, out var ret))
+                {
+                    item.CantidadRetenciones = ret.Cantidad;
+                    item.MontoTotalRetenciones = ret.Monto;
+                }
+            }
+        }
+
+        return items;
     }
 
     private static BeneficiarioDto MapToDto(Beneficiario b) => new()
