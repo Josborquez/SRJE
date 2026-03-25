@@ -35,6 +35,23 @@ const routes = [
     props: true
   },
   {
+    path: '/funcionarios',
+    name: 'funcionarios',
+    component: () => import('./views/ListaFuncionarios.vue')
+  },
+  {
+    path: '/funcionarios/:rut',
+    name: 'detalle-funcionario',
+    component: () => import('./views/DetalleFuncionario.vue'),
+    props: true
+  },
+  {
+    path: '/funcionarios/:rut/editar',
+    name: 'editar-funcionario',
+    component: () => import('./views/FichaFuncionario.vue'),
+    props: true
+  },
+  {
     path: '/archivos/remuneraciones',
     name: 'importar-remuneraciones',
     component: () => import('./views/ImportarRemuneraciones.vue')

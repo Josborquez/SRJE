@@ -91,6 +91,15 @@ export const mantenedoresApi = {
   toggleTipoCuenta: (cod) => api.patch(`/mantenedores/tipos-cuenta/${cod}/toggle`)
 }
 
+// Funcionarios
+export const funcionariosApi = {
+  listar: (params) => api.get('/funcionarios', { params }),
+  obtener: (rut) => api.get(`/funcionarios/${rut}`),
+  actualizar: (rut, data) => api.put(`/funcionarios/${rut}`, data),
+  inactivar: (rut) => api.delete(`/funcionarios/${rut}`),
+  stats: () => api.get('/funcionarios/stats')
+}
+
 // Catalogos
 export const catalogosApi = {
   bancos: () => api.get('/catalogos/bancos'),

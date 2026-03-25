@@ -50,6 +50,13 @@
               Nuevo
             </router-link>
           </li>
+          <li class="nav-section">Funcionarios</li>
+          <li>
+            <router-link to="/funcionarios" @click="sidebarOpen = false">
+              <UsersRound :size="18" class="nav-icon" />
+              Lista
+            </router-link>
+          </li>
           <li class="nav-section">Archivos</li>
           <li>
             <router-link to="/archivos/remuneraciones" @click="sidebarOpen = false">
@@ -130,7 +137,8 @@ import {
   User,
   LogOut,
   Building2,
-  Wallet
+  Wallet,
+  UsersRound
 } from 'lucide-vue-next'
 
 const route = useRoute()

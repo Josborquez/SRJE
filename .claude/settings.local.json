@@ -48,7 +48,10 @@
       "Bash(taskkill //F //IM \"SRJE.Web.exe\" 2>/dev/null; sleep 2 && dotnet build src/SRJE.Web/SRJE.Web.csproj 2>&1 | tail -5)",
       "Bash(taskkill //F //IM \"SRJE.Web.exe\" 2>/dev/null; sleep 1 && dotnet build src/SRJE.Web/SRJE.Web.csproj 2>&1 | tail -5)",
       "Bash(dotnet script:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(cd C:/Users/Terry/Documents/GitHub/SRJE/src/SRJE.Web/ClientApp && npm run build 2>&1)",
+      "Bash(cd /c/Users/Terry/Documents/GitHub/SRJE/src/SRJE.Web/ClientApp && npm run build 2>&1 | tail -10)",
+      "Bash(npm run:*)"
     ]
   }
 }
