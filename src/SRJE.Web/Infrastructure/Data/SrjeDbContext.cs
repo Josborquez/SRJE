@@ -43,7 +43,6 @@ public class SrjeDbContext : DbContext
             e.Property(x => x.Sucursal).HasColumnName("SUCURSAL").HasMaxLength(60);
             e.Property(x => x.RutFuncionario).HasColumnName("RUT_FUNCIONARIO");
             e.Property(x => x.DvFuncionario).HasColumnName("DV_FUNCIONARIO").HasMaxLength(1);
-            e.Property(x => x.NombreFuncionario).HasColumnName("NOMBRE_FUNCIONARIO").HasMaxLength(100);
             e.Property(x => x.Estado).HasColumnName("ESTADO").HasMaxLength(1).HasDefaultValue("A");
             e.Property(x => x.FechaCreacion).HasColumnName("FECHA_CREACION").HasDefaultValueSql("SYSDATE");
             e.Property(x => x.FechaModificacion).HasColumnName("FECHA_MODIFICACION");
@@ -99,7 +98,6 @@ public class SrjeDbContext : DbContext
             e.HasKey(x => x.Id);
             e.Property(x => x.Id).HasColumnName("ID");
             e.Property(x => x.FechaProceso).HasColumnName("FECHA_PROCESO").IsRequired();
-            e.Property(x => x.HoraProceso).HasColumnName("HORA_PROCESO").HasMaxLength(6).IsFixedLength();
             e.Property(x => x.CodEmpresa).HasColumnName("COD_EMPRESA").HasMaxLength(21);
             e.Property(x => x.MontoTotal).HasColumnName("MONTO_TOTAL").HasColumnType("NUMBER(18,2)");
             e.Property(x => x.CantidadRegistros).HasColumnName("CANTIDAD_REGISTROS");

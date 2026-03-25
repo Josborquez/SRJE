@@ -96,7 +96,6 @@ public class TemgeService : ITemgeService
             var historial = new HistorialPagosTemge
             {
                 FechaProceso = inicio,
-                HoraProceso = inicio.ToString("HHmmss"),
                 CodEmpresa = _settings.CodEmpresa,
                 Estado = "G",
                 UsuarioGenera = usuario
@@ -291,7 +290,6 @@ public class TemgeService : ITemgeService
             var historial = new HistorialPagosTemge
             {
                 FechaProceso = fechaProceso,
-                HoraProceso = fechaProceso.ToString("HHmmss"),
                 CodEmpresa = _settings.CodEmpresa,
                 MontoTotal = registros.Sum(d => d.Monto),
                 CantidadRegistros = registros.Count,

@@ -36,7 +36,19 @@
       "Bash(python3 -c \"import reportlab; print\\(reportlab.__version__\\)\")",
       "Bash(cd C:/Users/Terry/Documents/GitHub/SRJE/legado && python3 generar_informe.py 2>&1)",
       "Bash(cd C:/Users/Terry/Documents/GitHub/SRJE && dotnet list src/SRJE.Web/SRJE.Web.csproj package 2>&1 | grep -i -E \"closedxml|epplus|npoi|excel\")",
-      "Bash(taskkill //PID 4776 //F 2>&1 && cd C:/Users/Terry/Documents/GitHub/SRJE && dotnet build src/SRJE.Web/SRJE.Web.csproj 2>&1 | tail -5)"
+      "Bash(taskkill //PID 4776 //F 2>&1 && cd C:/Users/Terry/Documents/GitHub/SRJE && dotnet build src/SRJE.Web/SRJE.Web.csproj 2>&1 | tail -5)",
+      "Bash(which sqlplus:*)",
+      "Bash(where dotnet-script:*)",
+      "Bash(cd /c/Users/Terry/Documents/GitHub/SRJE/tools/SchemaExtractor && dotnet run 2>&1 | tee /c/Users/Terry/Documents/GitHub/SRJE/docs/schema_oracle_dump.txt)",
+      "Bash(dotnet run:*)",
+      "Bash(find /c/Users/Terry/Documents/GitHub/SRJE/src/SRJE.Web -name \"*.cs\" | xargs grep -l \"class RetenidoJudicial\" | head -5)",
+      "Bash(cd /c/Users/Terry/Documents/GitHub/SRJE && dotnet build src/SRJE.Web/SRJE.Web.csproj 2>&1 | tail -20)",
+      "Bash(dotnet test:*)",
+      "Bash(dotnet build:*)",
+      "Bash(taskkill //F //IM \"SRJE.Web.exe\" 2>/dev/null; sleep 2 && dotnet build src/SRJE.Web/SRJE.Web.csproj 2>&1 | tail -5)",
+      "Bash(taskkill //F //IM \"SRJE.Web.exe\" 2>/dev/null; sleep 1 && dotnet build src/SRJE.Web/SRJE.Web.csproj 2>&1 | tail -5)",
+      "Bash(dotnet script:*)",
+      "Bash(git checkout:*)"
     ]
   }
 }

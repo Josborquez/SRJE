@@ -4,7 +4,6 @@ public class HistorialPagosTemge
 {
     public long Id { get; set; }
     public DateTime FechaProceso { get; set; }
-    public string? HoraProceso { get; set; }
     public string? CodEmpresa { get; set; }
     public decimal? MontoTotal { get; set; }
     public int? CantidadRegistros { get; set; }

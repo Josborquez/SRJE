@@ -42,9 +42,6 @@ public class CrearBeneficiarioRequest
 
     [MaxLength(1)]
     public string? DvFuncionario { get; set; }
-
-    [MaxLength(100)]
-    public string? NombreFuncionario { get; set; }
 }
 
 public class ActualizarBeneficiarioRequest : CrearBeneficiarioRequest

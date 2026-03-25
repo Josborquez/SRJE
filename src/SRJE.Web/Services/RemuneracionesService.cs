@@ -195,7 +195,7 @@ public class RemuneracionesService : IRemuneracionesService
                     {
                         var nuevaRetencion = new RetenidoJudicial
                         {
-                            IdRetencion = 0,
+                            IdRetencion = linea.NumeroLinea,
                             RutTitular = linea.RutFuncionario ?? 0,
                             DvTitular = linea.DvFuncionario ?? "",
                             RutBeneficiario = linea.RutBeneficiario,

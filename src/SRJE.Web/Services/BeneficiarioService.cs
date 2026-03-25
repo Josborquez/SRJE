@@ -79,6 +79,22 @@ public class BeneficiarioService : IBeneficiarioService
             }
         }
 
+        // Enriquecer con nombre del funcionario desde tabla FUNCIONARIOS
+        var rutsFuncionario = items.Where(i => i.RutFuncionario.HasValue)
+            .Select(i => i.RutFuncionario!.Value).Distinct().ToList();
+        if (rutsFuncionario.Count > 0)
+        {
+            var funcionarios = await _db.Funcionarios.AsNoTracking()
+                .Where(f => rutsFuncionario.Contains(f.RutFuncionario))
+                .ToDictionaryAsync(f => f.RutFuncionario);
+            foreach (var item in items)
+            {
+                if (item.RutFuncionario.HasValue &&
+                    funcionarios.TryGetValue(item.RutFuncionario.Value, out var func))
+                    item.NombreFuncionario = $"{func.ApellidoPaterno} {func.ApellidoMaterno} {func.Nombres}".Trim();
+            }
+        }
+
         // Enriquecer con retenciones activas del ultimo periodo
         var rutsItems = items.Select(i => i.RutBeneficiario).ToList();
         if (rutsItems.Count > 0)
@@ -179,7 +195,6 @@ public class BeneficiarioService : IBeneficiarioService
             RutFuncionarioFormateado = beneficiario.RutFuncionario.HasValue && beneficiario.DvFuncionario != null
                 ? RutHelper.Formatear(beneficiario.RutFuncionario.Value, beneficiario.DvFuncionario)
                 : null,
-            NombreFuncionario = beneficiario.NombreFuncionario,
             Estado = beneficiario.Estado,
             FechaCreacion = beneficiario.FechaCreacion,
             FechaModificacion = beneficiario.FechaModificacion,
@@ -214,8 +229,8 @@ public class BeneficiarioService : IBeneficiarioService
                 ret.NombreFuncionario = $"{func.ApellidoPaterno} {func.ApellidoMaterno} {func.Nombres}".Trim();
         }
 
-        // Enriquecer datos del funcionario en la ficha si no tiene nombre guardado
-        if (string.IsNullOrEmpty(dto.NombreFuncionario) && beneficiario.RutFuncionario.HasValue
+        // Obtener nombre del funcionario desde la tabla FUNCIONARIOS
+        if (beneficiario.RutFuncionario.HasValue
             && funcionarios.TryGetValue(beneficiario.RutFuncionario.Value, out var funcBenef))
         {
             dto.NombreFuncionario = $"{funcBenef.ApellidoPaterno} {funcBenef.ApellidoMaterno} {funcBenef.Nombres}".Trim();
@@ -252,7 +267,6 @@ public class BeneficiarioService : IBeneficiarioService
             Sucursal = request.Sucursal,
             RutFuncionario = request.RutFuncionario,
             DvFuncionario = request.DvFuncionario?.ToUpper(),
-            NombreFuncionario = request.NombreFuncionario,
             UsuarioCreacion = usuario
         };
 
@@ -297,7 +311,6 @@ public class BeneficiarioService : IBeneficiarioService
         entity.Sucursal = request.Sucursal;
         entity.RutFuncionario = request.RutFuncionario;
         entity.DvFuncionario = request.DvFuncionario?.ToUpper();
-        entity.NombreFuncionario = request.NombreFuncionario;
         entity.FechaModificacion = DateTime.Now;
 
         _db.AuditoriaCambios.Add(new AuditoriaCambios
@@ -468,6 +481,22 @@ public class BeneficiarioService : IBeneficiarioService
             }
         }
 
+        // Enriquecer con nombre del funcionario desde tabla FUNCIONARIOS
+        var rutsFuncionario = items.Where(i => i.RutFuncionario.HasValue)
+            .Select(i => i.RutFuncionario!.Value).Distinct().ToList();
+        if (rutsFuncionario.Count > 0)
+        {
+            var funcionarios = await _db.Funcionarios.AsNoTracking()
+                .Where(f => rutsFuncionario.Contains(f.RutFuncionario))
+                .ToDictionaryAsync(f => f.RutFuncionario);
+            foreach (var item in items)
+            {
+                if (item.RutFuncionario.HasValue &&
+                    funcionarios.TryGetValue(item.RutFuncionario.Value, out var func))
+                    item.NombreFuncionario = $"{func.ApellidoPaterno} {func.ApellidoMaterno} {func.Nombres}".Trim();
+            }
+        }
+
         // Enriquecer con retenciones del ultimo periodo
         var ultimoPeriodo = await _db.RetenidosJudiciales.AsNoTracking()
             .Where(r => r.Estado == "A")
@@ -528,7 +557,6 @@ public class BeneficiarioService : IBeneficiarioService
         RutFuncionarioFormateado = b.RutFuncionario.HasValue && b.DvFuncionario != null
             ? RutHelper.Formatear(b.RutFuncionario.Value, b.DvFuncionario)
             : null,
-        NombreFuncionario = b.NombreFuncionario,
         Estado = b.Estado,
         FechaCreacion = b.FechaCreacion
     };
