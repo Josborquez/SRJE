@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using SRJE.Web.Infrastructure.Data;
+using SRJE.Web.Models;
 using SRJE.Web.Models.Entities;
 using SRJE.Web.Models.ViewModels;
 using SRJE.Web.Parsers;
@@ -16,37 +18,66 @@ public class RemuneracionesService : IRemuneracionesService
 {
     private readonly SrjeDbContext _db;
     private readonly ILogger<RemuneracionesService> _logger;
+    private readonly SrjeSettings _settings;
 
-    public RemuneracionesService(SrjeDbContext db, ILogger<RemuneracionesService> logger)
+    public RemuneracionesService(SrjeDbContext db, ILogger<RemuneracionesService> logger, IOptions<SrjeSettings> settings)
     {
         _db = db;
         _logger = logger;
+        _settings = settings.Value;
     }
 
     public async Task<ArchivoPreviewDto> PreviewRemuneracionesAsync(Stream stream, string nombreArchivo)
     {
         var lineas = RemuneracionesParser.Parsear(stream);
 
-        // Solo cargar los RUTs necesarios en lugar de toda la tabla
+        // Cargar beneficiarios con datos bancarios
         var rutsArchivo = lineas
             .Where(l => l.EstadoLinea != "ERROR")
             .Select(l => l.RutBeneficiario)
             .Distinct()
             .ToList();
-        var rutsExistentes = (await _db.Beneficiarios.AsNoTracking()
+        var beneficiariosDict = await _db.Beneficiarios.AsNoTracking()
             .Where(b => rutsArchivo.Contains(b.RutBeneficiario))
-            .Select(b => b.RutBeneficiario)
-            .ToListAsync())
+            .ToDictionaryAsync(b => b.RutBeneficiario);
+
+        // Detectar multicuenta: mismo (rutBenef, rutFunc) con más de 1 línea
+        var multicuentaKeys = lineas
+            .Where(l => l.EstadoLinea != "ERROR")
+            .GroupBy(l => (l.RutBeneficiario, RutFunc: l.RutFuncionario ?? 0))
+            .Where(g => g.Count() > 1)
+            .Select(g => g.Key)
             .ToHashSet();
 
         foreach (var linea in lineas)
         {
             if (linea.EstadoLinea == "ERROR") continue;
 
-            if (!rutsExistentes.Contains(linea.RutBeneficiario))
+            if (!beneficiariosDict.ContainsKey(linea.RutBeneficiario))
             {
                 linea.EstadoLinea = "NUEVO";
                 linea.Mensaje = "Beneficiario no existe en BD — se creara al confirmar";
+            }
+            else
+            {
+                // Pre-llenar datos bancarios del beneficiario
+                var benef = beneficiariosDict[linea.RutBeneficiario];
+                linea.CodBanco = benef.CodBanco;
+                linea.TipoCuenta = benef.TipoCuenta;
+                linea.NumeroCuenta = benef.CodBanco == _settings.CodBancoEstado
+                    ? benef.CtaEstado : benef.CtaOtBanco;
+            }
+
+            // Marcar líneas multicuenta
+            var key = (linea.RutBeneficiario, RutFunc: linea.RutFuncionario ?? 0);
+            if (multicuentaKeys.Contains(key))
+            {
+                linea.EsMulticuenta = true;
+                if (linea.EstadoLinea == "OK")
+                {
+                    linea.EstadoLinea = "ADVERTENCIA";
+                    linea.Mensaje = "Multicuenta: asignar cuenta bancaria manualmente";
+                }
             }
         }
 
@@ -81,6 +112,15 @@ public class RemuneracionesService : IRemuneracionesService
 
             // Pre-cargar datos necesarios para evitar N+1
             var lineasIncluidas = request.Lineas.Where(l => l.Incluir).ToList();
+
+            // Validar que líneas multicuenta tengan cuenta bancaria asignada
+            var multicuentaSinCuenta = lineasIncluidas
+                .Where(l => l.EsMulticuenta && (l.CodBanco == null || string.IsNullOrEmpty(l.NumeroCuenta)))
+                .ToList();
+            if (multicuentaSinCuenta.Count > 0)
+                throw new ArgumentException(
+                    $"Hay {multicuentaSinCuenta.Count} lineas multicuenta sin cuenta bancaria asignada. " +
+                    "Asigne banco y cuenta a todas las lineas multicuenta antes de confirmar.");
 
             var rutsBenefLineas = lineasIncluidas
                 .Select(l => l.RutBeneficiario)
@@ -171,8 +211,26 @@ public class RemuneracionesService : IRemuneracionesService
                     // Upsert retencion: cola por key para soportar multiples retenciones mismo par
                     string accion;
                     var key = (linea.RutBeneficiario, linea.RutFuncionario ?? 0);
-                    // Resolver datos bancarios del beneficiario para copiar a la retencion
+
+                    // Resolver datos bancarios: preferir preview (operador), fallback a beneficiario
                     beneficiariosDict.TryGetValue(linea.RutBeneficiario, out var benefBanco);
+                    var codBanco = linea.CodBanco ?? benefBanco?.CodBanco;
+                    var tipoCuenta = linea.TipoCuenta ?? benefBanco?.TipoCuenta;
+                    string? ctaEstado;
+                    string? ctaOtBanco;
+
+                    if (!string.IsNullOrEmpty(linea.NumeroCuenta) && codBanco.HasValue)
+                    {
+                        // Cuenta asignada en preview (manual o pre-llenada)
+                        ctaEstado = codBanco == _settings.CodBancoEstado ? linea.NumeroCuenta : null;
+                        ctaOtBanco = codBanco != _settings.CodBancoEstado ? linea.NumeroCuenta : null;
+                    }
+                    else
+                    {
+                        // Fallback: datos del beneficiario
+                        ctaEstado = benefBanco?.CtaEstado;
+                        ctaOtBanco = benefBanco?.CtaOtBanco;
+                    }
 
                     if (retencionesColas.TryGetValue(key, out var cola) && cola.Count > 0)
                     {
@@ -180,14 +238,10 @@ public class RemuneracionesService : IRemuneracionesService
                         retencion.Monto = linea.Monto ?? 0;
                         retencion.CodRetencion = linea.CodRetencion;
                         retencion.TipoPago = linea.TipoPago;
-                        // Copiar datos bancarios solo si la retencion no tiene propios
-                        if (retencion.CodBanco == null && benefBanco != null)
-                        {
-                            retencion.CodBanco = benefBanco.CodBanco;
-                            retencion.TipoCuenta = benefBanco.TipoCuenta;
-                            retencion.CtaEstado = benefBanco.CtaEstado;
-                            retencion.CtaOtBanco = benefBanco.CtaOtBanco;
-                        }
+                        retencion.CodBanco = codBanco;
+                        retencion.TipoCuenta = tipoCuenta;
+                        retencion.CtaEstado = ctaEstado;
+                        retencion.CtaOtBanco = ctaOtBanco;
                         actualizados++;
                         accion = "ACTUALIZAR";
                     }
@@ -204,10 +258,10 @@ public class RemuneracionesService : IRemuneracionesService
                             CodRetencion = linea.CodRetencion,
                             TipoPago = linea.TipoPago,
                             PeriodoProceso = request.PeriodoProceso,
-                            CodBanco = benefBanco?.CodBanco,
-                            TipoCuenta = benefBanco?.TipoCuenta,
-                            CtaEstado = benefBanco?.CtaEstado,
-                            CtaOtBanco = benefBanco?.CtaOtBanco
+                            CodBanco = codBanco,
+                            TipoCuenta = tipoCuenta,
+                            CtaEstado = ctaEstado,
+                            CtaOtBanco = ctaOtBanco
                         };
                         _db.RetenidosJudiciales.Add(nuevaRetencion);
                         insertados++;
@@ -289,6 +343,7 @@ public class RemuneracionesService : IRemuneracionesService
             LineasAdvertencia = lineas.Count(l => l.EstadoLinea == "ADVERTENCIA"),
             LineasError = lineas.Count(l => l.EstadoLinea == "ERROR"),
             LineasNuevas = lineas.Count(l => l.EstadoLinea == "NUEVO"),
+            LineasMulticuenta = lineas.Count(l => l.EsMulticuenta),
             MontoTotal = lineas.Where(l => l.Monto.HasValue).Sum(l => l.Monto!.Value)
         };
     }

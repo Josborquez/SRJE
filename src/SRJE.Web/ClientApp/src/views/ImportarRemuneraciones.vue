@@ -63,6 +63,8 @@ const opcionesTipoPago = ref([
   { value: 'CHEQUE', label: 'CHEQUE' },
   { value: 'TRANSFERENCIA', label: 'TRANSFERENCIA' }
 ])
+const opcionesBancos = ref([])
+const opcionesTiposCuenta = ref([])
 const loading = ref(false)
 const error = ref(null)
 const periodo = ref('')
@@ -77,7 +79,11 @@ const columnas = computed(() => [
   { key: 'nombreBeneficiario', label: 'Nombre' },
   { key: 'rutFuncionario', label: 'RUT Func.' },
   { key: 'codRetencion', label: 'Cod. Retencion', editable: true, options: opcionesCodRetencion.value },
-  { key: 'tipoPago', label: 'Tipo Pago', editable: true, options: opcionesTipoPago.value }
+  { key: 'tipoPago', label: 'Tipo Pago', editable: true, options: opcionesTipoPago.value },
+  { key: 'monto', label: 'Monto', format: 'monto' },
+  { key: 'codBanco', label: 'Banco', editableWhen: 'esMulticuenta', numeric: true, options: opcionesBancos.value },
+  { key: 'tipoCuenta', label: 'Tipo Cta', editableWhen: 'esMulticuenta', numeric: true, options: opcionesTiposCuenta.value },
+  { key: 'numeroCuenta', label: 'N° Cuenta', editableWhen: 'esMulticuenta' }
 ])
 
 const lineasSeleccionadas = computed(() =>
@@ -86,13 +92,25 @@ const lineasSeleccionadas = computed(() =>
 
 onMounted(async () => {
   try {
-    const { data } = await catalogosApi.tiposRetencion()
-    opcionesCodRetencion.value = data.map(t => ({
+    const [retRes, bancosRes, tiposCtaRes] = await Promise.all([
+      catalogosApi.tiposRetencion(),
+      catalogosApi.bancos(),
+      catalogosApi.tiposCuenta()
+    ])
+    opcionesCodRetencion.value = retRes.data.map(t => ({
       value: t.codRetencion,
       label: `${t.codRetencion} - ${t.descripcion}`
     }))
+    opcionesBancos.value = bancosRes.data.map(b => ({
+      value: b.codBanco,
+      label: `${b.codBanco} - ${b.nombreBanco}`
+    }))
+    opcionesTiposCuenta.value = tiposCtaRes.data.map(t => ({
+      value: t.codTipoCuenta,
+      label: `${t.codTipoCuenta} - ${t.descripcion}`
+    }))
   } catch (e) {
-    console.error('Error cargando tipos de retencion:', e)
+    console.error('Error cargando catalogos:', e)
   }
 })
 
@@ -104,8 +122,13 @@ async function onFileSelected(file) {
   try {
     const { data } = await archivosApi.previewRemuneraciones(file)
     preview.value = data
-    alertType.value = 'info'
-    alertMsg.value = `Se cargaron ${data.lineas?.length || 0} registros del archivo. Ingrese el periodo y confirme la importacion.`
+    if (data.lineasMulticuenta > 0) {
+      alertType.value = 'warning'
+      alertMsg.value = `Se cargaron ${data.lineas?.length || 0} registros. ${data.lineasMulticuenta} lineas multicuenta requieren asignacion manual de cuenta bancaria.`
+    } else {
+      alertType.value = 'info'
+      alertMsg.value = `Se cargaron ${data.lineas?.length || 0} registros del archivo. Ingrese el periodo y confirme la importacion.`
+    }
   } catch (e) {
     error.value = e.response?.data?.error || e.message
   } finally {

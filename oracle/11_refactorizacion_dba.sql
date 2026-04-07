@@ -1,0 +1,664 @@
+-- ============================================================================
+-- SRJE - Sistema de Retenciones Judiciales de Empleados
+-- Script 11: Refactorizacion DBA - Correcciones de integridad, indices y tipos
+-- Base de Datos: Oracle 19c
+-- Ejecutar despues de: 01 a 10
+--
+-- IMPORTANTE: Script IDEMPOTENTE — puede ejecutarse multiples veces sin error.
+--             Cada operacion verifica si ya fue aplicada antes de actuar.
+-- ============================================================================
+
+SET SERVEROUTPUT ON;
+
+
+-- ==========================================================================
+-- SECCION 1: FOREIGN KEYS FALTANTES
+-- Criticidad: ALTA | Esfuerzo: BAJO
+-- Nota: DEFERRABLE INITIALLY DEFERRED para cargas masivas en cualquier orden.
+-- ==========================================================================
+
+-- FK: RETENIDO_JUDICIAL.COD_BANCO -> BANCOS.COD_BANCO
+BEGIN
+    EXECUTE IMMEDIATE 'ALTER TABLE RETENIDO_JUDICIAL ADD CONSTRAINT FK_RETEN_BANCO
+        FOREIGN KEY (COD_BANCO) REFERENCES BANCOS(COD_BANCO)
+        DEFERRABLE INITIALLY DEFERRED';
+    DBMS_OUTPUT.PUT_LINE('FK_RETEN_BANCO creada.');
+EXCEPTION WHEN OTHERS THEN
+    IF SQLCODE IN (-2275, -2264) THEN
+        DBMS_OUTPUT.PUT_LINE('FK_RETEN_BANCO ya existe, omitida.');
+    ELSE RAISE;
+    END IF;
+END;
+/
+
+-- FK: RETENIDO_JUDICIAL.COD_RETENCION -> TIPOS_RETENCION.COD_RETENCION
+BEGIN
+    EXECUTE IMMEDIATE 'ALTER TABLE RETENIDO_JUDICIAL ADD CONSTRAINT FK_RETEN_TIPO_RETENCION
+        FOREIGN KEY (COD_RETENCION) REFERENCES TIPOS_RETENCION(COD_RETENCION)
+        DEFERRABLE INITIALLY DEFERRED';
+    DBMS_OUTPUT.PUT_LINE('FK_RETEN_TIPO_RETENCION creada.');
+EXCEPTION WHEN OTHERS THEN
+    IF SQLCODE IN (-2275, -2264) THEN
+        DBMS_OUTPUT.PUT_LINE('FK_RETEN_TIPO_RETENCION ya existe, omitida.');
+    ELSE RAISE;
+    END IF;
+END;
+/
+
+-- FK: RETENIDO_JUDICIAL.RUT_BENEFICIARIO -> BENEFICIARIOS.RUT_BENEFICIARIO
+BEGIN
+    EXECUTE IMMEDIATE 'ALTER TABLE RETENIDO_JUDICIAL ADD CONSTRAINT FK_RETEN_BENEFICIARIO
+        FOREIGN KEY (RUT_BENEFICIARIO) REFERENCES BENEFICIARIOS(RUT_BENEFICIARIO)
+        DEFERRABLE INITIALLY DEFERRED';
+    DBMS_OUTPUT.PUT_LINE('FK_RETEN_BENEFICIARIO creada.');
+EXCEPTION WHEN OTHERS THEN
+    IF SQLCODE IN (-2275, -2264) THEN
+        DBMS_OUTPUT.PUT_LINE('FK_RETEN_BENEFICIARIO ya existe, omitida.');
+    ELSE RAISE;
+    END IF;
+END;
+/
+
+-- FK: RETENIDO_JUDICIAL.RUT_TITULAR -> FUNCIONARIOS.RUT_FUNCIONARIO
+BEGIN
+    EXECUTE IMMEDIATE 'ALTER TABLE RETENIDO_JUDICIAL ADD CONSTRAINT FK_RETEN_FUNCIONARIO
+        FOREIGN KEY (RUT_TITULAR) REFERENCES FUNCIONARIOS(RUT_FUNCIONARIO)
+        DEFERRABLE INITIALLY DEFERRED';
+    DBMS_OUTPUT.PUT_LINE('FK_RETEN_FUNCIONARIO creada.');
+EXCEPTION WHEN OTHERS THEN
+    IF SQLCODE IN (-2275, -2264) THEN
+        DBMS_OUTPUT.PUT_LINE('FK_RETEN_FUNCIONARIO ya existe, omitida.');
+    ELSE RAISE;
+    END IF;
+END;
+/
+
+-- FK: DETALLE_PAGO_TEMGE.ID_RETENIDO_JUDICIAL -> RETENIDO_JUDICIAL.ID
+BEGIN
+    EXECUTE IMMEDIATE 'ALTER TABLE DETALLE_PAGO_TEMGE ADD CONSTRAINT FK_DETPAGO_RETENIDO
+        FOREIGN KEY (ID_RETENIDO_JUDICIAL) REFERENCES RETENIDO_JUDICIAL(ID)';
+    DBMS_OUTPUT.PUT_LINE('FK_DETPAGO_RETENIDO creada.');
+EXCEPTION WHEN OTHERS THEN
+    IF SQLCODE IN (-2275, -2264) THEN
+        DBMS_OUTPUT.PUT_LINE('FK_DETPAGO_RETENIDO ya existe, omitida.');
+    ELSE RAISE;
+    END IF;
+END;
+/
+
+-- FK: DETALLE_PAGO_TEMGE.RUT_BENEFICIARIO -> BENEFICIARIOS.RUT_BENEFICIARIO
+BEGIN
+    EXECUTE IMMEDIATE 'ALTER TABLE DETALLE_PAGO_TEMGE ADD CONSTRAINT FK_DETPAGO_BENEFICIARIO
+        FOREIGN KEY (RUT_BENEFICIARIO) REFERENCES BENEFICIARIOS(RUT_BENEFICIARIO)';
+    DBMS_OUTPUT.PUT_LINE('FK_DETPAGO_BENEFICIARIO creada.');
+EXCEPTION WHEN OTHERS THEN
+    IF SQLCODE IN (-2275, -2264) THEN
+        DBMS_OUTPUT.PUT_LINE('FK_DETPAGO_BENEFICIARIO ya existe, omitida.');
+    ELSE RAISE;
+    END IF;
+END;
+/
+
+
+-- ==========================================================================
+-- SECCION 2: FOREIGN KEYS DE TIPO_CUENTA HACIA CATALOGO
+-- Criticidad: MEDIA | Esfuerzo: BAJO
+-- ==========================================================================
+
+BEGIN
+    EXECUTE IMMEDIATE 'ALTER TABLE BENEFICIARIOS ADD CONSTRAINT FK_BENEF_TIPO_CUENTA
+        FOREIGN KEY (TIPO_CUENTA) REFERENCES TIPOS_CUENTA(COD_TIPO_CUENTA)';
+    DBMS_OUTPUT.PUT_LINE('FK_BENEF_TIPO_CUENTA creada.');
+EXCEPTION WHEN OTHERS THEN
+    IF SQLCODE IN (-2275, -2264) THEN
+        DBMS_OUTPUT.PUT_LINE('FK_BENEF_TIPO_CUENTA ya existe, omitida.');
+    ELSE RAISE;
+    END IF;
+END;
+/
+
+BEGIN
+    EXECUTE IMMEDIATE 'ALTER TABLE RETENIDO_JUDICIAL ADD CONSTRAINT FK_RETEN_TIPO_CUENTA
+        FOREIGN KEY (TIPO_CUENTA) REFERENCES TIPOS_CUENTA(COD_TIPO_CUENTA)';
+    DBMS_OUTPUT.PUT_LINE('FK_RETEN_TIPO_CUENTA creada.');
+EXCEPTION WHEN OTHERS THEN
+    IF SQLCODE IN (-2275, -2264) THEN
+        DBMS_OUTPUT.PUT_LINE('FK_RETEN_TIPO_CUENTA ya existe, omitida.');
+    ELSE RAISE;
+    END IF;
+END;
+/
+
+BEGIN
+    EXECUTE IMMEDIATE 'ALTER TABLE DETALLE_PAGO_TEMGE ADD CONSTRAINT FK_DETPAGO_TIPO_CUENTA
+        FOREIGN KEY (TIPO_CUENTA) REFERENCES TIPOS_CUENTA(COD_TIPO_CUENTA)';
+    DBMS_OUTPUT.PUT_LINE('FK_DETPAGO_TIPO_CUENTA creada.');
+EXCEPTION WHEN OTHERS THEN
+    IF SQLCODE IN (-2275, -2264) THEN
+        DBMS_OUTPUT.PUT_LINE('FK_DETPAGO_TIPO_CUENTA ya existe, omitida.');
+    ELSE RAISE;
+    END IF;
+END;
+/
+
+
+-- ==========================================================================
+-- SECCION 3: UNIQUE CONSTRAINTS FALTANTES
+-- Criticidad: ALTA | Esfuerzo: BAJO
+-- ==========================================================================
+
+-- Evitar retenciones duplicadas
+BEGIN
+    EXECUTE IMMEDIATE 'ALTER TABLE RETENIDO_JUDICIAL ADD CONSTRAINT UK_RETEN_UNICA
+        UNIQUE (ID_RETENCION, RUT_TITULAR, RUT_BENEFICIARIO, PERIODO_PROCESO)';
+    DBMS_OUTPUT.PUT_LINE('UK_RETEN_UNICA creada.');
+EXCEPTION WHEN OTHERS THEN
+    IF SQLCODE IN (-2261, -2264) THEN
+        DBMS_OUTPUT.PUT_LINE('UK_RETEN_UNICA ya existe, omitida.');
+    ELSE RAISE;
+    END IF;
+END;
+/
+
+-- Evitar cargas duplicadas del mismo archivo
+BEGIN
+    EXECUTE IMMEDIATE 'CREATE UNIQUE INDEX UK_LOG_HASH ON LOG_CARGAS(HASH_ARCHIVO)';
+    DBMS_OUTPUT.PUT_LINE('UK_LOG_HASH creado.');
+EXCEPTION WHEN OTHERS THEN
+    IF SQLCODE IN (-955, -1408) THEN
+        DBMS_OUTPUT.PUT_LINE('UK_LOG_HASH ya existe, omitido.');
+    ELSE RAISE;
+    END IF;
+END;
+/
+
+
+-- ==========================================================================
+-- SECCION 4: CHECK CONSTRAINTS FALTANTES
+-- Criticidad: ALTA/MEDIA | Esfuerzo: BAJO
+-- ==========================================================================
+
+BEGIN
+    EXECUTE IMMEDIATE 'ALTER TABLE RETENIDO_JUDICIAL ADD CONSTRAINT CK_RETEN_MONTO_POS CHECK (MONTO > 0)';
+    DBMS_OUTPUT.PUT_LINE('CK_RETEN_MONTO_POS creado.');
+EXCEPTION WHEN OTHERS THEN
+    IF SQLCODE = -2264 THEN DBMS_OUTPUT.PUT_LINE('CK_RETEN_MONTO_POS ya existe, omitido.');
+    ELSE RAISE;
+    END IF;
+END;
+/
+
+BEGIN
+    EXECUTE IMMEDIATE 'ALTER TABLE BENEFICIARIOS ADD CONSTRAINT CK_BENEF_RUT_POS CHECK (RUT_BENEFICIARIO > 0)';
+    DBMS_OUTPUT.PUT_LINE('CK_BENEF_RUT_POS creado.');
+EXCEPTION WHEN OTHERS THEN
+    IF SQLCODE = -2264 THEN DBMS_OUTPUT.PUT_LINE('CK_BENEF_RUT_POS ya existe, omitido.');
+    ELSE RAISE;
+    END IF;
+END;
+/
+
+BEGIN
+    EXECUTE IMMEDIATE 'ALTER TABLE FUNCIONARIOS ADD CONSTRAINT CK_FUNC_RUT_POS CHECK (RUT_FUNCIONARIO > 0)';
+    DBMS_OUTPUT.PUT_LINE('CK_FUNC_RUT_POS creado.');
+EXCEPTION WHEN OTHERS THEN
+    IF SQLCODE = -2264 THEN DBMS_OUTPUT.PUT_LINE('CK_FUNC_RUT_POS ya existe, omitido.');
+    ELSE RAISE;
+    END IF;
+END;
+/
+
+BEGIN
+    EXECUTE IMMEDIATE 'ALTER TABLE RETENIDO_JUDICIAL ADD CONSTRAINT CK_RETEN_RUT_TITULAR_POS CHECK (RUT_TITULAR > 0)';
+    DBMS_OUTPUT.PUT_LINE('CK_RETEN_RUT_TITULAR_POS creado.');
+EXCEPTION WHEN OTHERS THEN
+    IF SQLCODE = -2264 THEN DBMS_OUTPUT.PUT_LINE('CK_RETEN_RUT_TITULAR_POS ya existe, omitido.');
+    ELSE RAISE;
+    END IF;
+END;
+/
+
+BEGIN
+    EXECUTE IMMEDIATE 'ALTER TABLE RETENIDO_JUDICIAL ADD CONSTRAINT CK_RETEN_RUT_BENEF_POS CHECK (RUT_BENEFICIARIO > 0)';
+    DBMS_OUTPUT.PUT_LINE('CK_RETEN_RUT_BENEF_POS creado.');
+EXCEPTION WHEN OTHERS THEN
+    IF SQLCODE = -2264 THEN DBMS_OUTPUT.PUT_LINE('CK_RETEN_RUT_BENEF_POS ya existe, omitido.');
+    ELSE RAISE;
+    END IF;
+END;
+/
+
+BEGIN
+    EXECUTE IMMEDIATE 'ALTER TABLE BANCOS ADD CONSTRAINT CK_BANCOS_ACTIVO CHECK (ACTIVO IN (''S'', ''N''))';
+    DBMS_OUTPUT.PUT_LINE('CK_BANCOS_ACTIVO creado.');
+EXCEPTION WHEN OTHERS THEN
+    IF SQLCODE = -2264 THEN DBMS_OUTPUT.PUT_LINE('CK_BANCOS_ACTIVO ya existe, omitido.');
+    ELSE RAISE;
+    END IF;
+END;
+/
+
+BEGIN
+    EXECUTE IMMEDIATE 'ALTER TABLE TIPOS_RETENCION ADD CONSTRAINT CK_TIPOSRET_ACTIVO CHECK (ACTIVO IN (''S'', ''N''))';
+    DBMS_OUTPUT.PUT_LINE('CK_TIPOSRET_ACTIVO creado.');
+EXCEPTION WHEN OTHERS THEN
+    IF SQLCODE = -2264 THEN DBMS_OUTPUT.PUT_LINE('CK_TIPOSRET_ACTIVO ya existe, omitido.');
+    ELSE RAISE;
+    END IF;
+END;
+/
+
+
+-- ==========================================================================
+-- SECCION 5: COLUMNAS FALTANTES
+-- Criticidad: MEDIA | Esfuerzo: BAJO
+-- ==========================================================================
+
+-- 5.1 PERIODO_PROCESO en HISTORIAL_PAGOS_TEMGE
+BEGIN
+    EXECUTE IMMEDIATE 'ALTER TABLE HISTORIAL_PAGOS_TEMGE ADD (PERIODO_PROCESO NCHAR(6) NULL)';
+    DBMS_OUTPUT.PUT_LINE('HISTORIAL_PAGOS_TEMGE.PERIODO_PROCESO agregada.');
+EXCEPTION WHEN OTHERS THEN
+    IF SQLCODE = -1430 THEN DBMS_OUTPUT.PUT_LINE('HISTORIAL_PAGOS_TEMGE.PERIODO_PROCESO ya existe, omitida.');
+    ELSE RAISE;
+    END IF;
+END;
+/
+
+COMMENT ON COLUMN HISTORIAL_PAGOS_TEMGE.PERIODO_PROCESO
+    IS 'Periodo AAAAMM del archivo TEMGE generado';
+
+-- 5.2 Campos de auditoria en FUNCIONARIOS (cada columna por separado para idempotencia)
+BEGIN
+    EXECUTE IMMEDIATE 'ALTER TABLE FUNCIONARIOS ADD (FECHA_CREACION DATE DEFAULT SYSDATE)';
+    DBMS_OUTPUT.PUT_LINE('FUNCIONARIOS.FECHA_CREACION agregada.');
+EXCEPTION WHEN OTHERS THEN
+    IF SQLCODE = -1430 THEN DBMS_OUTPUT.PUT_LINE('FUNCIONARIOS.FECHA_CREACION ya existe, omitida.');
+    ELSE RAISE;
+    END IF;
+END;
+/
+
+BEGIN
+    EXECUTE IMMEDIATE 'ALTER TABLE FUNCIONARIOS ADD (FECHA_MODIFICACION DATE NULL)';
+    DBMS_OUTPUT.PUT_LINE('FUNCIONARIOS.FECHA_MODIFICACION agregada.');
+EXCEPTION WHEN OTHERS THEN
+    IF SQLCODE = -1430 THEN DBMS_OUTPUT.PUT_LINE('FUNCIONARIOS.FECHA_MODIFICACION ya existe, omitida.');
+    ELSE RAISE;
+    END IF;
+END;
+/
+
+BEGIN
+    EXECUTE IMMEDIATE 'ALTER TABLE FUNCIONARIOS ADD (USUARIO_CREACION NVARCHAR2(50) NULL)';
+    DBMS_OUTPUT.PUT_LINE('FUNCIONARIOS.USUARIO_CREACION agregada.');
+EXCEPTION WHEN OTHERS THEN
+    IF SQLCODE = -1430 THEN DBMS_OUTPUT.PUT_LINE('FUNCIONARIOS.USUARIO_CREACION ya existe, omitida.');
+    ELSE RAISE;
+    END IF;
+END;
+/
+
+COMMENT ON COLUMN FUNCIONARIOS.FECHA_CREACION IS 'Fecha de creacion del registro';
+COMMENT ON COLUMN FUNCIONARIOS.FECHA_MODIFICACION IS 'Fecha de ultima modificacion';
+COMMENT ON COLUMN FUNCIONARIOS.USUARIO_CREACION IS 'Usuario que creo el registro';
+
+
+-- ==========================================================================
+-- SECCION 6: CORRECCION DE TIPOS DE DATOS EN TIPOS_CUENTA
+-- Criticidad: MEDIA | Esfuerzo: BAJO
+-- Uniformar VARCHAR2/CHAR -> NVARCHAR2/NCHAR para consistencia con esquema.
+-- MODIFY es idempotente si el tipo destino es compatible.
+-- ==========================================================================
+
+ALTER TABLE TIPOS_CUENTA MODIFY DESCRIPCION NVARCHAR2(100);
+ALTER TABLE TIPOS_CUENTA MODIFY ACTIVO NCHAR(1);
+
+
+-- ==========================================================================
+-- SECCION 7: OPTIMIZACION DE INDICES
+-- Criticidad: MEDIA | Esfuerzo: BAJO
+-- Reemplazar indices de baja selectividad por compuestos.
+-- ==========================================================================
+
+-- 7.1 Eliminar indices de baja selectividad (solo si existen)
+DECLARE
+    PROCEDURE drop_index_safe(p_name VARCHAR2) IS
+    BEGIN
+        EXECUTE IMMEDIATE 'DROP INDEX ' || p_name;
+        DBMS_OUTPUT.PUT_LINE('Indice ' || p_name || ' eliminado.');
+    EXCEPTION WHEN OTHERS THEN
+        IF SQLCODE = -1418 THEN
+            DBMS_OUTPUT.PUT_LINE('Indice ' || p_name || ' no existe, omitido.');
+        ELSE RAISE;
+        END IF;
+    END;
+BEGIN
+    drop_index_safe('IDX_BENEF_ESTADO');
+    drop_index_safe('IDX_RETEN_ESTADO');
+    drop_index_safe('IDX_HIST_ESTADO');
+    drop_index_safe('IDX_LOG_ESTADO');
+    drop_index_safe('IDX_RETEN_RUT_TITULAR');
+    drop_index_safe('IDX_RETEN_RUT_BENEF');
+    drop_index_safe('IDX_LOG_TIPO');
+    drop_index_safe('IDX_LOG_PERIODO');
+    drop_index_safe('IDX_AUD_ENTIDAD');
+END;
+/
+
+-- 7.2 Crear indices compuestos (solo si no existen)
+DECLARE
+    PROCEDURE create_index_safe(p_ddl VARCHAR2, p_name VARCHAR2) IS
+    BEGIN
+        EXECUTE IMMEDIATE p_ddl;
+        DBMS_OUTPUT.PUT_LINE('Indice ' || p_name || ' creado.');
+    EXCEPTION WHEN OTHERS THEN
+        IF SQLCODE IN (-955, -1408) THEN
+            DBMS_OUTPUT.PUT_LINE('Indice ' || p_name || ' ya existe, omitido.');
+        ELSE RAISE;
+        END IF;
+    END;
+BEGIN
+    create_index_safe(
+        'CREATE INDEX IDX_RETEN_TITULAR_ESTADO ON RETENIDO_JUDICIAL(RUT_TITULAR, ESTADO)',
+        'IDX_RETEN_TITULAR_ESTADO');
+    create_index_safe(
+        'CREATE INDEX IDX_RETEN_BENEF_PERIODO ON RETENIDO_JUDICIAL(RUT_BENEFICIARIO, PERIODO_PROCESO)',
+        'IDX_RETEN_BENEF_PERIODO');
+    create_index_safe(
+        'CREATE INDEX IDX_LOG_TIPO_PERIODO ON LOG_CARGAS(TIPO_CARGA, PERIODO_PROCESO)',
+        'IDX_LOG_TIPO_PERIODO');
+    create_index_safe(
+        'CREATE INDEX IDX_DET_RETENIDO ON DETALLE_PAGO_TEMGE(ID_RETENIDO_JUDICIAL)',
+        'IDX_DET_RETENIDO');
+    create_index_safe(
+        'CREATE INDEX IDX_AUD_ENTIDAD_FECHA ON AUDITORIA_CAMBIOS(ENTIDAD, ID_ENTIDAD, FECHA)',
+        'IDX_AUD_ENTIDAD_FECHA');
+END;
+/
+
+
+-- ==========================================================================
+-- SECCION 8: REDIMENSIONAR TIPOS NUMERICOS SOBREDIMENSIONADOS
+-- Criticidad: MEDIA | Esfuerzo: MEDIO
+--
+-- Oracle no permite reducir precision en columnas con datos.
+-- Se usa un procedimiento que verifica la precision actual antes de intentar.
+-- Para BANCOS.COD_BANCO (PK con datos): se usa recreacion de columna.
+-- ==========================================================================
+
+DECLARE
+    PROCEDURE modify_safe(p_ddl VARCHAR2, p_desc VARCHAR2) IS
+    BEGIN
+        EXECUTE IMMEDIATE p_ddl;
+        DBMS_OUTPUT.PUT_LINE(p_desc || ' — OK.');
+    EXCEPTION WHEN OTHERS THEN
+        IF SQLCODE = -1440 THEN
+            DBMS_OUTPUT.PUT_LINE(p_desc || ' — omitido (columna con datos, ya aplicado o requiere vaciar).');
+        ELSE RAISE;
+        END IF;
+    END;
+BEGIN
+    -- 8.1 RUTs: NUMBER(18,0) -> NUMBER(10,0)
+    modify_safe('ALTER TABLE BENEFICIARIOS MODIFY RUT_BENEFICIARIO NUMBER(10,0)', 'BENEFICIARIOS.RUT_BENEFICIARIO -> NUMBER(10)');
+    modify_safe('ALTER TABLE BENEFICIARIOS MODIFY RUT_FUNCIONARIO NUMBER(10,0)',  'BENEFICIARIOS.RUT_FUNCIONARIO -> NUMBER(10)');
+    modify_safe('ALTER TABLE FUNCIONARIOS MODIFY RUT_FUNCIONARIO NUMBER(10,0)',   'FUNCIONARIOS.RUT_FUNCIONARIO -> NUMBER(10)');
+    modify_safe('ALTER TABLE RETENIDO_JUDICIAL MODIFY RUT_TITULAR NUMBER(10,0)',       'RETENIDO_JUDICIAL.RUT_TITULAR -> NUMBER(10)');
+    modify_safe('ALTER TABLE RETENIDO_JUDICIAL MODIFY RUT_BENEFICIARIO NUMBER(10,0)',  'RETENIDO_JUDICIAL.RUT_BENEFICIARIO -> NUMBER(10)');
+    modify_safe('ALTER TABLE RETENIDO_JUDICIAL MODIFY ID_RETENCION NUMBER(10,0)',      'RETENIDO_JUDICIAL.ID_RETENCION -> NUMBER(10)');
+    modify_safe('ALTER TABLE DETALLE_PAGO_TEMGE MODIFY RUT_BENEFICIARIO NUMBER(10,0)', 'DETALLE_PAGO_TEMGE.RUT_BENEFICIARIO -> NUMBER(10)');
+    modify_safe('ALTER TABLE LOG_CARGA_DETALLE MODIFY ID_CARGA NUMBER(10,0)',          'LOG_CARGA_DETALLE.ID_CARGA -> NUMBER(10)');
+
+    -- 8.2 COD_BANCO: NUMBER(18,0) -> NUMBER(5,0)
+    -- BANCOS.COD_BANCO es PK con datos: Oracle no permite reducir precision directamente.
+    -- Las tablas hijas si se pueden si estan vacias o ya tienen precision menor.
+    modify_safe('ALTER TABLE BANCOS MODIFY COD_BANCO NUMBER(5,0)',             'BANCOS.COD_BANCO -> NUMBER(5)');
+    modify_safe('ALTER TABLE BENEFICIARIOS MODIFY COD_BANCO NUMBER(5,0)',      'BENEFICIARIOS.COD_BANCO -> NUMBER(5)');
+    modify_safe('ALTER TABLE RETENIDO_JUDICIAL MODIFY COD_BANCO NUMBER(5,0)',  'RETENIDO_JUDICIAL.COD_BANCO -> NUMBER(5)');
+    modify_safe('ALTER TABLE DETALLE_PAGO_TEMGE MODIFY COD_BANCO NUMBER(5,0)', 'DETALLE_PAGO_TEMGE.COD_BANCO -> NUMBER(5)');
+
+    -- 8.3 TIPO_CUENTA: NUMBER(18,0) -> NUMBER(5,0)
+    modify_safe('ALTER TABLE BENEFICIARIOS MODIFY TIPO_CUENTA NUMBER(5,0)',      'BENEFICIARIOS.TIPO_CUENTA -> NUMBER(5)');
+    modify_safe('ALTER TABLE RETENIDO_JUDICIAL MODIFY TIPO_CUENTA NUMBER(5,0)',  'RETENIDO_JUDICIAL.TIPO_CUENTA -> NUMBER(5)');
+    modify_safe('ALTER TABLE DETALLE_PAGO_TEMGE MODIFY TIPO_CUENTA NUMBER(5,0)', 'DETALLE_PAGO_TEMGE.TIPO_CUENTA -> NUMBER(5)');
+
+    -- 8.4 MONTO: NUMBER(18,2) -> NUMBER(14,2)
+    modify_safe('ALTER TABLE RETENIDO_JUDICIAL MODIFY MONTO NUMBER(14,2)',           'RETENIDO_JUDICIAL.MONTO -> NUMBER(14,2)');
+    modify_safe('ALTER TABLE DETALLE_PAGO_TEMGE MODIFY MONTO_PAGADO NUMBER(14,2)',   'DETALLE_PAGO_TEMGE.MONTO_PAGADO -> NUMBER(14,2)');
+    modify_safe('ALTER TABLE HISTORIAL_PAGOS_TEMGE MODIFY MONTO_TOTAL NUMBER(14,2)', 'HISTORIAL_PAGOS_TEMGE.MONTO_TOTAL -> NUMBER(14,2)');
+    modify_safe('ALTER TABLE LOG_CARGAS MODIFY MONTO_TOTAL NUMBER(14,2)',            'LOG_CARGAS.MONTO_TOTAL -> NUMBER(14,2)');
+END;
+/
+
+
+-- ==========================================================================
+-- SECCION 9: COMBINAR FECHA_PROCESO + HORA_PROCESO EN TIMESTAMP
+-- Criticidad: MEDIA | Esfuerzo: MEDIO
+--
+-- Verifica el estado actual de la tabla antes de cada paso.
+-- Si FECHA_PROCESO ya es TIMESTAMP (por ejecucion previa), omite todo.
+-- ==========================================================================
+
+DECLARE
+    v_dtype VARCHAR2(100);
+    v_col_exists NUMBER;
+BEGIN
+    -- Verificar tipo actual de FECHA_PROCESO
+    SELECT data_type INTO v_dtype
+    FROM user_tab_columns
+    WHERE table_name = 'HISTORIAL_PAGOS_TEMGE' AND column_name = 'FECHA_PROCESO';
+
+    IF v_dtype = 'TIMESTAMP(6)' OR v_dtype LIKE 'TIMESTAMP%' THEN
+        DBMS_OUTPUT.PUT_LINE('SECCION 9: FECHA_PROCESO ya es TIMESTAMP, nada que hacer.');
+    ELSE
+        -- FECHA_PROCESO es DATE, hay que migrar
+
+        -- 9.1 Verificar si HORA_PROCESO existe
+        SELECT COUNT(*) INTO v_col_exists
+        FROM user_tab_columns
+        WHERE table_name = 'HISTORIAL_PAGOS_TEMGE' AND column_name = 'HORA_PROCESO';
+
+        -- 9.2 Agregar columna temporal si no existe
+        SELECT COUNT(*) INTO v_col_exists
+        FROM user_tab_columns
+        WHERE table_name = 'HISTORIAL_PAGOS_TEMGE' AND column_name = 'FECHA_HORA_PROCESO';
+
+        IF v_col_exists = 0 THEN
+            EXECUTE IMMEDIATE 'ALTER TABLE HISTORIAL_PAGOS_TEMGE ADD (FECHA_HORA_PROCESO TIMESTAMP NULL)';
+            DBMS_OUTPUT.PUT_LINE('Columna FECHA_HORA_PROCESO agregada.');
+        END IF;
+
+        -- 9.3 Migrar datos
+        SELECT COUNT(*) INTO v_col_exists
+        FROM user_tab_columns
+        WHERE table_name = 'HISTORIAL_PAGOS_TEMGE' AND column_name = 'HORA_PROCESO';
+
+        IF v_col_exists > 0 THEN
+            EXECUTE IMMEDIATE '
+                UPDATE HISTORIAL_PAGOS_TEMGE
+                SET FECHA_HORA_PROCESO = CASE
+                    WHEN HORA_PROCESO IS NOT NULL THEN
+                        CAST(FECHA_PROCESO AS TIMESTAMP)
+                        + NUMTODSINTERVAL(TO_NUMBER(SUBSTR(HORA_PROCESO, 1, 2)), ''HOUR'')
+                        + NUMTODSINTERVAL(TO_NUMBER(SUBSTR(HORA_PROCESO, 3, 2)), ''MINUTE'')
+                        + NUMTODSINTERVAL(TO_NUMBER(SUBSTR(HORA_PROCESO, 5, 2)), ''SECOND'')
+                    ELSE
+                        CAST(FECHA_PROCESO AS TIMESTAMP)
+                    END
+                WHERE FECHA_HORA_PROCESO IS NULL';
+            DBMS_OUTPUT.PUT_LINE('Datos migrados a FECHA_HORA_PROCESO.');
+
+            -- 9.4 Eliminar HORA_PROCESO
+            EXECUTE IMMEDIATE 'ALTER TABLE HISTORIAL_PAGOS_TEMGE DROP COLUMN HORA_PROCESO';
+            DBMS_OUTPUT.PUT_LINE('Columna HORA_PROCESO eliminada.');
+        ELSE
+            -- HORA_PROCESO ya fue eliminada, solo copiar FECHA_PROCESO
+            EXECUTE IMMEDIATE '
+                UPDATE HISTORIAL_PAGOS_TEMGE
+                SET FECHA_HORA_PROCESO = CAST(FECHA_PROCESO AS TIMESTAMP)
+                WHERE FECHA_HORA_PROCESO IS NULL';
+            DBMS_OUTPUT.PUT_LINE('Datos copiados de FECHA_PROCESO a FECHA_HORA_PROCESO.');
+        END IF;
+
+        -- 9.5 Hacer NOT NULL
+        EXECUTE IMMEDIATE 'ALTER TABLE HISTORIAL_PAGOS_TEMGE MODIFY FECHA_HORA_PROCESO TIMESTAMP NOT NULL';
+
+        -- 9.6 Eliminar FECHA_PROCESO original (tipo DATE)
+        EXECUTE IMMEDIATE 'ALTER TABLE HISTORIAL_PAGOS_TEMGE DROP COLUMN FECHA_PROCESO';
+        DBMS_OUTPUT.PUT_LINE('Columna FECHA_PROCESO (DATE) eliminada.');
+
+        -- 9.7 Renombrar
+        EXECUTE IMMEDIATE 'ALTER TABLE HISTORIAL_PAGOS_TEMGE RENAME COLUMN FECHA_HORA_PROCESO TO FECHA_PROCESO';
+        DBMS_OUTPUT.PUT_LINE('FECHA_HORA_PROCESO renombrada a FECHA_PROCESO (TIMESTAMP).');
+    END IF;
+END;
+/
+
+COMMENT ON COLUMN HISTORIAL_PAGOS_TEMGE.FECHA_PROCESO
+    IS 'Fecha y hora del proceso de generacion TEMGE';
+
+-- Recrear indice sobre FECHA_PROCESO
+BEGIN
+    EXECUTE IMMEDIATE 'DROP INDEX IDX_HIST_FECHA';
+    DBMS_OUTPUT.PUT_LINE('IDX_HIST_FECHA eliminado para recrear.');
+EXCEPTION WHEN OTHERS THEN
+    IF SQLCODE = -1418 THEN DBMS_OUTPUT.PUT_LINE('IDX_HIST_FECHA no existia.');
+    ELSE RAISE;
+    END IF;
+END;
+/
+
+BEGIN
+    EXECUTE IMMEDIATE 'CREATE INDEX IDX_HIST_FECHA ON HISTORIAL_PAGOS_TEMGE(FECHA_PROCESO)';
+    DBMS_OUTPUT.PUT_LINE('IDX_HIST_FECHA creado.');
+EXCEPTION WHEN OTHERS THEN
+    IF SQLCODE = -955 THEN DBMS_OUTPUT.PUT_LINE('IDX_HIST_FECHA ya existe.');
+    ELSE RAISE;
+    END IF;
+END;
+/
+
+
+-- ==========================================================================
+-- SECCION 10: CHECK ESTADO_CIVIL
+-- Criticidad: BAJA | Esfuerzo: BAJO
+-- ==========================================================================
+
+BEGIN
+    EXECUTE IMMEDIATE 'ALTER TABLE BENEFICIARIOS ADD CONSTRAINT CK_BENEF_ESTADO_CIVIL
+        CHECK (ESTADO_CIVIL IN (''Soltero'', ''Casado'', ''Viudo'', ''Divorciado'', ''Separado''))';
+    DBMS_OUTPUT.PUT_LINE('CK_BENEF_ESTADO_CIVIL creado.');
+EXCEPTION WHEN OTHERS THEN
+    IF SQLCODE = -2264 THEN DBMS_OUTPUT.PUT_LINE('CK_BENEF_ESTADO_CIVIL ya existe, omitido.');
+    ELSE RAISE;
+    END IF;
+END;
+/
+
+
+-- ==========================================================================
+-- SECCION 11: FK BENEFICIARIOS.RUT_FUNCIONARIO -> FUNCIONARIOS
+-- Criticidad: ALTA | Esfuerzo: BAJO
+-- ==========================================================================
+
+BEGIN
+    EXECUTE IMMEDIATE 'ALTER TABLE BENEFICIARIOS ADD CONSTRAINT FK_BENEF_FUNCIONARIO
+        FOREIGN KEY (RUT_FUNCIONARIO) REFERENCES FUNCIONARIOS(RUT_FUNCIONARIO)
+        DEFERRABLE INITIALLY DEFERRED';
+    DBMS_OUTPUT.PUT_LINE('FK_BENEF_FUNCIONARIO creada.');
+EXCEPTION WHEN OTHERS THEN
+    IF SQLCODE IN (-2275, -2264) THEN
+        DBMS_OUTPUT.PUT_LINE('FK_BENEF_FUNCIONARIO ya existe, omitida.');
+    ELSE RAISE;
+    END IF;
+END;
+/
+
+
+-- ==========================================================================
+-- SECCION 12: PARTICIONAMIENTO SUGERIDO (REQUIERE RECREAR TABLAS)
+-- Criticidad: MEDIA | Esfuerzo: ALTO
+--
+-- NOTA: Plantillas comentadas. Planificar para ventana de mantenimiento.
+-- ==========================================================================
+
+/*
+-- 12.1 AUDITORIA_CAMBIOS con particionamiento mensual por FECHA
+CREATE TABLE AUDITORIA_CAMBIOS_PART (
+    ID                    NUMBER(18)          GENERATED ALWAYS AS IDENTITY,
+    ENTIDAD               NVARCHAR2(50)       NOT NULL,
+    ID_ENTIDAD            NUMBER(18,0)        NOT NULL,
+    RUT_AFECTADO          NVARCHAR2(15)       NULL,
+    ACCION                NVARCHAR2(20)       NOT NULL,
+    CAMPO_MODIFICADO      NVARCHAR2(60)       NULL,
+    VALOR_ANTERIOR        NVARCHAR2(500)      NULL,
+    VALOR_NUEVO           NVARCHAR2(500)      NULL,
+    USUARIO               NVARCHAR2(50)       NOT NULL,
+    FECHA                 TIMESTAMP           DEFAULT SYSTIMESTAMP NOT NULL,
+    IP                    NVARCHAR2(50)       NULL,
+    MOTIVO                NVARCHAR2(500)      NULL,
+    CONSTRAINT PK_AUDITORIA_CAMBIOS_PART PRIMARY KEY (ID, FECHA)
+)
+PARTITION BY RANGE (FECHA)
+INTERVAL (NUMTOYMINTERVAL(1, 'MONTH'))
+(
+    PARTITION P_INIT VALUES LESS THAN (TIMESTAMP '2026-01-01 00:00:00')
+);
+
+-- Migrar datos:
+-- INSERT INTO AUDITORIA_CAMBIOS_PART SELECT * FROM AUDITORIA_CAMBIOS;
+-- RENAME AUDITORIA_CAMBIOS TO AUDITORIA_CAMBIOS_OLD;
+-- RENAME AUDITORIA_CAMBIOS_PART TO AUDITORIA_CAMBIOS;
+*/
+
+/*
+-- 12.2 LOG_CARGA_DETALLE con particionamiento mensual
+CREATE TABLE LOG_CARGA_DETALLE_PART (
+    ID                    NUMBER(18)          GENERATED ALWAYS AS IDENTITY,
+    ID_CARGA              NUMBER(18,0)        NOT NULL,
+    NUMERO_LINEA          NUMBER(10,0)        NULL,
+    RUT_REFERENCIA        NVARCHAR2(15)       NULL,
+    ACCION                NVARCHAR2(15)       NULL,
+    ESTADO                NCHAR(2)            NULL,
+    DATOS_ORIGINALES      NCLOB               NULL,
+    DATOS_ANTERIORES      NCLOB               NULL,
+    DATOS_NUEVOS          NCLOB               NULL,
+    MENSAJES              NVARCHAR2(2000)     NULL,
+    FECHA_CARGA           TIMESTAMP           DEFAULT SYSTIMESTAMP NOT NULL,
+    CONSTRAINT PK_LOG_CARGA_DETALLE_PART PRIMARY KEY (ID, FECHA_CARGA)
+)
+PARTITION BY RANGE (FECHA_CARGA)
+INTERVAL (NUMTOYMINTERVAL(1, 'MONTH'))
+(
+    PARTITION P_INIT VALUES LESS THAN (TIMESTAMP '2026-01-01 00:00:00')
+);
+*/
+
+
+COMMIT;
+
+
+-- ============================================================================
+-- VERIFICACION POST-EJECUCION
+-- ============================================================================
+
+-- Resumen de FKs
+SELECT constraint_name, table_name, status, deferrable, deferred
+FROM user_constraints
+WHERE constraint_type = 'R'
+ORDER BY table_name, constraint_name;
+
+-- Resumen de CHECK constraints del proyecto
+SELECT constraint_name, table_name, search_condition
+FROM user_constraints
+WHERE constraint_type = 'C'
+  AND constraint_name LIKE 'CK_%'
+ORDER BY table_name;
+
+-- Resumen de indices
+SELECT index_name, table_name, uniqueness, status
+FROM user_indexes
+WHERE table_name IN ('BENEFICIARIOS','FUNCIONARIOS','RETENIDO_JUDICIAL',
+                     'HISTORIAL_PAGOS_TEMGE','DETALLE_PAGO_TEMGE',
+                     'LOG_CARGAS','LOG_CARGA_DETALLE','AUDITORIA_CAMBIOS')
+ORDER BY table_name, index_name;

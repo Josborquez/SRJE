@@ -1,11 +1,12 @@
 <template>
   <div class="preview-importacion">
     <div class="preview-stats">
-      <span class="stat ok"><CheckCircle :size="14" /> OK: {{ stats.ok }}</span>
-      <span class="stat nuevo"><PlusCircle :size="14" /> Nuevos: {{ stats.nuevos }}</span>
-      <span class="stat advertencia"><AlertTriangle :size="14" /> Advertencias: {{ stats.advertencias }}</span>
-      <span class="stat error"><XCircle :size="14" /> Errores: {{ stats.errores }}</span>
-      <span class="stat total"><List :size="14" /> Total: {{ lineas.length }}</span>
+      <span class="stat ok" :class="{ active: filtroActivo === 'ok' }" @click="toggleFiltro('ok')"><CheckCircle :size="14" /> OK: {{ stats.ok }}</span>
+      <span class="stat nuevo" :class="{ active: filtroActivo === 'nuevo' }" @click="toggleFiltro('nuevo')"><PlusCircle :size="14" /> Nuevos: {{ stats.nuevos }}</span>
+      <span class="stat advertencia" :class="{ active: filtroActivo === 'advertencia' }" @click="toggleFiltro('advertencia')"><AlertTriangle :size="14" /> Advertencias: {{ stats.advertencias }}</span>
+      <span class="stat error" :class="{ active: filtroActivo === 'error' }" @click="toggleFiltro('error')"><XCircle :size="14" /> Errores: {{ stats.errores }}</span>
+      <span v-if="stats.multicuenta > 0" class="stat multicuenta" :class="{ active: filtroActivo === 'multicuenta' }" @click="toggleFiltro('multicuenta')"><AlertTriangle :size="14" /> Multicuenta: {{ stats.multicuenta }}</span>
+      <span class="stat total" :class="{ active: !filtroActivo }" @click="toggleFiltro(null)"><List :size="14" /> Total: {{ lineas.length }}</span>
     </div>
 
     <div class="preview-table-wrapper">
@@ -28,10 +29,10 @@
             <td><input type="checkbox" v-model="linea.incluir" /></td>
             <td>{{ linea.numeroLinea }}</td>
             <td v-for="col in columnas" :key="col.key">
-              <template v-if="col.editable && col.options">
+              <template v-if="isEditable(linea, col) && col.options">
                 <select
                   :value="linea[col.key]"
-                  @change="linea[col.key] = $event.target.value"
+                  @change="onSelectChange(linea, col, $event)"
                   class="inline-select"
                 >
                   <option
@@ -45,7 +46,7 @@
                   >{{ opt.label }}</option>
                 </select>
               </template>
-              <template v-else-if="col.editable">
+              <template v-else-if="isEditable(linea, col)">
                 <input
                   v-model="linea[col.key]"
                   class="inline-edit"
@@ -66,7 +67,8 @@
     <!-- Paginacion del preview -->
     <div v-if="totalPages > 1" class="preview-pagination">
       <span class="pagination-info">
-        Filas {{ rangoInicio }}-{{ rangoFin }} de {{ lineas.length }}
+        Filas {{ rangoInicio }}-{{ rangoFin }} de {{ lineasFiltradas.length }}
+        <template v-if="filtroActivo"> (filtrado de {{ lineas.length }})</template>
       </span>
       <div class="pagination-controls">
         <button @click="pagina = 1" :disabled="pagina <= 1" class="page-btn">&laquo;</button>
@@ -113,21 +115,34 @@ defineEmits(['confirmar', 'cancelar'])
 const selectAll = ref(true)
 const pagina = ref(1)
 const porPagina = ref(100)
+const filtroActivo = ref(null)
 
 const stats = computed(() => ({
   ok: props.lineas.filter(l => l.estadoLinea === 'OK').length,
   nuevos: props.lineas.filter(l => l.estadoLinea === 'NUEVO').length,
   advertencias: props.lineas.filter(l => l.estadoLinea === 'ADVERTENCIA').length,
-  errores: props.lineas.filter(l => l.estadoLinea === 'ERROR').length
+  errores: props.lineas.filter(l => l.estadoLinea === 'ERROR').length,
+  multicuenta: props.lineas.filter(l => l.esMulticuenta).length
 }))
 
-const totalPages = computed(() => Math.ceil(props.lineas.length / porPagina.value))
-const rangoInicio = computed(() => (pagina.value - 1) * porPagina.value + 1)
-const rangoFin = computed(() => Math.min(pagina.value * porPagina.value, props.lineas.length))
+const lineasFiltradas = computed(() => {
+  if (!filtroActivo.value) return props.lineas
+  if (filtroActivo.value === 'multicuenta') return props.lineas.filter(l => l.esMulticuenta)
+  return props.lineas.filter(l => l.estadoLinea.toLowerCase() === filtroActivo.value)
+})
+
+function toggleFiltro(tipo) {
+  filtroActivo.value = filtroActivo.value === tipo ? null : tipo
+  pagina.value = 1
+}
+
+const totalPages = computed(() => Math.ceil(lineasFiltradas.value.length / porPagina.value))
+const rangoInicio = computed(() => lineasFiltradas.value.length ? (pagina.value - 1) * porPagina.value + 1 : 0)
+const rangoFin = computed(() => Math.min(pagina.value * porPagina.value, lineasFiltradas.value.length))
 
 const lineasPaginadas = computed(() => {
   const inicio = (pagina.value - 1) * porPagina.value
-  return props.lineas.slice(inicio, inicio + porPagina.value)
+  return lineasFiltradas.value.slice(inicio, inicio + porPagina.value)
 })
 
 const lineasIncluidas = computed(() => props.lineas.filter(l => l.incluir).length)
@@ -137,8 +152,20 @@ function toggleAll() {
   props.lineas.forEach(l => { l.incluir = selectAll.value })
 }
 
+function isEditable(linea, col) {
+  if (col.editable) return true
+  if (col.editableWhen) return !!linea[col.editableWhen]
+  return false
+}
+
+function onSelectChange(linea, col, event) {
+  const val = event.target.value
+  linea[col.key] = col.numeric ? Number(val) : val
+}
+
 function rowClass(linea) {
   if (!linea.incluir) return 'row-excluido'
+  if (linea.esMulticuenta) return 'row-advertencia row-multicuenta'
   return 'row-' + linea.estadoLinea.toLowerCase()
 }
 
@@ -165,12 +192,18 @@ function formatValue(val, col) {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
 }
+.stat:hover { opacity: 0.85; transform: scale(1.03); }
+.stat.active { box-shadow: 0 0 0 2px currentColor; font-weight: 700; }
 .stat.ok { background: #f0fdf4; color: #166534; }
 .stat.nuevo { background: #f0f9ff; color: #075985; }
 .stat.advertencia { background: #fffbeb; color: #92400e; }
 .stat.error { background: #fef2f2; color: #991b1b; }
 .stat.total { background: #f1f5f9; color: #334155; }
+.stat.multicuenta { background: #fef3c7; color: #92400e; }
 
 .preview-table-wrapper {
   overflow-x: auto;
@@ -188,6 +221,7 @@ function formatValue(val, col) {
 .row-advertencia { background: #fffbeb; }
 .row-error { background: #fef2f2; }
 .row-excluido { background: #f8fafc; text-decoration: line-through; color: #94a3b8; }
+.row-multicuenta { border-left: 3px solid #d97706; }
 
 .badge { padding: 0.2rem 0.5rem; border-radius: 12px; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.02em; }
 .badge.ok { background: #16a34a; color: #fff; }

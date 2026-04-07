@@ -8,6 +8,7 @@ public class ArchivoPreviewDto
     public int LineasAdvertencia { get; set; }
     public int LineasError { get; set; }
     public int LineasNuevas { get; set; }
+    public int LineasMulticuenta { get; set; }
     public decimal MontoTotal { get; set; }
 }
 
@@ -25,6 +26,7 @@ public class PreviewLineaDto
     public string? NumeroCuenta { get; set; }
     public long? CodBanco { get; set; }
     public long? TipoCuenta { get; set; }
+    public bool EsMulticuenta { get; set; }
     public string EstadoLinea { get; set; } = "OK";  // OK, ADVERTENCIA, ERROR, NUEVO
     public string? Mensaje { get; set; }
     public bool Incluir { get; set; } = true;
