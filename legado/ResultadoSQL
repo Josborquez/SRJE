@@ -1,0 +1,586 @@
+
+Error que empieza en la línea: 21 del comando :
+ALTER TABLE RETENIDO_JUDICIAL ADD CONSTRAINT FK_RETEN_BANCO
+    FOREIGN KEY (COD_BANCO) REFERENCES BANCOS(COD_BANCO)
+    DEFERRABLE INITIALLY DEFERRED
+Informe de error -
+ORA-02275: ya existe una restricción referencial de este tipo en la tabla
+
+https://docs.oracle.com/error-help/db/ora-02275/02275. 00000 -  "such a referential constraint already exists in the table"
+*Cause:    Self-evident.
+*Action:   Remove the extra constraint.
+
+Error que empieza en la línea: 26 del comando :
+ALTER TABLE RETENIDO_JUDICIAL ADD CONSTRAINT FK_RETEN_TIPO_RETENCION
+    FOREIGN KEY (COD_RETENCION) REFERENCES TIPOS_RETENCION(COD_RETENCION)
+    DEFERRABLE INITIALLY DEFERRED
+Informe de error -
+ORA-02275: ya existe una restricción referencial de este tipo en la tabla
+
+https://docs.oracle.com/error-help/db/ora-02275/02275. 00000 -  "such a referential constraint already exists in the table"
+*Cause:    Self-evident.
+*Action:   Remove the extra constraint.
+
+Error que empieza en la línea: 31 del comando :
+ALTER TABLE RETENIDO_JUDICIAL ADD CONSTRAINT FK_RETEN_BENEFICIARIO
+    FOREIGN KEY (RUT_BENEFICIARIO) REFERENCES BENEFICIARIOS(RUT_BENEFICIARIO)
+    DEFERRABLE INITIALLY DEFERRED
+Informe de error -
+ORA-02275: ya existe una restricción referencial de este tipo en la tabla
+
+https://docs.oracle.com/error-help/db/ora-02275/02275. 00000 -  "such a referential constraint already exists in the table"
+*Cause:    Self-evident.
+*Action:   Remove the extra constraint.
+
+Error que empieza en la línea: 36 del comando :
+ALTER TABLE RETENIDO_JUDICIAL ADD CONSTRAINT FK_RETEN_FUNCIONARIO
+    FOREIGN KEY (RUT_TITULAR) REFERENCES FUNCIONARIOS(RUT_FUNCIONARIO)
+    DEFERRABLE INITIALLY DEFERRED
+Informe de error -
+ORA-02275: ya existe una restricción referencial de este tipo en la tabla
+
+https://docs.oracle.com/error-help/db/ora-02275/02275. 00000 -  "such a referential constraint already exists in the table"
+*Cause:    Self-evident.
+*Action:   Remove the extra constraint.
+
+Error que empieza en la línea: 41 del comando :
+ALTER TABLE DETALLE_PAGO_TEMGE ADD CONSTRAINT FK_DETPAGO_RETENIDO
+    FOREIGN KEY (ID_RETENIDO_JUDICIAL) REFERENCES RETENIDO_JUDICIAL(ID)
+Informe de error -
+ORA-02275: ya existe una restricción referencial de este tipo en la tabla
+
+https://docs.oracle.com/error-help/db/ora-02275/02275. 00000 -  "such a referential constraint already exists in the table"
+*Cause:    Self-evident.
+*Action:   Remove the extra constraint.
+
+Error que empieza en la línea: 46 del comando :
+ALTER TABLE DETALLE_PAGO_TEMGE ADD CONSTRAINT FK_DETPAGO_BENEFICIARIO
+    FOREIGN KEY (RUT_BENEFICIARIO) REFERENCES BENEFICIARIOS(RUT_BENEFICIARIO)
+Informe de error -
+ORA-02275: ya existe una restricción referencial de este tipo en la tabla
+
+https://docs.oracle.com/error-help/db/ora-02275/02275. 00000 -  "such a referential constraint already exists in the table"
+*Cause:    Self-evident.
+*Action:   Remove the extra constraint.
+
+Error que empieza en la línea: 56 del comando :
+ALTER TABLE BENEFICIARIOS ADD CONSTRAINT FK_BENEF_TIPO_CUENTA
+    FOREIGN KEY (TIPO_CUENTA) REFERENCES TIPOS_CUENTA(COD_TIPO_CUENTA)
+Informe de error -
+ORA-02275: ya existe una restricción referencial de este tipo en la tabla
+
+https://docs.oracle.com/error-help/db/ora-02275/02275. 00000 -  "such a referential constraint already exists in the table"
+*Cause:    Self-evident.
+*Action:   Remove the extra constraint.
+
+Error que empieza en la línea: 59 del comando :
+ALTER TABLE RETENIDO_JUDICIAL ADD CONSTRAINT FK_RETEN_TIPO_CUENTA
+    FOREIGN KEY (TIPO_CUENTA) REFERENCES TIPOS_CUENTA(COD_TIPO_CUENTA)
+Informe de error -
+ORA-02275: ya existe una restricción referencial de este tipo en la tabla
+
+https://docs.oracle.com/error-help/db/ora-02275/02275. 00000 -  "such a referential constraint already exists in the table"
+*Cause:    Self-evident.
+*Action:   Remove the extra constraint.
+
+Error que empieza en la línea: 62 del comando :
+ALTER TABLE DETALLE_PAGO_TEMGE ADD CONSTRAINT FK_DETPAGO_TIPO_CUENTA
+    FOREIGN KEY (TIPO_CUENTA) REFERENCES TIPOS_CUENTA(COD_TIPO_CUENTA)
+Informe de error -
+ORA-02275: ya existe una restricción referencial de este tipo en la tabla
+
+https://docs.oracle.com/error-help/db/ora-02275/02275. 00000 -  "such a referential constraint already exists in the table"
+*Cause:    Self-evident.
+*Action:   Remove the extra constraint.
+
+Error que empieza en la línea: 72 del comando :
+ALTER TABLE RETENIDO_JUDICIAL ADD CONSTRAINT UK_RETEN_UNICA
+    UNIQUE (ID_RETENCION, RUT_TITULAR, RUT_BENEFICIARIO, PERIODO_PROCESO)
+Informe de error -
+ORA-02261: este tipo de clave única o primaria ya existe en la tabla
+
+https://docs.oracle.com/error-help/db/ora-02261/02261. 00000 -  "The unique or primary key already exists in the table."
+*Cause:    The unique or primary key value that was used already exists in the
+           table.
+*Action:   Remove the extra key or specify an unused value for the key.
+
+Error que empieza en la línea: 76 del comando :
+CREATE UNIQUE INDEX UK_LOG_HASH ON LOG_CARGAS(HASH_ARCHIVO)
+Informe de error -
+ORA-01408: esta lista de columnas ya está indexada
+
+https://docs.oracle.com/error-help/db/ora-01408/01408. 00000 -  "such column list already indexed"
+*Cause:    A CREATE INDEX statement specified a column that was
+           already indexed. A single column may be indexed only once.
+           Additional indexes may be created on the column if it was used
+           as a portion of a concatenated index, that was, if the index
+           consists of multiple columns.
+*Action:   Do not attempt to re-index the column, as it is
+           unnecessary. To create a concatenated key, specify one or more
+           additional columns in the CREATE INDEX statement.
+
+Error que empieza en la línea: 85 del comando :
+ALTER TABLE RETENIDO_JUDICIAL ADD CONSTRAINT CK_RETEN_MONTO_POS
+    CHECK (MONTO > 0)
+Informe de error -
+ORA-02264: nombre ya utilizado por una restricción existente
+
+https://docs.oracle.com/error-help/db/ora-02264/02264. 00000 -  "name already used by an existing constraint"
+*Cause:    The specified constraint name has to be unique.
+*Action:   Specify a unique constraint name for the constraint.
+
+Error que empieza en la línea: 89 del comando :
+ALTER TABLE BENEFICIARIOS ADD CONSTRAINT CK_BENEF_RUT_POS
+    CHECK (RUT_BENEFICIARIO > 0)
+Informe de error -
+ORA-02264: nombre ya utilizado por una restricción existente
+
+https://docs.oracle.com/error-help/db/ora-02264/02264. 00000 -  "name already used by an existing constraint"
+*Cause:    The specified constraint name has to be unique.
+*Action:   Specify a unique constraint name for the constraint.
+
+Error que empieza en la línea: 92 del comando :
+ALTER TABLE FUNCIONARIOS ADD CONSTRAINT CK_FUNC_RUT_POS
+    CHECK (RUT_FUNCIONARIO > 0)
+Informe de error -
+ORA-02264: nombre ya utilizado por una restricción existente
+
+https://docs.oracle.com/error-help/db/ora-02264/02264. 00000 -  "name already used by an existing constraint"
+*Cause:    The specified constraint name has to be unique.
+*Action:   Specify a unique constraint name for the constraint.
+
+Error que empieza en la línea: 95 del comando :
+ALTER TABLE RETENIDO_JUDICIAL ADD CONSTRAINT CK_RETEN_RUT_TITULAR_POS
+    CHECK (RUT_TITULAR > 0)
+Informe de error -
+ORA-02264: nombre ya utilizado por una restricción existente
+
+https://docs.oracle.com/error-help/db/ora-02264/02264. 00000 -  "name already used by an existing constraint"
+*Cause:    The specified constraint name has to be unique.
+*Action:   Specify a unique constraint name for the constraint.
+
+Error que empieza en la línea: 98 del comando :
+ALTER TABLE RETENIDO_JUDICIAL ADD CONSTRAINT CK_RETEN_RUT_BENEF_POS
+    CHECK (RUT_BENEFICIARIO > 0)
+Informe de error -
+ORA-02264: nombre ya utilizado por una restricción existente
+
+https://docs.oracle.com/error-help/db/ora-02264/02264. 00000 -  "name already used by an existing constraint"
+*Cause:    The specified constraint name has to be unique.
+*Action:   Specify a unique constraint name for the constraint.
+
+Error que empieza en la línea: 102 del comando :
+ALTER TABLE BANCOS ADD CONSTRAINT CK_BANCOS_ACTIVO
+    CHECK (ACTIVO IN ('S', 'N'))
+Informe de error -
+ORA-02264: nombre ya utilizado por una restricción existente
+
+https://docs.oracle.com/error-help/db/ora-02264/02264. 00000 -  "name already used by an existing constraint"
+*Cause:    The specified constraint name has to be unique.
+*Action:   Specify a unique constraint name for the constraint.
+
+Error que empieza en la línea: 105 del comando :
+ALTER TABLE TIPOS_RETENCION ADD CONSTRAINT CK_TIPOSRET_ACTIVO
+    CHECK (ACTIVO IN ('S', 'N'))
+Informe de error -
+ORA-02264: nombre ya utilizado por una restricción existente
+
+https://docs.oracle.com/error-help/db/ora-02264/02264. 00000 -  "name already used by an existing constraint"
+*Cause:    The specified constraint name has to be unique.
+*Action:   Specify a unique constraint name for the constraint.
+
+Error que empieza en la línea: 115 del comando :
+ALTER TABLE HISTORIAL_PAGOS_TEMGE ADD (
+    PERIODO_PROCESO   NCHAR(6)   NULL
+)
+Informe de error -
+ORA-01430: la columna que se está agregando ya existe en la tabla
+
+https://docs.oracle.com/error-help/db/ora-01430/01430. 00000 -  "column being added already exists in table"
+*Cause:    An ALTER TABLE ADD statement specified the name of a
+           column that was already in the table. All column names must be
+           unique within a table.
+*Action:   Specify a unique name for the new column, then
+           re-execute the statement.
+
+Comment creado.
+
+
+Error que empieza en la línea: 123 del comando :
+ALTER TABLE FUNCIONARIOS ADD (
+    FECHA_CREACION     DATE DEFAULT SYSDATE,
+    FECHA_MODIFICACION DATE NULL,
+    USUARIO_CREACION   NVARCHAR2(50) NULL
+)
+Informe de error -
+ORA-01430: la columna que se está agregando ya existe en la tabla
+
+https://docs.oracle.com/error-help/db/ora-01430/01430. 00000 -  "column being added already exists in table"
+*Cause:    An ALTER TABLE ADD statement specified the name of a
+           column that was already in the table. All column names must be
+           unique within a table.
+*Action:   Specify a unique name for the new column, then
+           re-execute the statement.
+
+Comment creado.
+
+
+Comment creado.
+
+
+Comment creado.
+
+
+Table TIPOS_CUENTA alterado.
+
+
+Table TIPOS_CUENTA alterado.
+
+
+Error que empieza en la línea: 152 del comando :
+DROP INDEX IDX_BENEF_ESTADO
+Informe de error -
+ORA-01418: el índice especificado no existe
+
+https://docs.oracle.com/error-help/db/ora-01418/01418. 00000 -  "specified index does not exist"
+*Cause:    An ALTER INDEX, DROP INDEX, or VALIDATE INDEX statement
+           specified the name of an index that did not exist. Only
+           existing indexes can be altered, dropped, or validated.
+           Existing indexes may be listed by querying the data
+           dictionary.
+*Action:   Specify the name of an existing index in the ALTER
+           INDEX, DROP INDEX, or VALIDATE INDEX statement.
+
+Error que empieza en la línea: 153 del comando :
+DROP INDEX IDX_RETEN_ESTADO
+Informe de error -
+ORA-01418: el índice especificado no existe
+
+https://docs.oracle.com/error-help/db/ora-01418/01418. 00000 -  "specified index does not exist"
+*Cause:    An ALTER INDEX, DROP INDEX, or VALIDATE INDEX statement
+           specified the name of an index that did not exist. Only
+           existing indexes can be altered, dropped, or validated.
+           Existing indexes may be listed by querying the data
+           dictionary.
+*Action:   Specify the name of an existing index in the ALTER
+           INDEX, DROP INDEX, or VALIDATE INDEX statement.
+
+Error que empieza en la línea: 154 del comando :
+DROP INDEX IDX_HIST_ESTADO
+Informe de error -
+ORA-01418: el índice especificado no existe
+
+https://docs.oracle.com/error-help/db/ora-01418/01418. 00000 -  "specified index does not exist"
+*Cause:    An ALTER INDEX, DROP INDEX, or VALIDATE INDEX statement
+           specified the name of an index that did not exist. Only
+           existing indexes can be altered, dropped, or validated.
+           Existing indexes may be listed by querying the data
+           dictionary.
+*Action:   Specify the name of an existing index in the ALTER
+           INDEX, DROP INDEX, or VALIDATE INDEX statement.
+
+Error que empieza en la línea: 155 del comando :
+DROP INDEX IDX_LOG_ESTADO
+Informe de error -
+ORA-01418: el índice especificado no existe
+
+https://docs.oracle.com/error-help/db/ora-01418/01418. 00000 -  "specified index does not exist"
+*Cause:    An ALTER INDEX, DROP INDEX, or VALIDATE INDEX statement
+           specified the name of an index that did not exist. Only
+           existing indexes can be altered, dropped, or validated.
+           Existing indexes may be listed by querying the data
+           dictionary.
+*Action:   Specify the name of an existing index in the ALTER
+           INDEX, DROP INDEX, or VALIDATE INDEX statement.
+
+Error que empieza en la línea: 158 del comando :
+DROP INDEX IDX_RETEN_RUT_TITULAR
+Informe de error -
+ORA-01418: el índice especificado no existe
+
+https://docs.oracle.com/error-help/db/ora-01418/01418. 00000 -  "specified index does not exist"
+*Cause:    An ALTER INDEX, DROP INDEX, or VALIDATE INDEX statement
+           specified the name of an index that did not exist. Only
+           existing indexes can be altered, dropped, or validated.
+           Existing indexes may be listed by querying the data
+           dictionary.
+*Action:   Specify the name of an existing index in the ALTER
+           INDEX, DROP INDEX, or VALIDATE INDEX statement.
+
+Error que empieza en la línea: 159 del comando :
+DROP INDEX IDX_RETEN_RUT_BENEF
+Informe de error -
+ORA-01418: el índice especificado no existe
+
+https://docs.oracle.com/error-help/db/ora-01418/01418. 00000 -  "specified index does not exist"
+*Cause:    An ALTER INDEX, DROP INDEX, or VALIDATE INDEX statement
+           specified the name of an index that did not exist. Only
+           existing indexes can be altered, dropped, or validated.
+           Existing indexes may be listed by querying the data
+           dictionary.
+*Action:   Specify the name of an existing index in the ALTER
+           INDEX, DROP INDEX, or VALIDATE INDEX statement.
+
+Error que empieza en la línea: 162 del comando :
+CREATE INDEX IDX_RETEN_TITULAR_ESTADO
+    ON RETENIDO_JUDICIAL(RUT_TITULAR, ESTADO)
+Informe de error -
+ORA-00955: este nombre ya lo está utilizando otro objeto existente
+
+https://docs.oracle.com/error-help/db/ora-00955/00955. 00000 -  "name is already used by an existing object"
+*Cause:    An attempt was made to create a database object (such
+           as a table, view, cluster, index, or synonym) that already
+           existed. A user's database objects must have distinct names.
+*Action:   Enter a unique name for the database object or modify
+           or drop the existing object so it can be reused.
+
+Error que empieza en la línea: 166 del comando :
+CREATE INDEX IDX_RETEN_BENEF_PERIODO
+    ON RETENIDO_JUDICIAL(RUT_BENEFICIARIO, PERIODO_PROCESO)
+Informe de error -
+ORA-00955: este nombre ya lo está utilizando otro objeto existente
+
+https://docs.oracle.com/error-help/db/ora-00955/00955. 00000 -  "name is already used by an existing object"
+*Cause:    An attempt was made to create a database object (such
+           as a table, view, cluster, index, or synonym) that already
+           existed. A user's database objects must have distinct names.
+*Action:   Enter a unique name for the database object or modify
+           or drop the existing object so it can be reused.
+
+Error que empieza en la línea: 170 del comando :
+DROP INDEX IDX_LOG_TIPO
+Informe de error -
+ORA-01418: el índice especificado no existe
+
+https://docs.oracle.com/error-help/db/ora-01418/01418. 00000 -  "specified index does not exist"
+*Cause:    An ALTER INDEX, DROP INDEX, or VALIDATE INDEX statement
+           specified the name of an index that did not exist. Only
+           existing indexes can be altered, dropped, or validated.
+           Existing indexes may be listed by querying the data
+           dictionary.
+*Action:   Specify the name of an existing index in the ALTER
+           INDEX, DROP INDEX, or VALIDATE INDEX statement.
+
+Error que empieza en la línea: 171 del comando :
+DROP INDEX IDX_LOG_PERIODO
+Informe de error -
+ORA-01418: el índice especificado no existe
+
+https://docs.oracle.com/error-help/db/ora-01418/01418. 00000 -  "specified index does not exist"
+*Cause:    An ALTER INDEX, DROP INDEX, or VALIDATE INDEX statement
+           specified the name of an index that did not exist. Only
+           existing indexes can be altered, dropped, or validated.
+           Existing indexes may be listed by querying the data
+           dictionary.
+*Action:   Specify the name of an existing index in the ALTER
+           INDEX, DROP INDEX, or VALIDATE INDEX statement.
+
+Error que empieza en la línea: 173 del comando :
+CREATE INDEX IDX_LOG_TIPO_PERIODO
+    ON LOG_CARGAS(TIPO_CARGA, PERIODO_PROCESO)
+Informe de error -
+ORA-00955: este nombre ya lo está utilizando otro objeto existente
+
+https://docs.oracle.com/error-help/db/ora-00955/00955. 00000 -  "name is already used by an existing object"
+*Cause:    An attempt was made to create a database object (such
+           as a table, view, cluster, index, or synonym) that already
+           existed. A user's database objects must have distinct names.
+*Action:   Enter a unique name for the database object or modify
+           or drop the existing object so it can be reused.
+
+Error que empieza en la línea: 177 del comando :
+CREATE INDEX IDX_DET_RETENIDO
+    ON DETALLE_PAGO_TEMGE(ID_RETENIDO_JUDICIAL)
+Informe de error -
+ORA-00955: este nombre ya lo está utilizando otro objeto existente
+
+https://docs.oracle.com/error-help/db/ora-00955/00955. 00000 -  "name is already used by an existing object"
+*Cause:    An attempt was made to create a database object (such
+           as a table, view, cluster, index, or synonym) that already
+           existed. A user's database objects must have distinct names.
+*Action:   Enter a unique name for the database object or modify
+           or drop the existing object so it can be reused.
+
+Error que empieza en la línea: 181 del comando :
+DROP INDEX IDX_AUD_ENTIDAD
+Informe de error -
+ORA-01418: el índice especificado no existe
+
+https://docs.oracle.com/error-help/db/ora-01418/01418. 00000 -  "specified index does not exist"
+*Cause:    An ALTER INDEX, DROP INDEX, or VALIDATE INDEX statement
+           specified the name of an index that did not exist. Only
+           existing indexes can be altered, dropped, or validated.
+           Existing indexes may be listed by querying the data
+           dictionary.
+*Action:   Specify the name of an existing index in the ALTER
+           INDEX, DROP INDEX, or VALIDATE INDEX statement.
+
+Error que empieza en la línea: 183 del comando :
+CREATE INDEX IDX_AUD_ENTIDAD_FECHA
+    ON AUDITORIA_CAMBIOS(ENTIDAD, ID_ENTIDAD, FECHA)
+Informe de error -
+ORA-00955: este nombre ya lo está utilizando otro objeto existente
+
+https://docs.oracle.com/error-help/db/ora-00955/00955. 00000 -  "name is already used by an existing object"
+*Cause:    An attempt was made to create a database object (such
+           as a table, view, cluster, index, or synonym) that already
+           existed. A user's database objects must have distinct names.
+*Action:   Enter a unique name for the database object or modify
+           or drop the existing object so it can be reused.
+
+Table BENEFICIARIOS alterado.
+
+
+Table BENEFICIARIOS alterado.
+
+
+Table FUNCIONARIOS alterado.
+
+
+Table RETENIDO_JUDICIAL alterado.
+
+
+Table RETENIDO_JUDICIAL alterado.
+
+
+Table RETENIDO_JUDICIAL alterado.
+
+
+Table DETALLE_PAGO_TEMGE alterado.
+
+
+Table LOG_CARGA_DETALLE alterado.
+
+
+Error que empieza en la línea: 217 del comando :
+ALTER TABLE BANCOS MODIFY COD_BANCO NUMBER(5,0)
+Informe de error -
+ORA-01440: la columna que desea  modificar debe estar vacía para disminuir la precisión o escala
+
+https://docs.oracle.com/error-help/db/ora-01440/01440. 00000 -  "column to be modified must be empty to decrease precision or scale"
+*Cause:    An ALTER TABLE MODIFY statement attempted to decrease
+           the scale or precision of a numeric column containing data. In
+           order to decrease either of these values, the column must
+           contain only NULL values. An attempt to increase the scale
+           without also increasing the precision caused this
+           message.
+*Action:   Set all values in the column to NULL before decreasing
+           the numeric precision or scale. If attempting to increase the
+           scale, increase the precision in accordance with the scale or
+           set all values in the column to NULL first.
+
+Table BENEFICIARIOS alterado.
+
+
+Table RETENIDO_JUDICIAL alterado.
+
+
+Table DETALLE_PAGO_TEMGE alterado.
+
+
+Table BENEFICIARIOS alterado.
+
+
+Table RETENIDO_JUDICIAL alterado.
+
+
+Table DETALLE_PAGO_TEMGE alterado.
+
+
+Table RETENIDO_JUDICIAL alterado.
+
+
+Table DETALLE_PAGO_TEMGE alterado.
+
+
+Table HISTORIAL_PAGOS_TEMGE alterado.
+
+
+Table LOG_CARGAS alterado.
+
+
+Table HISTORIAL_PAGOS_TEMGE alterado.
+
+
+Error que empieza en la línea: 247 del comando -
+UPDATE HISTORIAL_PAGOS_TEMGE
+SET FECHA_HORA_PROCESO = CASE
+    WHEN HORA_PROCESO IS NOT NULL THEN
+        CAST(FECHA_PROCESO AS TIMESTAMP)
+        + NUMTODSINTERVAL(TO_NUMBER(SUBSTR(HORA_PROCESO, 1, 2)), 'HOUR')
+        + NUMTODSINTERVAL(TO_NUMBER(SUBSTR(HORA_PROCESO, 3, 2)), 'MINUTE')
+        + NUMTODSINTERVAL(TO_NUMBER(SUBSTR(HORA_PROCESO, 5, 2)), 'SECOND')
+    ELSE
+        CAST(FECHA_PROCESO AS TIMESTAMP)
+    END
+WHERE FECHA_HORA_PROCESO IS NULL
+Error en la línea de comandos : 253 Columna : 44
+Informe de error -
+Error SQL: ORA-00904: "HORA_PROCESO": identificador no válido
+
+https://docs.oracle.com/error-help/db/ora-00904/00904. 00000 -  "%s: invalid identifier"
+*Cause:    The identifier or column name entered was invalid.
+*Action:   Ensure the following
+
+More Details :
+https://docs.oracle.com/error-help/db/ora-00904/
+
+Table HISTORIAL_PAGOS_TEMGE alterado.
+
+
+Error que empieza en la línea: 263 del comando :
+ALTER TABLE HISTORIAL_PAGOS_TEMGE DROP COLUMN HORA_PROCESO
+Informe de error -
+ORA-00904: "HORA_PROCESO": identificador no válido
+
+https://docs.oracle.com/error-help/db/ora-00904/00904. 00000 -  "%s: invalid identifier"
+*Cause:    The identifier or column name entered was invalid.
+*Action:   Ensure the following
+
+Table HISTORIAL_PAGOS_TEMGE alterado.
+
+
+Table HISTORIAL_PAGOS_TEMGE alterado.
+
+
+Comment creado.
+
+
+Error que empieza en la línea: 273 del comando :
+DROP INDEX IDX_HIST_FECHA
+Informe de error -
+ORA-01418: el índice especificado no existe
+
+https://docs.oracle.com/error-help/db/ora-01418/01418. 00000 -  "specified index does not exist"
+*Cause:    An ALTER INDEX, DROP INDEX, or VALIDATE INDEX statement
+           specified the name of an index that did not exist. Only
+           existing indexes can be altered, dropped, or validated.
+           Existing indexes may be listed by querying the data
+           dictionary.
+*Action:   Specify the name of an existing index in the ALTER
+           INDEX, DROP INDEX, or VALIDATE INDEX statement.
+
+Index IDX_HIST_FECHA creado.
+
+
+Error que empieza en la línea: 283 del comando :
+ALTER TABLE BENEFICIARIOS ADD CONSTRAINT CK_BENEF_ESTADO_CIVIL
+    CHECK (ESTADO_CIVIL IN ('Soltero', 'Casado', 'Viudo', 'Divorciado', 'Separado'))
+Informe de error -
+ORA-02264: nombre ya utilizado por una restricción existente
+
+https://docs.oracle.com/error-help/db/ora-02264/02264. 00000 -  "name already used by an existing constraint"
+*Cause:    The specified constraint name has to be unique.
+*Action:   Specify a unique constraint name for the constraint.
+
+Error que empieza en la línea: 295 del comando :
+ALTER TABLE BENEFICIARIOS ADD CONSTRAINT FK_BENEF_FUNCIONARIO
+    FOREIGN KEY (RUT_FUNCIONARIO) REFERENCES FUNCIONARIOS(RUT_FUNCIONARIO)
+    DEFERRABLE INITIALLY DEFERRED
+Informe de error -
+ORA-02275: ya existe una restricción referencial de este tipo en la tabla
+
+https://docs.oracle.com/error-help/db/ora-02275/02275. 00000 -  "such a referential constraint already exists in the table"
+*Cause:    Self-evident.
+*Action:   Remove the extra constraint.
+Confirmación terminada.

@@ -1,0 +1,385 @@
+== CONEXION OK ==
+Schema: 
+
+== TABLAS Y COLUMNAS ==
+
+--- TABLE: API_CLIENTES ---
+COL                                 TYPE                      NULL  DEFAULT             
+ID                                  NUMBER(18)                N                         
+NOMBRE_CLIENTE                      NVARCHAR2(100)            N                         
+API_KEY                             NVARCHAR2(64)             N                         
+PERMISOS                            NVARCHAR2(200)            Y                         
+ACTIVO                              NCHAR(1)                  Y                         
+FECHA_EXPIRA                        DATE                      Y                         
+IP_PERMITIDAS                       NVARCHAR2(500)            Y                         
+ULTIMO_ACCESO                       DATE                      Y                         
+
+--- TABLE: AUDITORIA_CAMBIOS ---
+COL                                 TYPE                      NULL  DEFAULT             
+ID                                  NUMBER(18)                N                         
+ENTIDAD                             NVARCHAR2(50)             N                         
+ID_ENTIDAD                          NUMBER(18)                N                         
+RUT_AFECTADO                        NVARCHAR2(15)             Y                         
+ACCION                              NVARCHAR2(20)             N                         
+CAMPO_MODIFICADO                    NVARCHAR2(60)             Y                         
+VALOR_ANTERIOR                      NVARCHAR2(500)            Y                         
+VALOR_NUEVO                         NVARCHAR2(500)            Y                         
+USUARIO                             NVARCHAR2(50)             N                         
+FECHA                               TIMESTAMP(6)              Y                         
+IP                                  NVARCHAR2(50)             Y                         
+MOTIVO                              NVARCHAR2(500)            Y                         
+
+--- TABLE: BANCOS ---
+COL                                 TYPE                      NULL  DEFAULT             
+COD_BANCO                           NUMBER(18)                N                         
+NOMBRE_BANCO                        NVARCHAR2(100)            N                         
+USA_CTA_OT_BANCO                    NCHAR(1)                  Y                         
+ACTIVO                              NCHAR(1)                  Y                         
+
+--- TABLE: BENEFICIARIOS ---
+COL                                 TYPE                      NULL  DEFAULT             
+ID                                  NUMBER(18)                N                         
+RUT_BENEFICIARIO                    NUMBER(10)                N                         
+DV_BENEFICIARIO                     NCHAR(1)                  N                         
+NOMBRE_BENEFICIARIO                 NVARCHAR2(39)             N                         
+FECHA_NACIMIENTO                    DATE                      Y                         
+SEXO                                NCHAR(1)                  Y                         
+ESTADO_CIVIL                        NVARCHAR2(20)             Y                         
+DOMICILIO                           NVARCHAR2(100)            Y                         
+COMUNA                              NVARCHAR2(50)             Y                         
+TELEFONO                            NVARCHAR2(20)             Y                         
+CTA_OT_BANCO                        NVARCHAR2(15)             Y                         
+TIPO_CUENTA                         NUMBER(5)                 Y                         
+COD_BANCO                           NUMBER(5)                 Y                         
+CTA_ESTADO                          NVARCHAR2(15)             Y                         
+SUCURSAL                            NVARCHAR2(60)             Y                         
+ESTADO                              NCHAR(1)                  Y                         
+FECHA_CREACION                      DATE                      Y                         
+FECHA_MODIFICACION                  DATE                      Y                         
+USUARIO_CREACION                    NVARCHAR2(50)             Y                         
+RUT_FUNCIONARIO                     NUMBER(10)                Y                         
+DV_FUNCIONARIO                      NCHAR(1)                  Y                         
+NOMBRE_FUNCIONARIO                  NVARCHAR2(100)            Y                         
+
+--- TABLE: DETALLE_PAGO_TEMGE ---
+COL                                 TYPE                      NULL  DEFAULT             
+ID                                  NUMBER(18)                N                         
+ID_HISTORIAL                        NUMBER(18)                N                         
+ID_RETENIDO_JUDICIAL                NUMBER(18)                Y                         
+RUT_BENEFICIARIO                    NUMBER(10)                N                         
+MONTO_PAGADO                        NUMBER(14,2)              Y                         
+COD_BANCO                           NUMBER(5)                 Y                         
+TIPO_CUENTA                         NUMBER(5)                 Y                         
+ESTADO_LINEA                        NCHAR(1)                  Y                         
+MOTIVO_EXCLUSION                    NVARCHAR2(200)            Y                         
+
+--- TABLE: FUNCIONARIOS ---
+COL                                 TYPE                      NULL  DEFAULT             
+ID                                  NUMBER(18)                N                         
+RUT_FUNCIONARIO                     NUMBER(10)                N                         
+DV_FUNCIONARIO                      NCHAR(1)                  N                         
+APELLIDO_PATERNO                    NVARCHAR2(20)             Y                         
+APELLIDO_MATERNO                    NVARCHAR2(20)             Y                         
+NOMBRES                             NVARCHAR2(30)             Y                         
+ID_SISTEMA                          NVARCHAR2(8)              Y                         
+ACTIVO                              NCHAR(1)                  Y                         
+FECHA_CREACION                      DATE                      Y                         
+FECHA_MODIFICACION                  DATE                      Y                         
+USUARIO_CREACION                    NVARCHAR2(50)             Y                         
+
+--- TABLE: HISTORIAL_PAGOS_TEMGE ---
+COL                                 TYPE                      NULL  DEFAULT             
+ID                                  NUMBER(18)                N                         
+COD_EMPRESA                         NVARCHAR2(21)             Y                         
+MONTO_TOTAL                         NUMBER(14,2)              Y                         
+CANTIDAD_REGISTROS                  NUMBER(10)                Y                         
+NOMBRE_ARCHIVO                      NVARCHAR2(200)            Y                         
+ESTADO                              NCHAR(1)                  Y                         
+USUARIO_GENERA                      NVARCHAR2(50)             Y                         
+PERIODO_PROCESO                     NCHAR(6)                  Y                         
+FECHA_PROCESO                       TIMESTAMP(6)              N                         
+
+--- TABLE: LOG_API_ACCESOS ---
+COL                                 TYPE                      NULL  DEFAULT             
+ID                                  NUMBER(18)                N                         
+ID_CLIENTE                          NUMBER(18)                Y                         
+FECHA_ACCESO                        TIMESTAMP(6)              Y                         
+ENDPOINT                            NVARCHAR2(200)            Y                         
+METODO_HTTP                         NCHAR(6)                  Y                         
+PARAMETROS                          NVARCHAR2(500)            Y                         
+IP_ORIGEN                           NVARCHAR2(50)             Y                         
+COD_RESPUESTA                       NUMBER(3)                 Y                         
+TIEMPO_MS                           NUMBER(10)                Y                         
+RUT_CONSULTADO                      NVARCHAR2(15)             Y                         
+
+--- TABLE: LOG_CARGA_DETALLE ---
+COL                                 TYPE                      NULL  DEFAULT             
+ID                                  NUMBER(18)                N                         
+ID_CARGA                            NUMBER(10)                N                         
+NUMERO_LINEA                        NUMBER(10)                Y                         
+RUT_REFERENCIA                      NVARCHAR2(15)             Y                         
+ACCION                              NVARCHAR2(15)             Y                         
+ESTADO                              NCHAR(2)                  Y                         
+DATOS_ORIGINALES                    NCLOB                     Y                         
+DATOS_ANTERIORES                    NCLOB                     Y                         
+DATOS_NUEVOS                        NCLOB                     Y                         
+MENSAJES                            NVARCHAR2(2000)           Y                         
+
+--- TABLE: LOG_CARGAS ---
+COL                                 TYPE                      NULL  DEFAULT             
+ID                                  NUMBER(18)                N                         
+TIPO_CARGA                          NVARCHAR2(30)             N                         
+NOMBRE_ARCHIVO                      NVARCHAR2(260)            Y                         
+HASH_ARCHIVO                        NVARCHAR2(64)             Y                         
+TAMANIO_BYTES                       NUMBER(18)                Y                         
+PERIODO_PROCESO                     NCHAR(6)                  Y                         
+FECHA_INICIO                        TIMESTAMP(6)              Y                         
+FECHA_FIN                           TIMESTAMP(6)              Y                         
+DURACION_MS                         NUMBER(10)                Y                         
+ESTADO                              NCHAR(1)                  Y                         
+TOTAL_LINEAS                        NUMBER(10)                Y                         
+REGISTROS_INSERTADOS                NUMBER(10)                Y                         
+REGISTROS_ACTUALIZADOS              NUMBER(10)                Y                         
+REGISTROS_EXCLUIDOS                 NUMBER(10)                Y                         
+REGISTROS_ERROR                     NUMBER(10)                Y                         
+MONTO_TOTAL                         NUMBER(14,2)              Y                         
+USUARIO                             NVARCHAR2(50)             Y                         
+IP_USUARIO                          NVARCHAR2(50)             Y                         
+OBSERVACIONES                       NVARCHAR2(2000)           Y                         
+PUEDE_REVERTIR                      NCHAR(1)                  Y                         
+
+--- TABLE: RETENIDO_JUDICIAL ---
+COL                                 TYPE                      NULL  DEFAULT             
+ID                                  NUMBER(18)                N                         
+ID_RETENCION                        NUMBER(10)                N                         
+RUT_TITULAR                         NUMBER(10)                N                         
+DV_TITULAR                          NCHAR(1)                  N                         
+RUT_BENEFICIARIO                    NUMBER(10)                N                         
+DV_BENEFICIARIO                     NCHAR(1)                  N                         
+MONTO                               NUMBER(14,2)              N                         
+COD_RETENCION                       NVARCHAR2(11)             Y                         
+TIPO_PAGO                           NVARCHAR2(17)             Y                         
+ESTADO                              NCHAR(1)                  Y                         
+FECHA_VIGENCIA                      DATE                      Y                         
+PERIODO_PROCESO                     NCHAR(6)                  Y                         
+COD_BANCO                           NUMBER(5)                 Y                         
+TIPO_CUENTA                         NUMBER(5)                 Y                         
+CTA_ESTADO                          NVARCHAR2(15)             Y                         
+CTA_OT_BANCO                        NVARCHAR2(15)             Y                         
+
+--- TABLE: TIPOS_CUENTA ---
+COL                                 TYPE                      NULL  DEFAULT             
+COD_TIPO_CUENTA                     NUMBER(10)                N                         
+DESCRIPCION                         NVARCHAR2(100)            N                         
+ACTIVO                              NCHAR(1)                  N                         
+
+--- TABLE: TIPOS_RETENCION ---
+COL                                 TYPE                      NULL  DEFAULT             
+COD_RETENCION                       NVARCHAR2(11)             N                         
+DESCRIPCION                         NVARCHAR2(100)            N                         
+MONEDA                              NVARCHAR2(10)             Y                         
+ACTIVO                              NCHAR(1)                  Y                         
+
+== CONSTRAINTS ==
+
+--- API_CLIENTES ---
+  CHECK  CK_API_CLIENTES_ACTIVO                   ENABLED 
+  CHECK  SYS_C007512                              ENABLED 
+  CHECK  SYS_C007513                              ENABLED 
+  CHECK  SYS_C007514                              ENABLED 
+  PK     PK_API_CLIENTES                          ENABLED 
+  UNIQUE UK_API_CLIENTES_KEY                      ENABLED 
+
+--- AUDITORIA_CAMBIOS ---
+  CHECK  SYS_C007506                              ENABLED 
+  CHECK  SYS_C007507                              ENABLED 
+  CHECK  SYS_C007508                              ENABLED 
+  CHECK  SYS_C007509                              ENABLED 
+  CHECK  SYS_C007510                              ENABLED 
+  PK     PK_AUDITORIA_CAMBIOS                     ENABLED 
+
+--- BANCOS ---
+  CHECK  CK_BANCOS_ACTIVO                         ENABLED 
+  CHECK  SYS_C007490                              ENABLED 
+  CHECK  SYS_C007491                              ENABLED 
+  PK     PK_BANCOS                                ENABLED 
+
+--- BENEFICIARIOS ---
+  CHECK  CK_BENEF_ESTADO_CIVIL                    ENABLED 
+  CHECK  CK_BENEFICIARIOS_ESTADO                  ENABLED 
+  CHECK  CK_BENEFICIARIOS_SEXO                    ENABLED 
+  CHECK  CK_BENEF_RUT_POS                         ENABLED 
+  CHECK  SYS_C007456                              ENABLED 
+  CHECK  SYS_C007457                              ENABLED 
+  CHECK  SYS_C007458                              ENABLED 
+  CHECK  SYS_C007459                              ENABLED 
+  PK     PK_BENEFICIARIOS                         ENABLED 
+  FK     FK_BENEF_FUNCIONARIO                     ENABLED  -> UK_FUNCIONARIOS_RUT [DEFERRABLE DEFERRED]
+  FK     FK_BENEFICIARIOS_BANCO                   ENABLED  -> PK_BANCOS [NOT DEFERRABLE IMMEDIATE]
+  FK     FK_BENEF_TIPO_CUENTA                     ENABLED  -> PK_TIPOS_CUENTA [NOT DEFERRABLE IMMEDIATE]
+  UNIQUE UK_BENEFICIARIOS_RUT                     ENABLED 
+
+--- DETALLE_PAGO_TEMGE ---
+  CHECK  CK_DETALLE_ESTADO                        ENABLED 
+  CHECK  SYS_C007484                              ENABLED 
+  CHECK  SYS_C007485                              ENABLED 
+  CHECK  SYS_C007486                              ENABLED 
+  PK     PK_DETALLE_PAGO_TEMGE                    ENABLED 
+  FK     FK_DETALLE_HISTORIAL                     ENABLED  -> PK_HISTORIAL_PAGOS_TEMGE [NOT DEFERRABLE IMMEDIATE]
+  FK     FK_DETPAGO_BENEFICIARIO                  ENABLED  -> UK_BENEFICIARIOS_RUT [NOT DEFERRABLE IMMEDIATE]
+  FK     FK_DETPAGO_RETENIDO                      ENABLED  -> PK_RETENIDO_JUDICIAL [NOT DEFERRABLE IMMEDIATE]
+  FK     FK_DETPAGO_TIPO_CUENTA                   ENABLED  -> PK_TIPOS_CUENTA [NOT DEFERRABLE IMMEDIATE]
+
+--- FUNCIONARIOS ---
+  CHECK  CK_FUNCIONARIOS_ACTIVO                   ENABLED 
+  CHECK  CK_FUNC_RUT_POS                          ENABLED 
+  CHECK  SYS_C007465                              ENABLED 
+  CHECK  SYS_C007466                              ENABLED 
+  CHECK  SYS_C007467                              ENABLED 
+  PK     PK_FUNCIONARIOS                          ENABLED 
+  UNIQUE UK_FUNCIONARIOS_RUT                      ENABLED 
+
+--- HISTORIAL_PAGOS_TEMGE ---
+  CHECK  CK_HISTORIAL_ESTADO                      ENABLED 
+  CHECK  SYS_C007480                              ENABLED 
+  CHECK  SYS_C007672                              ENABLED 
+  PK     PK_HISTORIAL_PAGOS_TEMGE                 ENABLED 
+
+--- LOG_API_ACCESOS ---
+  CHECK  SYS_C007518                              ENABLED 
+  PK     PK_LOG_API_ACCESOS                       ENABLED 
+  FK     FK_LOG_API_CLIENTE                       ENABLED  -> PK_API_CLIENTES [NOT DEFERRABLE IMMEDIATE]
+
+--- LOG_CARGA_DETALLE ---
+  CHECK  SYS_C007502                              ENABLED 
+  CHECK  SYS_C007503                              ENABLED 
+  PK     PK_LOG_CARGA_DETALLE                     ENABLED 
+  FK     FK_LOG_CARGA_DETALLE                     ENABLED  -> PK_LOG_CARGAS [NOT DEFERRABLE IMMEDIATE]
+
+--- LOG_CARGAS ---
+  CHECK  CK_LOG_CARGAS_ESTADO                     ENABLED 
+  CHECK  CK_LOG_CARGAS_REVERTIR                   ENABLED 
+  CHECK  CK_LOG_CARGAS_TIPO                       ENABLED 
+  CHECK  SYS_C007496                              ENABLED 
+  CHECK  SYS_C007497                              ENABLED 
+  PK     PK_LOG_CARGAS                            ENABLED 
+
+--- RETENIDO_JUDICIAL ---
+  CHECK  CK_RETENIDO_ESTADO                       ENABLED 
+  CHECK  CK_RETEN_MONTO_POS                       ENABLED 
+  CHECK  CK_RETEN_RUT_BENEF_POS                   ENABLED 
+  CHECK  CK_RETEN_RUT_TITULAR_POS                 ENABLED 
+  CHECK  SYS_C007471                              ENABLED 
+  CHECK  SYS_C007472                              ENABLED 
+  CHECK  SYS_C007473                              ENABLED 
+  CHECK  SYS_C007474                              ENABLED 
+  CHECK  SYS_C007475                              ENABLED 
+  CHECK  SYS_C007476                              ENABLED 
+  CHECK  SYS_C007477                              ENABLED 
+  PK     PK_RETENIDO_JUDICIAL                     ENABLED 
+  FK     FK_RETEN_BANCO                           ENABLED  -> PK_BANCOS [DEFERRABLE DEFERRED]
+  FK     FK_RETEN_BENEFICIARIO                    ENABLED  -> UK_BENEFICIARIOS_RUT [DEFERRABLE DEFERRED]
+  FK     FK_RETEN_FUNCIONARIO                     ENABLED  -> UK_FUNCIONARIOS_RUT [DEFERRABLE DEFERRED]
+  FK     FK_RETEN_TIPO_CUENTA                     ENABLED  -> PK_TIPOS_CUENTA [NOT DEFERRABLE IMMEDIATE]
+  FK     FK_RETEN_TIPO_RETENCION                  ENABLED  -> PK_TIPOS_RETENCION [DEFERRABLE DEFERRED]
+  UNIQUE UK_RETEN_UNICA                           ENABLED 
+
+--- TIPOS_CUENTA ---
+  CHECK  CK_TIPOS_CUENTA_ACTIVO                   ENABLED 
+  CHECK  SYS_C007534                              ENABLED 
+  CHECK  SYS_C007535                              ENABLED 
+  CHECK  SYS_C007536                              ENABLED 
+  PK     PK_TIPOS_CUENTA                          ENABLED 
+
+--- TIPOS_RETENCION ---
+  CHECK  CK_TIPOSRET_ACTIVO                       ENABLED 
+  CHECK  SYS_C007493                              ENABLED 
+  CHECK  SYS_C007494                              ENABLED 
+  PK     PK_TIPOS_RETENCION                       ENABLED 
+
+== FK DETALLE (columnas) ==
+  FK_BENEF_FUNCIONARIO                BENEFICIARIOS.RUT_FUNCIONARIO -> FUNCIONARIOS.RUT_FUNCIONARIO
+  FK_BENEFICIARIOS_BANCO              BENEFICIARIOS.COD_BANCO -> BANCOS.COD_BANCO
+  FK_BENEF_TIPO_CUENTA                BENEFICIARIOS.TIPO_CUENTA -> TIPOS_CUENTA.COD_TIPO_CUENTA
+  FK_DETALLE_HISTORIAL                DETALLE_PAGO_TEMGE.ID_HISTORIAL -> HISTORIAL_PAGOS_TEMGE.ID
+  FK_DETPAGO_BENEFICIARIO             DETALLE_PAGO_TEMGE.RUT_BENEFICIARIO -> BENEFICIARIOS.RUT_BENEFICIARIO
+  FK_DETPAGO_RETENIDO                 DETALLE_PAGO_TEMGE.ID_RETENIDO_JUDICIAL -> RETENIDO_JUDICIAL.ID
+  FK_DETPAGO_TIPO_CUENTA              DETALLE_PAGO_TEMGE.TIPO_CUENTA -> TIPOS_CUENTA.COD_TIPO_CUENTA
+  FK_LOG_API_CLIENTE                  LOG_API_ACCESOS.ID_CLIENTE -> API_CLIENTES.ID
+  FK_LOG_CARGA_DETALLE                LOG_CARGA_DETALLE.ID_CARGA -> LOG_CARGAS.ID
+  FK_RETEN_BANCO                      RETENIDO_JUDICIAL.COD_BANCO -> BANCOS.COD_BANCO
+  FK_RETEN_BENEFICIARIO               RETENIDO_JUDICIAL.RUT_BENEFICIARIO -> BENEFICIARIOS.RUT_BENEFICIARIO
+  FK_RETEN_FUNCIONARIO                RETENIDO_JUDICIAL.RUT_TITULAR -> FUNCIONARIOS.RUT_FUNCIONARIO
+  FK_RETEN_TIPO_CUENTA                RETENIDO_JUDICIAL.TIPO_CUENTA -> TIPOS_CUENTA.COD_TIPO_CUENTA
+  FK_RETEN_TIPO_RETENCION             RETENIDO_JUDICIAL.COD_RETENCION -> TIPOS_RETENCION.COD_RETENCION
+
+== INDICES ==
+  PK_API_CLIENTES                          API_CLIENTES                   UNIQUE     VALID    (ID)
+  UK_API_CLIENTES_KEY                      API_CLIENTES                   UNIQUE     VALID    (API_KEY)
+  IDX_AUD_ENTIDAD_FECHA                    AUDITORIA_CAMBIOS              NONUNIQUE  VALID    (ENTIDAD, ID_ENTIDAD, FECHA)
+  IDX_AUD_FECHA                            AUDITORIA_CAMBIOS              NONUNIQUE  VALID    (FECHA)
+  IDX_AUD_RUT                              AUDITORIA_CAMBIOS              NONUNIQUE  VALID    (RUT_AFECTADO)
+  IDX_AUD_USUARIO                          AUDITORIA_CAMBIOS              NONUNIQUE  VALID    (USUARIO)
+  PK_AUDITORIA_CAMBIOS                     AUDITORIA_CAMBIOS              UNIQUE     VALID    (ID)
+  PK_BANCOS                                BANCOS                         UNIQUE     VALID    (COD_BANCO)
+  IDX_BENEF_COD_BANCO                      BENEFICIARIOS                  NONUNIQUE  VALID    (COD_BANCO)
+  IDX_BENEFICIARIOS_RUT_FUNC               BENEFICIARIOS                  NONUNIQUE  VALID    (RUT_FUNCIONARIO)
+  IDX_BENEF_NOMBRE                         BENEFICIARIOS                  NONUNIQUE  VALID    (NOMBRE_BENEFICIARIO)
+  PK_BENEFICIARIOS                         BENEFICIARIOS                  UNIQUE     VALID    (ID)
+  UK_BENEFICIARIOS_RUT                     BENEFICIARIOS                  UNIQUE     VALID    (RUT_BENEFICIARIO)
+  IDX_DET_HISTORIAL                        DETALLE_PAGO_TEMGE             NONUNIQUE  VALID    (ID_HISTORIAL)
+  IDX_DET_RETENIDO                         DETALLE_PAGO_TEMGE             NONUNIQUE  VALID    (ID_RETENIDO_JUDICIAL)
+  IDX_DET_RUT                              DETALLE_PAGO_TEMGE             NONUNIQUE  VALID    (RUT_BENEFICIARIO)
+  PK_DETALLE_PAGO_TEMGE                    DETALLE_PAGO_TEMGE             UNIQUE     VALID    (ID)
+  PK_FUNCIONARIOS                          FUNCIONARIOS                   UNIQUE     VALID    (ID)
+  UK_FUNCIONARIOS_RUT                      FUNCIONARIOS                   UNIQUE     VALID    (RUT_FUNCIONARIO)
+  IDX_HIST_FECHA                           HISTORIAL_PAGOS_TEMGE          NONUNIQUE  VALID    (FECHA_PROCESO)
+  PK_HISTORIAL_PAGOS_TEMGE                 HISTORIAL_PAGOS_TEMGE          UNIQUE     VALID    (ID)
+  IDX_API_CLIENTE                          LOG_API_ACCESOS                NONUNIQUE  VALID    (ID_CLIENTE)
+  IDX_API_FECHA                            LOG_API_ACCESOS                NONUNIQUE  VALID    (FECHA_ACCESO)
+  IDX_API_RUT                              LOG_API_ACCESOS                NONUNIQUE  VALID    (RUT_CONSULTADO)
+  PK_LOG_API_ACCESOS                       LOG_API_ACCESOS                UNIQUE     VALID    (ID)
+  IDX_LOGDET_CARGA                         LOG_CARGA_DETALLE              NONUNIQUE  VALID    (ID_CARGA)
+  IDX_LOGDET_RUT                           LOG_CARGA_DETALLE              NONUNIQUE  VALID    (RUT_REFERENCIA)
+  PK_LOG_CARGA_DETALLE                     LOG_CARGA_DETALLE              UNIQUE     VALID    (ID)
+  IDX_LOG_FECHA                            LOG_CARGAS                     NONUNIQUE  VALID    (FECHA_INICIO)
+  IDX_LOG_HASH                             LOG_CARGAS                     NONUNIQUE  VALID    (HASH_ARCHIVO)
+  IDX_LOG_TIPO_PERIODO                     LOG_CARGAS                     NONUNIQUE  VALID    (TIPO_CARGA, PERIODO_PROCESO)
+  PK_LOG_CARGAS                            LOG_CARGAS                     UNIQUE     VALID    (ID)
+  IDX_RETEN_BENEF_PERIODO                  RETENIDO_JUDICIAL              NONUNIQUE  VALID    (RUT_BENEFICIARIO, PERIODO_PROCESO)
+  IDX_RETEN_COD                            RETENIDO_JUDICIAL              NONUNIQUE  VALID    (COD_RETENCION)
+  IDX_RETEN_PERIODO                        RETENIDO_JUDICIAL              NONUNIQUE  VALID    (PERIODO_PROCESO)
+  IDX_RETEN_TITULAR_ESTADO                 RETENIDO_JUDICIAL              NONUNIQUE  VALID    (RUT_TITULAR, ESTADO)
+  PK_RETENIDO_JUDICIAL                     RETENIDO_JUDICIAL              UNIQUE     VALID    (ID)
+  UK_RETEN_UNICA                           RETENIDO_JUDICIAL              UNIQUE     VALID    (ID_RETENCION, RUT_TITULAR, RUT_BENEFICIARIO, PERIODO_PROCESO)
+  PK_TIPOS_CUENTA                          TIPOS_CUENTA                   UNIQUE     VALID    (COD_TIPO_CUENTA)
+  PK_TIPOS_RETENCION                       TIPOS_RETENCION                UNIQUE     VALID    (COD_RETENCION)
+
+== SECUENCIAS (IDENTITY) ==
+  ISEQ$$_73096                             last=1 inc=1 cache=20
+  ISEQ$$_73100                             last=1 inc=1 cache=20
+  ISEQ$$_73104                             last=1 inc=1 cache=20
+  ISEQ$$_73107                             last=1 inc=1 cache=20
+  ISEQ$$_73110                             last=1 inc=1 cache=20
+  ISEQ$$_73117                             last=1 inc=1 cache=20
+  ISEQ$$_73120                             last=1 inc=1 cache=20
+  ISEQ$$_73129                             last=1 inc=1 cache=20
+  ISEQ$$_73132                             last=1 inc=1 cache=20
+  ISEQ$$_73136                             last=1 inc=1 cache=20
+
+== CONTEO DE FILAS ==
+  API_CLIENTES                             0 filas
+  AUDITORIA_CAMBIOS                        0 filas
+  BANCOS                                   13 filas
+  BENEFICIARIOS                            0 filas
+  DETALLE_PAGO_TEMGE                       0 filas
+  FUNCIONARIOS                             0 filas
+  HISTORIAL_PAGOS_TEMGE                    0 filas
+  LOG_API_ACCESOS                          0 filas
+  LOG_CARGA_DETALLE                        0 filas
+  LOG_CARGAS                               0 filas
+  RETENIDO_JUDICIAL                        0 filas
+  TIPOS_CUENTA                             5 filas
+  TIPOS_RETENCION                          13 filas
+
+== FIN ==
