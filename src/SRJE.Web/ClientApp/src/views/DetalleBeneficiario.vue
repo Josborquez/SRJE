@@ -137,7 +137,10 @@ const tipoCuentaLabel = computed(() => {
   return '-'
 })
 
-onMounted(() => store.obtener(Number(props.rut)))
+onMounted(() => {
+  store.detalle = null
+  store.obtener(Number(props.rut))
+})
 
 function esc(str) {
   const div = document.createElement('div')

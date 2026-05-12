@@ -84,9 +84,19 @@ export const useFuncionariosStore = defineStore('funcionarios', () => {
     }
   }
 
+  function $reset() {
+    items.value = []
+    totalCount.value = 0
+    page.value = 1
+    loading.value = false
+    error.value = null
+    detalle.value = null
+    stats.value = null
+  }
+
   return {
     items, totalCount,
     page, pageSize, loading, error, detalle, stats, totalPages,
-    listar, obtener, actualizar, inactivar, cargarStats
+    listar, obtener, actualizar, inactivar, cargarStats, $reset
   }
 })

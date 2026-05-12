@@ -235,6 +235,7 @@ function tipoCuentaLabel(tc) {
 
 // Al montar: carga el detalle del funcionario y los catalogos de bancos/tipos de cuenta
 onMounted(async () => {
+  store.detalle = null
   store.obtener(Number(props.rut))
   try {
     const [bancosRes, tcRes] = await Promise.all([

@@ -123,6 +123,8 @@
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from './stores/auth.js'
+import { useBeneficiariosStore } from './stores/beneficiarios.js'
+import { useFuncionariosStore } from './stores/funcionarios.js'
 import {
   Scale,
   LayoutDashboard,
@@ -144,10 +146,14 @@ import {
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const beneficiariosStore = useBeneficiariosStore()
+const funcionariosStore = useFuncionariosStore()
 const sidebarOpen = ref(false)
 
 async function handleLogout() {
   await authStore.logout()
+  beneficiariosStore.$reset()
+  funcionariosStore.$reset()
   router.push('/login')
 }
 </script>

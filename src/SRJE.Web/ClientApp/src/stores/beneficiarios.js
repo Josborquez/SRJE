@@ -94,9 +94,21 @@ export const useBeneficiariosStore = defineStore('beneficiarios', () => {
     }
   }
 
+  function $reset() {
+    items.value = []
+    totalCount.value = 0
+    totalInscritos.value = 0
+    totalActivos.value = 0
+    totalInactivos.value = 0
+    page.value = 1
+    loading.value = false
+    error.value = null
+    detalle.value = null
+  }
+
   return {
     items, totalCount, totalInscritos, totalActivos, totalInactivos,
     page, pageSize, loading, error, detalle, totalPages,
-    listar, obtener, crear, actualizar, inactivar
+    listar, obtener, crear, actualizar, inactivar, $reset
   }
 })

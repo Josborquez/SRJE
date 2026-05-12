@@ -65,7 +65,8 @@
       <small>Intenta con otra busqueda o ajusta los filtros.</small>
     </div>
 
-    <table v-if="store.items.length" class="data-table">
+    <div v-if="store.items.length" class="table-responsive">
+    <table class="data-table">
       <thead>
         <tr>
           <th>RUT</th>
@@ -104,6 +105,7 @@
         </tr>
       </tbody>
     </table>
+    </div>
 
     <!-- Paginacion -->
     <div v-if="store.totalPages >= 1" class="pagination-bar">

@@ -11,7 +11,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onUnmounted } from 'vue'
 import { CheckCircle, XCircle, AlertTriangle, Info, X } from 'lucide-vue-next'
 
 const props = defineProps({
@@ -39,6 +39,8 @@ watch(() => props.message, (val) => {
     }
   }
 }, { immediate: true })
+
+onUnmounted(() => { if (timer) clearTimeout(timer) })
 
 function close() {
   visible.value = false

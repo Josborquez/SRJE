@@ -283,6 +283,11 @@ body {
 .btn-sm-danger:hover { background: #fee2e2; }
 
 /* --- Tablas --- */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .data-table {
   width: 100%;
   border-collapse: collapse;
@@ -290,6 +295,7 @@ body {
   border-radius: var(--border-radius-lg);
   overflow: hidden;
   box-shadow: var(--shadow-sm);
+  min-width: 600px;
 }
 
 .data-table th,

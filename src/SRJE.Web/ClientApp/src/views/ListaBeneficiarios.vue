@@ -64,7 +64,8 @@
       <small>Intenta con otra busqueda o crea un nuevo beneficiario.</small>
     </div>
 
-    <table v-if="store.items.length" class="data-table">
+    <div v-if="store.items.length" class="table-responsive">
+    <table class="data-table">
       <thead>
         <tr>
           <th>RUT</th>
@@ -117,6 +118,7 @@
         </tr>
       </tbody>
     </table>
+    </div>
 
     <!-- Paginacion -->
     <div v-if="store.totalPages >= 1" class="pagination-bar">
