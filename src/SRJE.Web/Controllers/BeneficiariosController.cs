@@ -36,6 +36,7 @@ public class BeneficiariosController : ControllerBase
 
     /// <summary>POST /api/beneficiarios — Crear nuevo beneficiario</summary>
     [HttpPost]
+    [Authorize(Roles = "admin,operador")]
     public async Task<IActionResult> Crear([FromBody] CrearBeneficiarioRequest request)
     {
         try
@@ -57,6 +58,7 @@ public class BeneficiariosController : ControllerBase
 
     /// <summary>PUT /api/beneficiarios/{rut} — Actualizar ficha</summary>
     [HttpPut("{rut:long}")]
+    [Authorize(Roles = "admin,operador")]
     public async Task<IActionResult> Actualizar(long rut, [FromBody] ActualizarBeneficiarioRequest request)
     {
         try
@@ -73,6 +75,7 @@ public class BeneficiariosController : ControllerBase
 
     /// <summary>DELETE /api/beneficiarios/{rut} — Inactivar beneficiario</summary>
     [HttpDelete("{rut:long}")]
+    [Authorize(Roles = "admin,operador")]
     public async Task<IActionResult> Inactivar(long rut)
     {
         var usuario = User.Identity?.Name ?? "sistema";

@@ -9,7 +9,7 @@ namespace SRJE.Web.Controllers;
 
 [ApiController]
 [Route("api/mantenedores")]
-[Authorize]
+[Authorize(Roles = "admin")]
 public class MantenedoresController : ControllerBase
 {
     private readonly SrjeDbContext _db;

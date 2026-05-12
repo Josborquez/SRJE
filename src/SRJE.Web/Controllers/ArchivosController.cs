@@ -7,9 +7,11 @@ namespace SRJE.Web.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
+[Authorize(Roles = "admin,operador")]
 public class ArchivosController : ControllerBase
 {
+    private const long MaxFileSize = 10 * 1024 * 1024; // 10 MB
+
     private readonly IRemuneracionesService _remuneraciones;
     private readonly ITemgeService _temge;
     private readonly INuevasCuentasService _nuevasCuentas;
@@ -27,12 +29,21 @@ public class ArchivosController : ControllerBase
         _auditoria = auditoria;
     }
 
+    private static IActionResult? ValidarArchivo(IFormFile? archivo, ControllerBase controller)
+    {
+        if (archivo == null || archivo.Length == 0)
+            return controller.BadRequest(new { error = "Archivo requerido" });
+        if (archivo.Length > MaxFileSize)
+            return controller.BadRequest(new { error = $"El archivo excede el tamaño máximo permitido ({MaxFileSize / 1024 / 1024} MB)" });
+        return null;
+    }
+
     /// <summary>POST /api/archivos/remuneraciones/preview — Parsear sin persistir</summary>
     [HttpPost("remuneraciones/preview")]
     public async Task<IActionResult> PreviewRemuneraciones(IFormFile archivo)
     {
-        if (archivo == null || archivo.Length == 0)
-            return BadRequest(new { error = "Archivo requerido" });
+        var error = ValidarArchivo(archivo, this);
+        if (error != null) return error;
 
         using var stream = archivo.OpenReadStream();
         var result = await _remuneraciones.PreviewRemuneracionesAsync(stream, archivo.FileName);
@@ -53,8 +64,8 @@ public class ArchivosController : ControllerBase
     [HttpPost("temge/preview")]
     public async Task<IActionResult> PreviewTemge(IFormFile archivo)
     {
-        if (archivo == null || archivo.Length == 0)
-            return BadRequest(new { error = "Archivo requerido" });
+        var error = ValidarArchivo(archivo, this);
+        if (error != null) return error;
 
         using var stream = archivo.OpenReadStream();
         var result = await _temge.PreviewTemgeAsync(stream, archivo.FileName);
@@ -65,8 +76,8 @@ public class ArchivosController : ControllerBase
     [HttpPost("nuevas-cuentas/preview")]
     public async Task<IActionResult> PreviewNuevasCuentas(IFormFile archivo)
     {
-        if (archivo == null || archivo.Length == 0)
-            return BadRequest(new { error = "Archivo requerido" });
+        var error = ValidarArchivo(archivo, this);
+        if (error != null) return error;
 
         using var stream = archivo.OpenReadStream();
         var result = await _nuevasCuentas.PreviewNuevasCuentasAsync(stream, archivo.FileName);
@@ -108,8 +119,8 @@ public class ArchivosController : ControllerBase
     [HttpPost("auditoria/comparar")]
     public async Task<IActionResult> CompararBeneficiarios(IFormFile archivo)
     {
-        if (archivo == null || archivo.Length == 0)
-            return BadRequest(new { error = "Archivo requerido" });
+        var error = ValidarArchivo(archivo, this);
+        if (error != null) return error;
 
         using var stream = archivo.OpenReadStream();
         var result = await _auditoria.CompararAsync(stream);
@@ -120,8 +131,8 @@ public class ArchivosController : ControllerBase
     [HttpPost("auditoria/exportar-excel")]
     public async Task<IActionResult> ExportarAuditoriaExcel(IFormFile archivo)
     {
-        if (archivo == null || archivo.Length == 0)
-            return BadRequest(new { error = "Archivo requerido" });
+        var error = ValidarArchivo(archivo, this);
+        if (error != null) return error;
 
         using var stream = archivo.OpenReadStream();
         var bytes = await _auditoria.ExportarExcelAsync(stream);
@@ -134,8 +145,8 @@ public class ArchivosController : ControllerBase
     [HttpPost("auditoria/exportar-csv")]
     public async Task<IActionResult> ExportarAuditoriaCsv(IFormFile archivo)
     {
-        if (archivo == null || archivo.Length == 0)
-            return BadRequest(new { error = "Archivo requerido" });
+        var error = ValidarArchivo(archivo, this);
+        if (error != null) return error;
 
         using var stream = archivo.OpenReadStream();
         var bytes = await _auditoria.ExportarCsvAsync(stream);

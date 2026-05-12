@@ -119,7 +119,7 @@ public class NuevasCuentasService : INuevasCuentasService
                         beneficiario.CodBanco = linea.CodBanco;
                         beneficiario.TipoCuenta = linea.TipoCuenta;
                         beneficiario.CtaEstado = linea.CodBanco == _settings.CodBancoEstado ? linea.NumeroCuenta : null;
-                        beneficiario.CtaOtBanco = linea.CodBanco != 12 ? linea.NumeroCuenta : null;
+                        beneficiario.CtaOtBanco = linea.CodBanco != _settings.CodBancoEstado ? linea.NumeroCuenta : null;
                         beneficiario.FechaModificacion = DateTime.Now;
                         actualizados++;
                         accion = "ACTUALIZAR";
@@ -134,7 +134,7 @@ public class NuevasCuentasService : INuevasCuentasService
                             CodBanco = linea.CodBanco,
                             TipoCuenta = linea.TipoCuenta,
                             CtaEstado = linea.CodBanco == _settings.CodBancoEstado ? linea.NumeroCuenta : null,
-                            CtaOtBanco = linea.CodBanco != 12 ? linea.NumeroCuenta : null,
+                            CtaOtBanco = linea.CodBanco != _settings.CodBancoEstado ? linea.NumeroCuenta : null,
                             UsuarioCreacion = usuario
                         };
                         _db.Beneficiarios.Add(nuevo);

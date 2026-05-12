@@ -44,6 +44,7 @@ public class FuncionariosController : ControllerBase
 
     /// <summary>PUT /api/funcionarios/{rut} — Actualizar ficha</summary>
     [HttpPut("{rut:long}")]
+    [Authorize(Roles = "admin,operador")]
     public async Task<IActionResult> Actualizar(long rut, [FromBody] ActualizarFuncionarioRequest request)
     {
         try
@@ -60,6 +61,7 @@ public class FuncionariosController : ControllerBase
 
     /// <summary>DELETE /api/funcionarios/{rut} — Inactivar funcionario</summary>
     [HttpDelete("{rut:long}")]
+    [Authorize(Roles = "admin,operador")]
     public async Task<IActionResult> Inactivar(long rut)
     {
         var usuario = User.Identity?.Name ?? "sistema";
