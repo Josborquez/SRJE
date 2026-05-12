@@ -62,12 +62,16 @@ export const useFuncionariosStore = defineStore('funcionarios', () => {
   }
 
   async function inactivar(rut) {
+    loading.value = true
+    error.value = null
     try {
       await funcionariosApi.inactivar(rut)
       return true
     } catch (e) {
       error.value = e.response?.data?.error || e.message
       return false
+    } finally {
+      loading.value = false
     }
   }
 

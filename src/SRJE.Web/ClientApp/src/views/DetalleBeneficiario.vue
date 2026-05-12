@@ -139,6 +139,12 @@ const tipoCuentaLabel = computed(() => {
 
 onMounted(() => store.obtener(Number(props.rut)))
 
+function esc(str) {
+  const div = document.createElement('div')
+  div.textContent = str ?? ''
+  return div.innerHTML
+}
+
 function imprimirFicha() {
   const d = store.detalle
   const fecha = new Date().toLocaleDateString('es-CL')
@@ -151,7 +157,7 @@ function imprimirFicha() {
   let funcHtml = ''
   if (d.funcionarios?.length) {
     funcHtml = d.funcionarios.map(f =>
-      `<div style="margin-bottom: 3px;"><strong>${f.rutFormateado}</strong> <span style="color: #64748b; margin-left: 6px;">${f.nombreCompleto || ''}</span></div>`
+      `<div style="margin-bottom: 3px;"><strong>${esc(f.rutFormateado)}</strong> <span style="color: #64748b; margin-left: 6px;">${esc(f.nombreCompleto)}</span></div>`
     ).join('')
   } else {
     funcHtml = '<p class="muted">Sin funcionarios asociados.</p>'
@@ -162,11 +168,11 @@ function imprimirFicha() {
     retHtml = `<table class="ret-table">
       <thead><tr><th>Funcionario</th><th>Monto</th><th>Codigo</th><th>Tipo Pago</th><th>Periodo</th></tr></thead>
       <tbody>${d.retenciones.map(r => `<tr>
-        <td>${r.nombreFuncionario || r.rutTitularFormateado || '-'}</td>
+        <td>${esc(r.nombreFuncionario || r.rutTitularFormateado || '-')}</td>
         <td>$${(r.monto || 0).toLocaleString('es-CL')}</td>
-        <td>${r.codRetencion || '-'}</td>
-        <td>${r.tipoPago || '-'}</td>
-        <td>${r.periodoProceso || '-'}</td>
+        <td>${esc(r.codRetencion || '-')}</td>
+        <td>${esc(r.tipoPago || '-')}</td>
+        <td>${esc(r.periodoProceso || '-')}</td>
       </tr>`).join('')}</tbody></table>`
   } else {
     retHtml = '<p class="muted">Sin retenciones activas.</p>'
@@ -195,17 +201,17 @@ function imprimirFicha() {
   @media print { body { padding: 10px; } }
 </style></head><body>
 <div class="fecha">Impreso: ${fecha}</div>
-<h1>${d.nombreBeneficiario}</h1>
-<p class="subtitle">RUT: ${d.rutFormateado} | <span class="estado ${d.estado === 'A' ? 'estado-a' : 'estado-i'}">${d.estado === 'A' ? 'Activo' : 'Inactivo'}</span></p>
+<h1>${esc(d.nombreBeneficiario)}</h1>
+<p class="subtitle">RUT: ${esc(d.rutFormateado)} | <span class="estado ${d.estado === 'A' ? 'estado-a' : 'estado-i'}">${d.estado === 'A' ? 'Activo' : 'Inactivo'}</span></p>
 
 <div class="section">
   <h2>Datos Personales</h2>
   <dl>
-    <dt>Sexo</dt><dd>${sexoLabel}</dd>
-    <dt>Estado Civil</dt><dd>${d.estadoCivil || '-'}</dd>
-    <dt>Domicilio</dt><dd>${d.domicilio || '-'}</dd>
-    <dt>Comuna</dt><dd>${d.comuna || '-'}</dd>
-    <dt>Telefono</dt><dd>${d.telefono || '-'}</dd>
+    <dt>Sexo</dt><dd>${esc(sexoLabel)}</dd>
+    <dt>Estado Civil</dt><dd>${esc(d.estadoCivil || '-')}</dd>
+    <dt>Domicilio</dt><dd>${esc(d.domicilio || '-')}</dd>
+    <dt>Comuna</dt><dd>${esc(d.comuna || '-')}</dd>
+    <dt>Telefono</dt><dd>${esc(d.telefono || '-')}</dd>
   </dl>
 </div>
 
@@ -217,10 +223,10 @@ function imprimirFicha() {
 <div class="section">
   <h2>Cuenta Bancaria</h2>
   <dl>
-    <dt>Banco</dt><dd>${banco}</dd>
-    <dt>Tipo Cuenta</dt><dd>${tcLabel}</dd>
-    <dt>Cuenta</dt><dd>${cuenta}</dd>
-    <dt>Sucursal</dt><dd>${d.sucursal || '-'}</dd>
+    <dt>Banco</dt><dd>${esc(banco)}</dd>
+    <dt>Tipo Cuenta</dt><dd>${esc(tcLabel)}</dd>
+    <dt>Cuenta</dt><dd>${esc(cuenta)}</dd>
+    <dt>Sucursal</dt><dd>${esc(d.sucursal || '-')}</dd>
   </dl>
 </div>
 
@@ -229,7 +235,7 @@ function imprimirFicha() {
   ${retHtml}
 </div>
 
-<script>window.onload = function() { window.print(); }<\/script>
+<script>window.onload = function() { window.print(); window.close(); }<\/script>
 </body></html>`
 
   const win = window.open('', '_blank', 'width=800,height=600')

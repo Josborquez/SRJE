@@ -248,19 +248,23 @@ public class BeneficiarioService : IBeneficiarioService
                 ret.NombreFuncionario = $"{func.ApellidoPaterno} {func.ApellidoMaterno} {func.Nombres}".Trim();
         }
 
-        dto.Funcionarios = rutsTitulares.Select(rutTitular =>
-        {
-            var ret = retenciones.First(r => r.RutTitular == rutTitular);
-            var fa = new FuncionarioAsociadoDto
+        dto.Funcionarios = rutsTitulares
+            .Select(rutTitular =>
             {
-                RutFuncionario = rutTitular,
-                DvFuncionario = ret.DvTitular,
-                RutFormateado = RutHelper.Formatear(rutTitular, ret.DvTitular)
-            };
-            if (funcionarios.TryGetValue(rutTitular, out var func))
-                fa.NombreCompleto = $"{func.ApellidoPaterno} {func.ApellidoMaterno} {func.Nombres}".Trim();
-            return fa;
-        }).ToList();
+                var ret = retenciones.FirstOrDefault(r => r.RutTitular == rutTitular);
+                if (ret == null) return null;
+                var fa = new FuncionarioAsociadoDto
+                {
+                    RutFuncionario = rutTitular,
+                    DvFuncionario = ret.DvTitular,
+                    RutFormateado = RutHelper.Formatear(rutTitular, ret.DvTitular)
+                };
+                if (funcionarios.TryGetValue(rutTitular, out var func))
+                    fa.NombreCompleto = $"{func.ApellidoPaterno} {func.ApellidoMaterno} {func.Nombres}".Trim();
+                return fa;
+            })
+            .Where(f => f != null)
+            .ToList()!;
 
         return dto;
     }

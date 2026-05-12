@@ -133,7 +133,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useFuncionariosStore } from '../stores/funcionarios.js'
 import AlertMessage from '../components/AlertMessage.vue'
 import {
@@ -154,6 +154,7 @@ onMounted(() => {
   store.cargarStats()
   store.listar()
 })
+onUnmounted(() => clearTimeout(debounceTimer))
 
 function buildParams() {
   const params = {}

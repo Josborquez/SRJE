@@ -155,7 +155,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useBeneficiariosStore } from '../stores/beneficiarios.js'
 import { beneficiariosApi } from '../api/index.js'
 import AlertMessage from '../components/AlertMessage.vue'
@@ -178,6 +178,7 @@ const exportando = ref(false)
 let debounceTimer = null
 
 onMounted(() => store.listar())
+onUnmounted(() => clearTimeout(debounceTimer))
 
 function debounceBuscar() {
   clearTimeout(debounceTimer)

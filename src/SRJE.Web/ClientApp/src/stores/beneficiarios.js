@@ -81,12 +81,16 @@ export const useBeneficiariosStore = defineStore('beneficiarios', () => {
   }
 
   async function inactivar(rut) {
+    loading.value = true
+    error.value = null
     try {
       await beneficiariosApi.inactivar(rut)
       return true
     } catch (e) {
       error.value = e.response?.data?.error || e.message
       return false
+    } finally {
+      loading.value = false
     }
   }
 

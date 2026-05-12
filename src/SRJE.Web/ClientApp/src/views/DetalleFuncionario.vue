@@ -236,12 +236,17 @@ function tipoCuentaLabel(tc) {
 // Al montar: carga el detalle del funcionario y los catalogos de bancos/tipos de cuenta
 onMounted(async () => {
   store.obtener(Number(props.rut))
-  const [bancosRes, tcRes] = await Promise.all([
-    catalogosApi.bancos(),
-    catalogosApi.tiposCuenta()
-  ])
-  bancos.value = bancosRes.data
-  tiposCuenta.value = tcRes.data
+  try {
+    const [bancosRes, tcRes] = await Promise.all([
+      catalogosApi.bancos(),
+      catalogosApi.tiposCuenta()
+    ])
+    bancos.value = bancosRes.data
+    tiposCuenta.value = tcRes.data
+  } catch (e) {
+    alertType.value = 'error'
+    alertMsg.value = 'Error al cargar catálogos de bancos/tipos de cuenta.'
+  }
 })
 
 // Ejecuta la inactivacion del funcionario y redirige a la lista tras exito
@@ -282,6 +287,12 @@ function limpiarCuenta(campo) {
   cuentaForm.value[campo] = cuentaForm.value[campo].replace(/[^0-9]/g, '')
 }
 
+function esc(str) {
+  const div = document.createElement('div')
+  div.textContent = str ?? ''
+  return div.innerHTML
+}
+
 // Genera un HTML de ficha imprimible con los datos del funcionario, beneficiarios y retenciones
 function imprimirFicha() {
   const d = store.detalle
@@ -300,9 +311,9 @@ function imprimirFicha() {
           <thead><tr><th>Monto</th><th>Cod. Retencion</th><th>Tipo Pago</th><th>Periodo</th><th>Estado</th></tr></thead>
           <tbody>${b.retenciones.map(r => `<tr>
             <td>$${(r.monto || 0).toLocaleString('es-CL')}</td>
-            <td>${r.codRetencion || '-'}</td>
-            <td>${r.tipoPago || '-'}</td>
-            <td>${r.periodoProceso || '-'}</td>
+            <td>${esc(r.codRetencion || '-')}</td>
+            <td>${esc(r.tipoPago || '-')}</td>
+            <td>${esc(r.periodoProceso || '-')}</td>
             <td>${r.estado === 'A' ? 'Activo' : 'Inactivo'}</td>
           </tr>`).join('')}</tbody></table>`
       } else {
@@ -312,9 +323,9 @@ function imprimirFicha() {
       benefHtml += `
         <div class="benef-block">
           <div class="benef-header">
-            <strong>${b.nombreBeneficiario}</strong> <span class="rut">${b.rutFormateado}</span>
+            <strong>${esc(b.nombreBeneficiario)}</strong> <span class="rut">${esc(b.rutFormateado)}</span>
           </div>
-          <div class="benef-cuenta">Banco: ${banco} | Tipo: ${tc} | Cuenta: ${cuenta}</div>
+          <div class="benef-cuenta">Banco: ${esc(banco)} | Tipo: ${esc(tc)} | Cuenta: ${esc(cuenta)}</div>
           ${retHtml}
         </div>`
     }
@@ -353,8 +364,8 @@ function imprimirFicha() {
   @media print { body { padding: 10px; } }
 </style></head><body>
 <div class="fecha">Impreso: ${fecha}</div>
-<h1>${d.nombres} ${d.apellidoPaterno} ${d.apellidoMaterno}</h1>
-<p class="subtitle">RUT: ${d.rutFormateado} | <span class="estado ${d.activo === 'S' ? 'estado-a' : 'estado-i'}">${d.activo === 'S' ? 'Activo' : 'Inactivo'}</span></p>
+<h1>${esc(d.nombres)} ${esc(d.apellidoPaterno)} ${esc(d.apellidoMaterno)}</h1>
+<p class="subtitle">RUT: ${esc(d.rutFormateado)} | <span class="estado ${d.activo === 'S' ? 'estado-a' : 'estado-i'}">${d.activo === 'S' ? 'Activo' : 'Inactivo'}</span></p>
 
 <div class="stats">
   <div class="stat-box"><span class="val">${d.beneficiarios?.length || 0}</span><span class="lbl">Beneficiarios</span></div>
@@ -364,10 +375,10 @@ function imprimirFicha() {
 <div class="section">
   <h2>Datos del Funcionario</h2>
   <dl>
-    <dt>Apellido Paterno</dt><dd>${d.apellidoPaterno || '-'}</dd>
-    <dt>Apellido Materno</dt><dd>${d.apellidoMaterno || '-'}</dd>
-    <dt>Nombres</dt><dd>${d.nombres || '-'}</dd>
-    <dt>ID Sistema</dt><dd>${d.idSistema || '-'}</dd>
+    <dt>Apellido Paterno</dt><dd>${esc(d.apellidoPaterno || '-')}</dd>
+    <dt>Apellido Materno</dt><dd>${esc(d.apellidoMaterno || '-')}</dd>
+    <dt>Nombres</dt><dd>${esc(d.nombres || '-')}</dd>
+    <dt>ID Sistema</dt><dd>${esc(d.idSistema || '-')}</dd>
   </dl>
 </div>
 
@@ -376,7 +387,7 @@ function imprimirFicha() {
   ${benefHtml}
 </div>
 
-<script>window.onload = function() { window.print(); }<\/script>
+<script>window.onload = function() { window.print(); window.close(); }<\/script>
 </body></html>`
 
   const win = window.open('', '_blank', 'width=800,height=600')
