@@ -6,4 +6,5 @@ public class Banco
     public string NombreBanco { get; set; } = string.Empty;
     public string UsaCtaOtBanco { get; set; } = "S";
     public string Activo { get; set; } = "S";
+    public long? CodBancoNew { get; set; }
 }

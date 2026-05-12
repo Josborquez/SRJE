@@ -10,6 +10,7 @@ public class HistorialPagosTemge
     public string? NombreArchivo { get; set; }
     public string Estado { get; set; } = "G";
     public string? UsuarioGenera { get; set; }
+    public string? PeriodoProceso { get; set; }
 
     public ICollection<DetallePagoTemge> Detalles { get; set; } = new List<DetallePagoTemge>();
 }

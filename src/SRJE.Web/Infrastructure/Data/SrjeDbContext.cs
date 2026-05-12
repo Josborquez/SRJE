@@ -62,6 +62,9 @@ public class SrjeDbContext : DbContext
             e.Property(x => x.Nombres).HasColumnName("NOMBRES").HasMaxLength(30);
             e.Property(x => x.IdSistema).HasColumnName("ID_SISTEMA").HasMaxLength(8);
             e.Property(x => x.Activo).HasColumnName("ACTIVO").HasMaxLength(1).HasDefaultValue("S");
+            e.Property(x => x.FechaCreacion).HasColumnName("FECHA_CREACION").HasDefaultValueSql("SYSDATE");
+            e.Property(x => x.FechaModificacion).HasColumnName("FECHA_MODIFICACION");
+            e.Property(x => x.UsuarioCreacion).HasColumnName("USUARIO_CREACION").HasMaxLength(50);
             e.HasIndex(x => x.RutFuncionario).IsUnique();
         });
 
@@ -102,6 +105,7 @@ public class SrjeDbContext : DbContext
             e.Property(x => x.NombreArchivo).HasColumnName("NOMBRE_ARCHIVO").HasMaxLength(200);
             e.Property(x => x.Estado).HasColumnName("ESTADO").HasMaxLength(1).HasDefaultValue("G");
             e.Property(x => x.UsuarioGenera).HasColumnName("USUARIO_GENERA").HasMaxLength(50);
+            e.Property(x => x.PeriodoProceso).HasColumnName("PERIODO_PROCESO").HasMaxLength(6).IsFixedLength();
             e.HasMany(x => x.Detalles).WithOne(x => x.Historial).HasForeignKey(x => x.IdHistorial);
         });
 
@@ -131,6 +135,7 @@ public class SrjeDbContext : DbContext
             e.Property(x => x.NombreBanco).HasColumnName("NOMBRE_BANCO").HasMaxLength(100).IsRequired();
             e.Property(x => x.UsaCtaOtBanco).HasColumnName("USA_CTA_OT_BANCO").HasMaxLength(1).HasDefaultValue("S");
             e.Property(x => x.Activo).HasColumnName("ACTIVO").HasMaxLength(1).HasDefaultValue("S");
+            e.Property(x => x.CodBancoNew).HasColumnName("COD_BANCO_NEW");
         });
 
         // TIPOS_CUENTA
