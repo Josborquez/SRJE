@@ -135,7 +135,7 @@
               <th>#</th>
               <th>RUT Beneficiario</th>
               <th>Nombre</th>
-              <th>RUT Funcionario</th>
+              <th>Estado</th>
             </tr>
           </thead>
           <tbody>
@@ -143,7 +143,7 @@
               <td>{{ i + 1 }}</td>
               <td>{{ item.rutFormateado }}</td>
               <td>{{ item.nombreBeneficiario }}</td>
-              <td>{{ item.rutFuncionarioFormateado || '-' }}</td>
+              <td>{{ item.estado === 'A' ? 'Activo' : 'Inactivo' }}</td>
             </tr>
           </tbody>
         </table>

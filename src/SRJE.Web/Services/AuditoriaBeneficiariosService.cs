@@ -62,8 +62,6 @@ public class AuditoriaBeneficiariosService : IAuditoriaBeneficiariosService
                     DvBeneficiario = linea.DvBeneficiario,
                     RutFormateado = RutHelper.Formatear(linea.RutBeneficiario, linea.DvBeneficiario),
                     NombreBeneficiario = linea.NombreBeneficiario,
-                    RutFuncionario = linea.RutFuncionario,
-                    DvFuncionario = linea.DvFuncionario,
                     RutFuncionarioFormateado = linea.RutFuncionario.HasValue && linea.DvFuncionario != null
                         ? RutHelper.Formatear(linea.RutFuncionario.Value, linea.DvFuncionario)
                         : null
@@ -82,11 +80,6 @@ public class AuditoriaBeneficiariosService : IAuditoriaBeneficiariosService
                     DvBeneficiario = benef.DvBeneficiario,
                     RutFormateado = RutHelper.Formatear(benef.RutBeneficiario, benef.DvBeneficiario),
                     NombreBeneficiario = benef.NombreBeneficiario,
-                    RutFuncionario = benef.RutFuncionario,
-                    DvFuncionario = benef.DvFuncionario,
-                    RutFuncionarioFormateado = benef.RutFuncionario.HasValue && benef.DvFuncionario != null
-                        ? RutHelper.Formatear(benef.RutFuncionario.Value, benef.DvFuncionario)
-                        : null,
                     Estado = benef.Estado
                 });
             }
@@ -109,21 +102,6 @@ public class AuditoriaBeneficiariosService : IAuditoriaBeneficiariosService
                     Campo = "Nombre",
                     ValorArchivo = linea.NombreBeneficiario,
                     ValorSistema = benef.NombreBeneficiario
-                });
-            }
-
-            if (linea.RutFuncionario.HasValue && benef.RutFuncionario.HasValue
-                && linea.RutFuncionario.Value != benef.RutFuncionario.Value)
-            {
-                diffs.Add(new CampoDiferencia
-                {
-                    Campo = "RUT Funcionario",
-                    ValorArchivo = linea.RutFuncionario.HasValue && linea.DvFuncionario != null
-                        ? RutHelper.Formatear(linea.RutFuncionario.Value, linea.DvFuncionario)
-                        : linea.RutFuncionario?.ToString(),
-                    ValorSistema = benef.RutFuncionario.HasValue && benef.DvFuncionario != null
-                        ? RutHelper.Formatear(benef.RutFuncionario.Value, benef.DvFuncionario)
-                        : benef.RutFuncionario?.ToString()
                 });
             }
 

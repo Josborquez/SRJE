@@ -69,8 +69,7 @@
         <tr>
           <th>RUT</th>
           <th>Nombre</th>
-          <th>RUT Funcionario</th>
-          <th>Nombre Funcionario</th>
+          <th>Funcionario(s)</th>
           <th>Banco</th>
           <th>Cuenta</th>
           <th>Retenciones</th>
@@ -83,8 +82,16 @@
         <tr v-for="b in store.items" :key="b.id">
           <td>{{ b.rutFormateado }}</td>
           <td>{{ b.nombreBeneficiario }}</td>
-          <td>{{ b.rutFuncionarioFormateado || '-' }}</td>
-          <td>{{ b.nombreFuncionario || '-' }}</td>
+          <td>
+            <template v-if="b.funcionarios?.length">
+              <div v-for="f in b.funcionarios" :key="f.rutFuncionario" style="line-height: 1.4;">
+                <router-link :to="`/funcionarios/${f.rutFuncionario}`" class="func-link">
+                  {{ f.nombreCompleto || f.rutFormateado }}
+                </router-link>
+              </div>
+            </template>
+            <span v-else>-</span>
+          </td>
           <td>{{ b.nombreBanco || b.codBanco || '-' }}</td>
           <td>{{ formatCuenta(b.ctaEstado || b.ctaOtBanco) }}</td>
           <td class="text-center">{{ b.cantidadRetenciones || 0 }}</td>

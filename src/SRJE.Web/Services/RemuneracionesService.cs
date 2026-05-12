@@ -81,6 +81,26 @@ public class RemuneracionesService : IRemuneracionesService
             }
         }
 
+        // Detectar beneficiarios con multiples funcionarios titulares
+        var multiFuncKeys = lineas
+            .Where(l => l.EstadoLinea != "ERROR" && l.RutFuncionario.HasValue)
+            .GroupBy(l => l.RutBeneficiario)
+            .Where(g => g.Select(l => l.RutFuncionario!.Value).Distinct().Count() > 1)
+            .Select(g => g.Key)
+            .ToHashSet();
+
+        foreach (var linea in lineas)
+        {
+            if (multiFuncKeys.Contains(linea.RutBeneficiario) && linea.EstadoLinea != "ERROR")
+            {
+                if (linea.EstadoLinea == "OK")
+                    linea.EstadoLinea = "ADVERTENCIA";
+                linea.Mensaje = string.IsNullOrEmpty(linea.Mensaje)
+                    ? "Beneficiario con multiples funcionarios titulares"
+                    : linea.Mensaje + " | Beneficiario con multiples funcionarios titulares";
+            }
+        }
+
         return BuildPreview(lineas);
     }
 
@@ -201,8 +221,6 @@ public class RemuneracionesService : IRemuneracionesService
                             RutBeneficiario = linea.RutBeneficiario,
                             DvBeneficiario = linea.DvBeneficiario,
                             NombreBeneficiario = linea.NombreBeneficiario,
-                            RutFuncionario = linea.RutFuncionario,
-                            DvFuncionario = linea.DvFuncionario,
                             UsuarioCreacion = usuario
                         });
                         beneficiariosEnBatch.Add(linea.RutBeneficiario);

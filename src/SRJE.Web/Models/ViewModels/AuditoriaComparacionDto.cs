@@ -16,8 +16,6 @@ public class AuditoriaItemDto
     public string DvBeneficiario { get; set; } = string.Empty;
     public string RutFormateado { get; set; } = string.Empty;
     public string NombreBeneficiario { get; set; } = string.Empty;
-    public long? RutFuncionario { get; set; }
-    public string? DvFuncionario { get; set; }
     public string? RutFuncionarioFormateado { get; set; }
     public string? Estado { get; set; }
 }

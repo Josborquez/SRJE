@@ -79,24 +79,48 @@ public class BeneficiarioService : IBeneficiarioService
             }
         }
 
-        // Enriquecer con nombre del funcionario desde tabla FUNCIONARIOS
-        var rutsFuncionario = items.Where(i => i.RutFuncionario.HasValue)
-            .Select(i => i.RutFuncionario!.Value).Distinct().ToList();
-        if (rutsFuncionario.Count > 0)
+        // Enriquecer con funcionarios asociados desde RETENIDO_JUDICIAL
+        var rutsItems = items.Select(i => i.RutBeneficiario).ToList();
+        if (rutsItems.Count > 0)
         {
-            var funcionarios = await _db.Funcionarios.AsNoTracking()
-                .Where(f => rutsFuncionario.Contains(f.RutFuncionario))
-                .ToDictionaryAsync(f => f.RutFuncionario);
+            var funcionariosPorBenef = await _db.RetenidosJudiciales.AsNoTracking()
+                .Where(r => r.Estado == "A" && rutsItems.Contains(r.RutBeneficiario))
+                .Select(r => new { r.RutBeneficiario, r.RutTitular, r.DvTitular })
+                .Distinct()
+                .ToListAsync();
+
+            var rutsTitulares = funcionariosPorBenef.Select(x => x.RutTitular).Distinct().ToList();
+            var funcionarios = rutsTitulares.Count > 0
+                ? await _db.Funcionarios.AsNoTracking()
+                    .Where(f => rutsTitulares.Contains(f.RutFuncionario))
+                    .ToDictionaryAsync(f => f.RutFuncionario)
+                : new Dictionary<long, Funcionario>();
+
+            var grouped = funcionariosPorBenef
+                .GroupBy(x => x.RutBeneficiario)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
             foreach (var item in items)
             {
-                if (item.RutFuncionario.HasValue &&
-                    funcionarios.TryGetValue(item.RutFuncionario.Value, out var func))
-                    item.NombreFuncionario = $"{func.ApellidoPaterno} {func.ApellidoMaterno} {func.Nombres}".Trim();
+                if (grouped.TryGetValue(item.RutBeneficiario, out var funcs))
+                {
+                    item.Funcionarios = funcs.Select(f =>
+                    {
+                        var dto = new FuncionarioAsociadoDto
+                        {
+                            RutFuncionario = f.RutTitular,
+                            DvFuncionario = f.DvTitular,
+                            RutFormateado = RutHelper.Formatear(f.RutTitular, f.DvTitular)
+                        };
+                        if (funcionarios.TryGetValue(f.RutTitular, out var func))
+                            dto.NombreCompleto = $"{func.ApellidoPaterno} {func.ApellidoMaterno} {func.Nombres}".Trim();
+                        return dto;
+                    }).ToList();
+                }
             }
         }
 
         // Enriquecer con retenciones activas del ultimo periodo
-        var rutsItems = items.Select(i => i.RutBeneficiario).ToList();
         if (rutsItems.Count > 0)
         {
             // Obtener el ultimo periodo disponible
@@ -190,11 +214,6 @@ public class BeneficiarioService : IBeneficiarioService
             NombreBanco = nombreBanco,
             CtaEstado = beneficiario.CtaEstado,
             Sucursal = beneficiario.Sucursal,
-            RutFuncionario = beneficiario.RutFuncionario,
-            DvFuncionario = beneficiario.DvFuncionario,
-            RutFuncionarioFormateado = beneficiario.RutFuncionario.HasValue && beneficiario.DvFuncionario != null
-                ? RutHelper.Formatear(beneficiario.RutFuncionario.Value, beneficiario.DvFuncionario)
-                : null,
             Estado = beneficiario.Estado,
             FechaCreacion = beneficiario.FechaCreacion,
             FechaModificacion = beneficiario.FechaModificacion,
@@ -214,14 +233,14 @@ public class BeneficiarioService : IBeneficiarioService
             }).ToList()
         };
 
-        // Obtener nombres de funcionarios (para retenciones y para la ficha)
+        // Derivar funcionarios asociados desde las retenciones
         var rutsTitulares = retenciones.Select(r => r.RutTitular).Distinct().ToList();
-        if (beneficiario.RutFuncionario.HasValue && !rutsTitulares.Contains(beneficiario.RutFuncionario.Value))
-            rutsTitulares.Add(beneficiario.RutFuncionario.Value);
 
-        var funcionarios = await _db.Funcionarios.AsNoTracking()
-            .Where(f => rutsTitulares.Contains(f.RutFuncionario))
-            .ToDictionaryAsync(f => f.RutFuncionario);
+        var funcionarios = rutsTitulares.Count > 0
+            ? await _db.Funcionarios.AsNoTracking()
+                .Where(f => rutsTitulares.Contains(f.RutFuncionario))
+                .ToDictionaryAsync(f => f.RutFuncionario)
+            : new Dictionary<long, Funcionario>();
 
         foreach (var ret in dto.Retenciones)
         {
@@ -229,12 +248,19 @@ public class BeneficiarioService : IBeneficiarioService
                 ret.NombreFuncionario = $"{func.ApellidoPaterno} {func.ApellidoMaterno} {func.Nombres}".Trim();
         }
 
-        // Obtener nombre del funcionario desde la tabla FUNCIONARIOS
-        if (beneficiario.RutFuncionario.HasValue
-            && funcionarios.TryGetValue(beneficiario.RutFuncionario.Value, out var funcBenef))
+        dto.Funcionarios = rutsTitulares.Select(rutTitular =>
         {
-            dto.NombreFuncionario = $"{funcBenef.ApellidoPaterno} {funcBenef.ApellidoMaterno} {funcBenef.Nombres}".Trim();
-        }
+            var ret = retenciones.First(r => r.RutTitular == rutTitular);
+            var fa = new FuncionarioAsociadoDto
+            {
+                RutFuncionario = rutTitular,
+                DvFuncionario = ret.DvTitular,
+                RutFormateado = RutHelper.Formatear(rutTitular, ret.DvTitular)
+            };
+            if (funcionarios.TryGetValue(rutTitular, out var func))
+                fa.NombreCompleto = $"{func.ApellidoPaterno} {func.ApellidoMaterno} {func.Nombres}".Trim();
+            return fa;
+        }).ToList();
 
         return dto;
     }
@@ -265,8 +291,6 @@ public class BeneficiarioService : IBeneficiarioService
             CtaEstado = request.CodBanco == _settings.CodBancoEstado ? request.CtaEstado : null,
             CtaOtBanco = request.CodBanco != _settings.CodBancoEstado ? request.CtaOtBanco : null,
             Sucursal = request.Sucursal,
-            RutFuncionario = request.RutFuncionario,
-            DvFuncionario = request.DvFuncionario?.ToUpper(),
             UsuarioCreacion = usuario
         };
 
@@ -309,8 +333,6 @@ public class BeneficiarioService : IBeneficiarioService
         entity.CtaEstado = request.CodBanco == _settings.CodBancoEstado ? request.CtaEstado : null;
         entity.CtaOtBanco = request.CodBanco != _settings.CodBancoEstado ? request.CtaOtBanco : null;
         entity.Sucursal = request.Sucursal;
-        entity.RutFuncionario = request.RutFuncionario;
-        entity.DvFuncionario = request.DvFuncionario?.ToUpper();
         entity.FechaModificacion = DateTime.Now;
 
         _db.AuditoriaCambios.Add(new AuditoriaCambios
@@ -395,7 +417,7 @@ public class BeneficiarioService : IBeneficiarioService
 
         // Headers
         var headers = new[] { "RUT", "Nombre", "Estado", "Banco", "Tipo Cuenta",
-            "Cta Banco Estado", "Cta Otro Banco", "RUT Funcionario", "Nombre Funcionario",
+            "Cta Banco Estado", "Cta Otro Banco", "Funcionario(s)",
             "Retenciones", "Monto Retenciones", "Fecha Creacion" };
         for (int c = 0; c < headers.Length; c++)
         {
@@ -417,12 +439,11 @@ public class BeneficiarioService : IBeneficiarioService
             ws.Cells[row, 5].Value = b.TipoCuentaDescripcion;
             ws.Cells[row, 6].Value = b.CtaEstado;
             ws.Cells[row, 7].Value = b.CtaOtBanco;
-            ws.Cells[row, 8].Value = b.RutFuncionarioFormateado;
-            ws.Cells[row, 9].Value = b.NombreFuncionario;
-            ws.Cells[row, 10].Value = b.CantidadRetenciones;
-            ws.Cells[row, 11].Value = b.MontoTotalRetenciones;
-            ws.Cells[row, 11].Style.Numberformat.Format = "#,##0";
-            ws.Cells[row, 12].Value = b.FechaCreacion?.ToString("dd/MM/yyyy");
+            ws.Cells[row, 8].Value = string.Join(", ", b.Funcionarios.Select(f => f.NombreCompleto ?? f.RutFormateado));
+            ws.Cells[row, 9].Value = b.CantidadRetenciones;
+            ws.Cells[row, 10].Value = b.MontoTotalRetenciones;
+            ws.Cells[row, 10].Style.Numberformat.Format = "#,##0";
+            ws.Cells[row, 11].Value = b.FechaCreacion?.ToString("dd/MM/yyyy");
         }
 
         ws.Cells[ws.Dimension.Address].AutoFitColumns();
@@ -434,7 +455,7 @@ public class BeneficiarioService : IBeneficiarioService
         var beneficiarios = await ObtenerBeneficiariosParaExportar(estado);
 
         var sb = new StringBuilder();
-        sb.AppendLine("RUT;Nombre;Estado;Banco;Tipo Cuenta;Cta Banco Estado;Cta Otro Banco;RUT Funcionario;Nombre Funcionario;Retenciones;Monto Retenciones;Fecha Creacion");
+        sb.AppendLine("RUT;Nombre;Estado;Banco;Tipo Cuenta;Cta Banco Estado;Cta Otro Banco;Funcionario(s);Retenciones;Monto Retenciones;Fecha Creacion");
 
         foreach (var b in beneficiarios)
         {
@@ -446,8 +467,7 @@ public class BeneficiarioService : IBeneficiarioService
                 b.TipoCuentaDescripcion ?? "",
                 b.CtaEstado ?? "",
                 b.CtaOtBanco ?? "",
-                b.RutFuncionarioFormateado ?? "",
-                b.NombreFuncionario ?? "",
+                string.Join(" / ", b.Funcionarios.Select(f => f.NombreCompleto ?? f.RutFormateado)),
                 b.CantidadRetenciones,
                 b.MontoTotalRetenciones,
                 b.FechaCreacion?.ToString("dd/MM/yyyy") ?? ""
@@ -481,19 +501,44 @@ public class BeneficiarioService : IBeneficiarioService
             }
         }
 
-        // Enriquecer con nombre del funcionario desde tabla FUNCIONARIOS
-        var rutsFuncionario = items.Where(i => i.RutFuncionario.HasValue)
-            .Select(i => i.RutFuncionario!.Value).Distinct().ToList();
-        if (rutsFuncionario.Count > 0)
+        // Enriquecer con funcionarios asociados desde RETENIDO_JUDICIAL
+        var allRuts = items.Select(i => i.RutBeneficiario).ToList();
+        if (allRuts.Count > 0)
         {
-            var funcionarios = await _db.Funcionarios.AsNoTracking()
-                .Where(f => rutsFuncionario.Contains(f.RutFuncionario))
-                .ToDictionaryAsync(f => f.RutFuncionario);
+            var funcionariosPorBenef = await _db.RetenidosJudiciales.AsNoTracking()
+                .Where(r => r.Estado == "A" && allRuts.Contains(r.RutBeneficiario))
+                .Select(r => new { r.RutBeneficiario, r.RutTitular, r.DvTitular })
+                .Distinct()
+                .ToListAsync();
+
+            var rutsTitulares = funcionariosPorBenef.Select(x => x.RutTitular).Distinct().ToList();
+            var funcionarios = rutsTitulares.Count > 0
+                ? await _db.Funcionarios.AsNoTracking()
+                    .Where(f => rutsTitulares.Contains(f.RutFuncionario))
+                    .ToDictionaryAsync(f => f.RutFuncionario)
+                : new Dictionary<long, Funcionario>();
+
+            var grouped = funcionariosPorBenef
+                .GroupBy(x => x.RutBeneficiario)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
             foreach (var item in items)
             {
-                if (item.RutFuncionario.HasValue &&
-                    funcionarios.TryGetValue(item.RutFuncionario.Value, out var func))
-                    item.NombreFuncionario = $"{func.ApellidoPaterno} {func.ApellidoMaterno} {func.Nombres}".Trim();
+                if (grouped.TryGetValue(item.RutBeneficiario, out var funcs))
+                {
+                    item.Funcionarios = funcs.Select(f =>
+                    {
+                        var dto = new FuncionarioAsociadoDto
+                        {
+                            RutFuncionario = f.RutTitular,
+                            DvFuncionario = f.DvTitular,
+                            RutFormateado = RutHelper.Formatear(f.RutTitular, f.DvTitular)
+                        };
+                        if (funcionarios.TryGetValue(f.RutTitular, out var func))
+                            dto.NombreCompleto = $"{func.ApellidoPaterno} {func.ApellidoMaterno} {func.Nombres}".Trim();
+                        return dto;
+                    }).ToList();
+                }
             }
         }
 
@@ -552,11 +597,6 @@ public class BeneficiarioService : IBeneficiarioService
         CodBanco = b.CodBanco,
         CtaEstado = b.CtaEstado,
         Sucursal = b.Sucursal,
-        RutFuncionario = b.RutFuncionario,
-        DvFuncionario = b.DvFuncionario,
-        RutFuncionarioFormateado = b.RutFuncionario.HasValue && b.DvFuncionario != null
-            ? RutHelper.Formatear(b.RutFuncionario.Value, b.DvFuncionario)
-            : null,
         Estado = b.Estado,
         FechaCreacion = b.FechaCreacion
     };

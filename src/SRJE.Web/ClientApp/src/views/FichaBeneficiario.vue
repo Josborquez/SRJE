@@ -64,24 +64,7 @@
         </div>
       </fieldset>
 
-      <!-- Seccion 2: Datos del Funcionario -->
-      <fieldset>
-        <legend><Briefcase :size="16" /> Datos del Funcionario</legend>
-        <div class="form-grid">
-          <RutInput
-            v-model="form.rutFuncionario"
-            label="RUT Funcionario"
-            @rutValidado="onRutFuncionarioValidado"
-          />
-          <div class="field">
-            <label>Nombre Funcionario (max 100 chars)</label>
-            <input v-model="form.nombreFuncionario" maxlength="100" />
-            <small>{{ form.nombreFuncionario?.length || 0 }}/100</small>
-          </div>
-        </div>
-      </fieldset>
-
-      <!-- Seccion 3: Cuenta Bancaria -->
+      <!-- Seccion 2: Cuenta Bancaria -->
       <fieldset>
         <legend><Landmark :size="16" /> Cuenta Bancaria</legend>
         <div class="form-grid">
@@ -142,7 +125,7 @@ import { useBeneficiariosStore } from '../stores/beneficiarios.js'
 import { catalogosApi } from '../api/index.js'
 import { formatCuenta } from '../composables/useFormato.js'
 import {
-  UserPlus, UserPen, User, Briefcase, Landmark,
+  UserPlus, UserPen, User, Landmark,
   Save, X, CircleAlert
 } from 'lucide-vue-next'
 
@@ -171,10 +154,7 @@ const form = ref({
   tipoCuenta: null,
   codBanco: null,
   ctaEstado: '',
-  sucursal: '',
-  rutFuncionario: null,
-  dvFuncionario: '',
-  nombreFuncionario: ''
+  sucursal: ''
 })
 
 onMounted(async () => {
@@ -201,10 +181,6 @@ onMounted(async () => {
 function onRutValidado({ rut, dv, valido }) {
   form.value.dvBeneficiario = dv
   rutValido.value = valido
-}
-
-function onRutFuncionarioValidado({ rut, dv, valido }) {
-  form.value.dvFuncionario = dv
 }
 
 function onBancoChange() {

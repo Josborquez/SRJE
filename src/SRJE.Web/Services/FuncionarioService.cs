@@ -48,13 +48,15 @@ public class FuncionarioService : IFuncionarioService
             .Select(f => MapToDto(f))
             .ToListAsync();
 
-        // Enriquecer con cantidad de beneficiarios por funcionario
+        // Enriquecer con cantidad de beneficiarios desde RETENIDO_JUDICIAL
         var rutsFuncionario = items.Select(i => i.RutFuncionario).ToList();
         if (rutsFuncionario.Count > 0)
         {
-            var beneficiariosPorFunc = await _db.Beneficiarios.AsNoTracking()
-                .Where(b => b.RutFuncionario.HasValue && rutsFuncionario.Contains(b.RutFuncionario.Value) && b.Estado == "A")
-                .GroupBy(b => b.RutFuncionario!.Value)
+            var beneficiariosPorFunc = await _db.RetenidosJudiciales.AsNoTracking()
+                .Where(r => r.Estado == "A" && rutsFuncionario.Contains(r.RutTitular))
+                .Select(r => new { r.RutTitular, r.RutBeneficiario })
+                .Distinct()
+                .GroupBy(r => r.RutTitular)
                 .Select(g => new { Rut = g.Key, Cantidad = g.Count() })
                 .ToListAsync();
 
@@ -114,9 +116,15 @@ public class FuncionarioService : IFuncionarioService
         if (funcionario == null)
             return null;
 
-        // Obtener beneficiarios asociados a este funcionario
+        // Obtener beneficiarios asociados a este funcionario via RETENIDO_JUDICIAL
+        var rutsBenefFromRet = await _db.RetenidosJudiciales.AsNoTracking()
+            .Where(r => r.RutTitular == rut && r.Estado == "A")
+            .Select(r => r.RutBeneficiario)
+            .Distinct()
+            .ToListAsync();
+
         var beneficiarios = await _db.Beneficiarios.AsNoTracking()
-            .Where(b => b.RutFuncionario == rut)
+            .Where(b => rutsBenefFromRet.Contains(b.RutBeneficiario))
             .ToListAsync();
 
         // Obtener retenciones activas donde este funcionario es titular, agrupadas por beneficiario

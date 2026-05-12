@@ -19,10 +19,7 @@ public class BeneficiarioDto
     public string? NombreBanco { get; set; }
     public string? CtaEstado { get; set; }
     public string? Sucursal { get; set; }
-    public long? RutFuncionario { get; set; }
-    public string? DvFuncionario { get; set; }
-    public string? RutFuncionarioFormateado { get; set; }
-    public string? NombreFuncionario { get; set; }
+    public List<FuncionarioAsociadoDto> Funcionarios { get; set; } = new();
     public string Estado { get; set; } = "A";
     public DateTime? FechaCreacion { get; set; }
     public int CantidadRetenciones { get; set; }
@@ -50,6 +47,14 @@ public class RetencionDto
     public string? TipoPago { get; set; }
     public string Estado { get; set; } = "A";
     public string? PeriodoProceso { get; set; }
+}
+
+public class FuncionarioAsociadoDto
+{
+    public long RutFuncionario { get; set; }
+    public string DvFuncionario { get; set; } = string.Empty;
+    public string RutFormateado { get; set; } = string.Empty;
+    public string? NombreCompleto { get; set; }
 }
 
 public class PagedResult<T>

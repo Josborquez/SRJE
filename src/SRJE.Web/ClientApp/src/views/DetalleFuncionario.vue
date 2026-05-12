@@ -216,6 +216,7 @@ const cuentaForm = ref({
   ctaOtBanco: ''
 })
 
+// Suma los montos de todas las retenciones de todos los beneficiarios del funcionario
 const montoTotalRetenciones = computed(() => {
   if (!store.detalle?.beneficiarios) return 0
   return store.detalle.beneficiarios.reduce((sum, b) => {
@@ -224,6 +225,7 @@ const montoTotalRetenciones = computed(() => {
   }, 0)
 })
 
+// Convierte el codigo numerico de tipo de cuenta a su descripcion legible
 function tipoCuentaLabel(tc) {
   if (tc === 1) return 'Cuenta Corriente'
   if (tc === 2) return 'Ahorro / CuentaRUT'
@@ -231,6 +233,7 @@ function tipoCuentaLabel(tc) {
   return '-'
 }
 
+// Al montar: carga el detalle del funcionario y los catalogos de bancos/tipos de cuenta
 onMounted(async () => {
   store.obtener(Number(props.rut))
   const [bancosRes, tcRes] = await Promise.all([
@@ -241,6 +244,7 @@ onMounted(async () => {
   tiposCuenta.value = tcRes.data
 })
 
+// Ejecuta la inactivacion del funcionario y redirige a la lista tras exito
 async function ejecutarInactivar() {
   const ok = await store.inactivar(Number(props.rut))
   if (ok) {
@@ -253,6 +257,7 @@ async function ejecutarInactivar() {
   }
 }
 
+// Abre el modal de edicion de cuenta bancaria, precargando los datos del beneficiario seleccionado
 function abrirEditarCuenta(b) {
   cuentaForm.value = {
     rutBeneficiario: b.rutBeneficiario,
@@ -266,15 +271,18 @@ function abrirEditarCuenta(b) {
   showEditarCuenta.value = true
 }
 
+// Limpia los campos de cuenta al cambiar de banco (evita datos cruzados)
 function onBancoChange() {
   cuentaForm.value.ctaEstado = ''
   cuentaForm.value.ctaOtBanco = ''
 }
 
+// Elimina caracteres no numericos del campo de cuenta ingresado
 function limpiarCuenta(campo) {
   cuentaForm.value[campo] = cuentaForm.value[campo].replace(/[^0-9]/g, '')
 }
 
+// Genera un HTML de ficha imprimible con los datos del funcionario, beneficiarios y retenciones
 function imprimirFicha() {
   const d = store.detalle
   const fecha = new Date().toLocaleDateString('es-CL')
@@ -376,6 +384,7 @@ function imprimirFicha() {
   win.document.close()
 }
 
+// Envía la actualizacion de cuenta bancaria al backend y recarga el detalle del funcionario
 async function guardarCuenta() {
   guardandoCuenta.value = true
   try {
@@ -444,7 +453,18 @@ async function guardarCuenta() {
 }
 
 .modal-dialog-lg {
-  max-width: 580px;
+  max-width: 720px;
+}
+
+/* Dentro del modal, el form-grid usa una sola columna para aprovechar todo el ancho */
+.modal-body .form-grid {
+  grid-template-columns: 1fr;
+}
+
+/* Selects del modal ocupan el 100% del ancho disponible */
+.modal-body select,
+.modal-body input {
+  width: 100%;
 }
 
 /* Reuse modal styles from ConfirmModal */
@@ -457,7 +477,7 @@ async function guardarCuenta() {
 .modal-dialog, .modal-dialog-lg {
   background: #fff; border-radius: 14px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
-  width: 92%; overflow: hidden;
+  width: 92%; overflow: visible;
 }
 
 .modal-dialog { max-width: 460px; }
@@ -466,15 +486,18 @@ async function guardarCuenta() {
   padding: 1.25rem 1.5rem 0.75rem;
   display: flex; align-items: center; gap: 0.6rem;
   border-bottom: 1px solid #f1f5f9;
+  background: #fff;
+  border-radius: 14px 14px 0 0;
 }
 .modal-header h3 { margin: 0; font-size: 1.05rem; color: #1e293b; }
 .modal-icon.primary { color: #2563eb; }
 
-.modal-body { padding: 1rem 1.5rem 1.25rem; }
+.modal-body { padding: 1rem 1.5rem 1.25rem; background: #fff; }
 
 .modal-footer {
   padding: 0.85rem 1.5rem; display: flex; justify-content: flex-end; gap: 0.6rem;
   border-top: 1px solid #f1f5f9; background: #f8fafc;
+  border-radius: 0 0 14px 14px;
 }
 
 .modal-fade-enter-active { transition: opacity 0.2s ease; }
