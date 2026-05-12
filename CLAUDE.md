@@ -1,10 +1,10 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.revs
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
 
-    SRJE (Sistema de Retenciones Judiciales Electrónicas) — Chilean judicial withholding system for payroll processing. .NET 8 backend with Vue 3 SPA frontend, backed by Oracle database.
+SRJE (Sistema de Retenciones Judiciales Electrónicas) — Chilean judicial withholding system for payroll processing. .NET 8 backend with Vue 3 SPA frontend, backed by Oracle database.
 
 ## Build & Run Commands
 
@@ -74,3 +74,32 @@ SQL migration/setup scripts live in `oracle/` at the repo root. These are manual
 ## Testing
 
 xUnit with Moq and FluentAssertions. Tests cover Helpers, Parsers, and Services. Service tests mock the DbContext.
+
+## Coding Guidelines
+
+### Think Before Coding
+- When a request is ambiguous, ask for clarification before implementing. Do not guess intent.
+- State assumptions explicitly. If a change could affect parsers, import flows, or audit logging, say so before proceeding.
+- If a simpler approach exists (fewer queries, less code, reusing existing helpers), propose it first.
+- Surface tradeoffs: "This changes the DB schema — do you want a migration script in `oracle/`?"
+
+### Simplicity First
+- Write only the minimum code that solves the stated problem. No speculative features.
+- Don't create abstractions for single-use code. Three similar lines are better than a premature helper.
+- If 200 lines can be reduced to 50, rewrite. Apply the senior engineer test: would an experienced developer call this overcomplicated?
+- Skip error handling for impossible scenarios. Trust internal code and EF Core guarantees. Only validate at system boundaries (controller inputs, file parsing).
+
+### Surgical Changes
+- Only modify code directly related to the request. Don't improve adjacent code, comments, or formatting.
+- Match existing style: Spanish variable names in domain code, English in infrastructure. Don't refactor conventions.
+- Don't add docstrings, type annotations, or comments to code you didn't change.
+- Remove only imports/variables made unused by your specific changes. Don't delete pre-existing dead code unless asked.
+- Test: every changed line should directly trace to the user's request.
+
+### Goal-Driven Execution
+- Before implementing, define what "done" looks like:
+  - "Add validation" → write a test for invalid input, then make it pass.
+  - "Fix the bug" → write a test reproducing it, then fix.
+  - "Refactor X" → ensure tests pass before and after.
+- For multi-step tasks, verify each step before moving to the next.
+- After finishing, run `dotnet build` and/or `npm run build` to confirm nothing is broken.
