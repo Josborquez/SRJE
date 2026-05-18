@@ -14,4 +14,8 @@ public interface IBeneficiarioService
     Task<List<BeneficiarioDto>> BuscarAsync(string query);
     Task<byte[]> ExportarExcelAsync(string? estado = null);
     Task<byte[]> ExportarCsvAsync(string? estado = null);
+    Task<List<CuentaBeneficiarioDto>> ListarCuentasAsync(long rut);
+    Task<CuentaBeneficiarioDto> AgregarCuentaAsync(long rut, CrearCuentaBeneficiarioRequest request, string usuario);
+    Task<CuentaBeneficiarioDto> ActualizarCuentaAsync(long rut, long id, ActualizarCuentaBeneficiarioRequest request, string usuario);
+    Task<bool> EliminarCuentaAsync(long rut, long id, string usuario);
 }

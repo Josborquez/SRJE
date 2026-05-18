@@ -43,6 +43,25 @@ public class ActualizarBeneficiarioRequest : CrearBeneficiarioRequest
 {
 }
 
+public class CrearCuentaBeneficiarioRequest
+{
+    [Required]
+    public long CodBanco { get; set; }
+
+    [Required]
+    public long TipoCuenta { get; set; }
+
+    [Required, MaxLength(15)]
+    public string NumeroCuenta { get; set; } = string.Empty;
+
+    [MaxLength(60)]
+    public string? Alias { get; set; }
+}
+
+public class ActualizarCuentaBeneficiarioRequest : CrearCuentaBeneficiarioRequest
+{
+}
+
 public class BuscarBeneficiarioQuery
 {
     public string? Q { get; set; }

@@ -73,6 +73,8 @@ const alertMsg = ref('')
 const alertType = ref('info')
 const showConfirm = ref(false)
 
+const cuentasPorBeneficiario = ref({})
+
 const columnas = computed(() => [
   { key: 'rutBeneficiario', label: 'RUT Benef.', format: 'rut' },
   { key: 'dvBeneficiario', label: 'DV' },
@@ -81,6 +83,29 @@ const columnas = computed(() => [
   { key: 'codRetencion', label: 'Cod. Retencion', editable: true, options: opcionesCodRetencion.value },
   { key: 'tipoPago', label: 'Tipo Pago', editable: true, options: opcionesTipoPago.value },
   { key: 'monto', label: 'Monto', format: 'monto' },
+  {
+    key: 'cuentaSeleccionada',
+    label: 'Cuenta',
+    editableWhen: 'esMulticuenta',
+    optionsFrom: (linea) => {
+      const cuentas = cuentasPorBeneficiario.value[linea.rutBeneficiario]
+      if (!cuentas?.length) return []
+      return cuentas.map(c => ({
+        value: c.id,
+        label: `${c.nombreBanco || c.codBanco} - ${c.numeroCuenta}${c.alias ? ' (' + c.alias + ')' : ''}`
+      }))
+    },
+    numeric: true,
+    onChange: (linea, val) => {
+      const cuentas = cuentasPorBeneficiario.value[linea.rutBeneficiario]
+      const cuenta = cuentas?.find(c => c.id === val)
+      if (cuenta) {
+        linea.codBanco = cuenta.codBanco
+        linea.tipoCuenta = cuenta.tipoCuenta
+        linea.numeroCuenta = cuenta.numeroCuenta
+      }
+    }
+  },
   { key: 'codBanco', label: 'Banco', editableWhen: 'esMulticuenta', numeric: true, options: opcionesBancos.value },
   { key: 'tipoCuenta', label: 'Tipo Cta', editableWhen: 'esMulticuenta', numeric: true, options: opcionesTiposCuenta.value },
   { key: 'numeroCuenta', label: 'N° Cuenta', editableWhen: 'esMulticuenta' }
@@ -122,6 +147,7 @@ async function onFileSelected(file) {
   try {
     const { data } = await archivosApi.previewRemuneraciones(file)
     preview.value = data
+    cuentasPorBeneficiario.value = data.cuentasPorBeneficiario || {}
     if (data.lineasMulticuenta > 0) {
       alertType.value = 'warning'
       alertMsg.value = `Se cargaron ${data.lineas?.length || 0} registros. ${data.lineasMulticuenta} lineas multicuenta requieren asignacion manual de cuenta bancaria.`

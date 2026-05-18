@@ -266,6 +266,9 @@ public class BeneficiarioService : IBeneficiarioService
             .Where(f => f != null)
             .ToList()!;
 
+        // Cargar cuentas almacenadas
+        dto.Cuentas = await CargarCuentasDtosAsync(rut);
+
         return dto;
     }
 
@@ -575,6 +578,176 @@ public class BeneficiarioService : IBeneficiarioService
         }
 
         return items;
+    }
+
+    public async Task<List<CuentaBeneficiarioDto>> ListarCuentasAsync(long rut)
+    {
+        return await CargarCuentasDtosAsync(rut);
+    }
+
+    public async Task<CuentaBeneficiarioDto> AgregarCuentaAsync(long rut, CrearCuentaBeneficiarioRequest request, string usuario)
+    {
+        var beneficiario = await _db.Beneficiarios.AsNoTracking()
+            .FirstOrDefaultAsync(b => b.RutBeneficiario == rut)
+            ?? throw new KeyNotFoundException("Beneficiario no encontrado");
+
+        // Verificar duplicado
+        var existe = await _db.CuentasBeneficiario.AnyAsync(c =>
+            c.RutBeneficiario == rut &&
+            c.CodBanco == request.CodBanco &&
+            c.TipoCuenta == request.TipoCuenta &&
+            c.NumeroCuenta == request.NumeroCuenta);
+        if (existe)
+            throw new BusinessConflictException("Ya existe una cuenta con esos datos para este beneficiario");
+
+        var maxOrden = await _db.CuentasBeneficiario
+            .Where(c => c.RutBeneficiario == rut)
+            .Select(c => (int?)c.Orden)
+            .MaxAsync() ?? -1;
+
+        var entity = new CuentaBeneficiario
+        {
+            RutBeneficiario = rut,
+            CodBanco = request.CodBanco,
+            TipoCuenta = request.TipoCuenta,
+            NumeroCuenta = request.NumeroCuenta,
+            Alias = request.Alias,
+            Orden = maxOrden + 1,
+            UsuarioCreacion = usuario
+        };
+
+        _db.CuentasBeneficiario.Add(entity);
+
+        _db.AuditoriaCambios.Add(new AuditoriaCambios
+        {
+            Entidad = "CUENTA_BENEFICIARIO",
+            IdEntidad = beneficiario.Id,
+            RutAfectado = RutHelper.Formatear(rut, beneficiario.DvBeneficiario),
+            Accion = "INSERT",
+            CampoModificado = "CUENTA",
+            ValorNuevo = $"Banco:{request.CodBanco} Tipo:{request.TipoCuenta} Cta:{request.NumeroCuenta}",
+            Usuario = usuario,
+            Fecha = DateTime.Now
+        });
+
+        await _db.SaveChangesAsync();
+        return await MapCuentaToDto(entity);
+    }
+
+    public async Task<CuentaBeneficiarioDto> ActualizarCuentaAsync(long rut, long id, ActualizarCuentaBeneficiarioRequest request, string usuario)
+    {
+        var entity = await _db.CuentasBeneficiario
+            .FirstOrDefaultAsync(c => c.Id == id && c.RutBeneficiario == rut)
+            ?? throw new KeyNotFoundException("Cuenta no encontrada");
+
+        var valorAnterior = $"Banco:{entity.CodBanco} Tipo:{entity.TipoCuenta} Cta:{entity.NumeroCuenta}";
+
+        entity.CodBanco = request.CodBanco;
+        entity.TipoCuenta = request.TipoCuenta;
+        entity.NumeroCuenta = request.NumeroCuenta;
+        entity.Alias = request.Alias;
+
+        var beneficiario = await _db.Beneficiarios.AsNoTracking()
+            .FirstOrDefaultAsync(b => b.RutBeneficiario == rut);
+
+        _db.AuditoriaCambios.Add(new AuditoriaCambios
+        {
+            Entidad = "CUENTA_BENEFICIARIO",
+            IdEntidad = beneficiario?.Id ?? 0,
+            RutAfectado = beneficiario != null ? RutHelper.Formatear(rut, beneficiario.DvBeneficiario) : rut.ToString(),
+            Accion = "ACTUALIZAR",
+            CampoModificado = "CUENTA",
+            ValorAnterior = valorAnterior,
+            ValorNuevo = $"Banco:{request.CodBanco} Tipo:{request.TipoCuenta} Cta:{request.NumeroCuenta}",
+            Usuario = usuario,
+            Fecha = DateTime.Now
+        });
+
+        await _db.SaveChangesAsync();
+        return await MapCuentaToDto(entity);
+    }
+
+    public async Task<bool> EliminarCuentaAsync(long rut, long id, string usuario)
+    {
+        var entity = await _db.CuentasBeneficiario
+            .FirstOrDefaultAsync(c => c.Id == id && c.RutBeneficiario == rut);
+        if (entity == null) return false;
+
+        var beneficiario = await _db.Beneficiarios.AsNoTracking()
+            .FirstOrDefaultAsync(b => b.RutBeneficiario == rut);
+
+        _db.CuentasBeneficiario.Remove(entity);
+
+        _db.AuditoriaCambios.Add(new AuditoriaCambios
+        {
+            Entidad = "CUENTA_BENEFICIARIO",
+            IdEntidad = beneficiario?.Id ?? 0,
+            RutAfectado = beneficiario != null ? RutHelper.Formatear(rut, beneficiario.DvBeneficiario) : rut.ToString(),
+            Accion = "ELIMINAR",
+            CampoModificado = "CUENTA",
+            ValorAnterior = $"Banco:{entity.CodBanco} Tipo:{entity.TipoCuenta} Cta:{entity.NumeroCuenta}",
+            Usuario = usuario,
+            Fecha = DateTime.Now
+        });
+
+        await _db.SaveChangesAsync();
+        return true;
+    }
+
+    private async Task<List<CuentaBeneficiarioDto>> CargarCuentasDtosAsync(long rut)
+    {
+        var cuentas = await _db.CuentasBeneficiario.AsNoTracking()
+            .Where(c => c.RutBeneficiario == rut && c.Estado == "A")
+            .OrderBy(c => c.Orden)
+            .ToListAsync();
+
+        if (cuentas.Count == 0) return new();
+
+        var codsBanco = cuentas.Select(c => c.CodBanco).Distinct().ToList();
+        var bancos = await _db.Bancos.AsNoTracking()
+            .Where(b => codsBanco.Contains(b.CodBanco))
+            .ToDictionaryAsync(b => b.CodBanco, b => b.NombreBanco);
+
+        var codsTipo = cuentas.Select(c => c.TipoCuenta).Distinct().ToList();
+        var tipos = await _db.TiposCuenta.AsNoTracking()
+            .Where(t => codsTipo.Contains(t.CodTipoCuenta))
+            .ToDictionaryAsync(t => t.CodTipoCuenta, t => t.Descripcion);
+
+        return cuentas.Select(c => new CuentaBeneficiarioDto
+        {
+            Id = c.Id,
+            CodBanco = c.CodBanco,
+            NombreBanco = bancos.GetValueOrDefault(c.CodBanco),
+            TipoCuenta = c.TipoCuenta,
+            TipoCuentaDescripcion = tipos.GetValueOrDefault(c.TipoCuenta),
+            NumeroCuenta = c.NumeroCuenta,
+            Alias = c.Alias,
+            Orden = c.Orden
+        }).ToList();
+    }
+
+    private async Task<CuentaBeneficiarioDto> MapCuentaToDto(CuentaBeneficiario c)
+    {
+        var nombreBanco = await _db.Bancos.AsNoTracking()
+            .Where(b => b.CodBanco == c.CodBanco)
+            .Select(b => b.NombreBanco)
+            .FirstOrDefaultAsync();
+        var tipoCuentaDesc = await _db.TiposCuenta.AsNoTracking()
+            .Where(t => t.CodTipoCuenta == c.TipoCuenta)
+            .Select(t => t.Descripcion)
+            .FirstOrDefaultAsync();
+
+        return new CuentaBeneficiarioDto
+        {
+            Id = c.Id,
+            CodBanco = c.CodBanco,
+            NombreBanco = nombreBanco,
+            TipoCuenta = c.TipoCuenta,
+            TipoCuentaDescripcion = tipoCuentaDesc,
+            NumeroCuenta = c.NumeroCuenta,
+            Alias = c.Alias,
+            Orden = c.Orden
+        };
     }
 
     private static BeneficiarioDto MapToDto(Beneficiario b) => new()

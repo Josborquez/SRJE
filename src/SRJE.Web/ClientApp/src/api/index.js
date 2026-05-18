@@ -34,7 +34,11 @@ export const beneficiariosApi = {
   retenciones: (rut) => api.get(`/beneficiarios/${rut}/retenciones`),
   buscar: (q) => api.get('/beneficiarios/buscar', { params: { q } }),
   exportarExcel: (estado) => api.get('/beneficiarios/exportar/excel', { params: { estado }, responseType: 'blob' }),
-  exportarCsv: (estado) => api.get('/beneficiarios/exportar/csv', { params: { estado }, responseType: 'blob' })
+  exportarCsv: (estado) => api.get('/beneficiarios/exportar/csv', { params: { estado }, responseType: 'blob' }),
+  listarCuentas: (rut) => api.get(`/beneficiarios/${rut}/cuentas`),
+  agregarCuenta: (rut, data) => api.post(`/beneficiarios/${rut}/cuentas`, data),
+  actualizarCuenta: (rut, id, data) => api.put(`/beneficiarios/${rut}/cuentas/${id}`, data),
+  eliminarCuenta: (rut, id) => api.delete(`/beneficiarios/${rut}/cuentas/${id}`)
 }
 
 // Archivos

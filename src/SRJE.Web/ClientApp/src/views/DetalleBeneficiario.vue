@@ -41,13 +41,35 @@
       </section>
 
       <section>
-        <h3><Landmark :size="16" /> Cuenta Bancaria</h3>
+        <h3><Landmark :size="16" /> Cuenta Bancaria Principal</h3>
         <dl>
           <dt>Banco</dt><dd>{{ store.detalle.nombreBanco || store.detalle.codBanco || '-' }}</dd>
           <dt>Tipo Cuenta</dt><dd>{{ tipoCuentaLabel }}</dd>
           <dt>Cuenta</dt><dd>{{ formatCuenta(store.detalle.ctaEstado || store.detalle.ctaOtBanco) }}</dd>
           <dt>Sucursal</dt><dd>{{ store.detalle.sucursal || '-' }}</dd>
         </dl>
+      </section>
+
+      <section v-if="store.detalle.cuentas?.length">
+        <h3><Landmark :size="16" /> Cuentas Almacenadas ({{ store.detalle.cuentas.length }})</h3>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Banco</th>
+              <th>Tipo Cuenta</th>
+              <th>N° Cuenta</th>
+              <th>Alias</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="c in store.detalle.cuentas" :key="c.id">
+              <td>{{ c.nombreBanco || c.codBanco }}</td>
+              <td>{{ c.tipoCuentaDescripcion || c.tipoCuenta }}</td>
+              <td>{{ formatCuenta(c.numeroCuenta) }}</td>
+              <td>{{ c.alias || '-' }}</td>
+            </tr>
+          </tbody>
+        </table>
       </section>
     </div>
 
@@ -224,7 +246,7 @@ function imprimirFicha() {
 </div>
 
 <div class="section">
-  <h2>Cuenta Bancaria</h2>
+  <h2>Cuenta Bancaria Principal</h2>
   <dl>
     <dt>Banco</dt><dd>${esc(banco)}</dd>
     <dt>Tipo Cuenta</dt><dd>${esc(tcLabel)}</dd>
@@ -232,6 +254,19 @@ function imprimirFicha() {
     <dt>Sucursal</dt><dd>${esc(d.sucursal || '-')}</dd>
   </dl>
 </div>
+
+${d.cuentas?.length ? `<div class="section">
+  <h2>Cuentas Almacenadas (${d.cuentas.length})</h2>
+  <table class="ret-table">
+    <thead><tr><th>Banco</th><th>Tipo Cuenta</th><th>N° Cuenta</th><th>Alias</th></tr></thead>
+    <tbody>${d.cuentas.map(c => `<tr>
+      <td>${esc(c.nombreBanco || String(c.codBanco))}</td>
+      <td>${esc(c.tipoCuentaDescripcion || String(c.tipoCuenta))}</td>
+      <td>${esc(c.numeroCuenta || '-')}</td>
+      <td>${esc(c.alias || '-')}</td>
+    </tr>`).join('')}</tbody>
+  </table>
+</div>` : ''}
 
 <div class="section">
   <h2>Retenciones Activas</h2>

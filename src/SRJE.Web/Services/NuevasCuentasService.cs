@@ -143,6 +143,33 @@ public class NuevasCuentasService : INuevasCuentasService
                         accion = "INSERTAR";
                     }
 
+                    // Upsert en CUENTAS_BENEFICIARIO
+                    if (linea.CodBanco.HasValue && !string.IsNullOrEmpty(linea.NumeroCuenta))
+                    {
+                        var numeroCuenta = linea.NumeroCuenta;
+                        var codBanco = linea.CodBanco.Value;
+                        var tipoCta = linea.TipoCuenta ?? 1;
+
+                        var existeCuenta = await _db.CuentasBeneficiario.AnyAsync(c =>
+                            c.RutBeneficiario == linea.RutBeneficiario &&
+                            c.CodBanco == codBanco &&
+                            c.TipoCuenta == tipoCta &&
+                            c.NumeroCuenta == numeroCuenta);
+
+                        if (!existeCuenta)
+                        {
+                            _db.CuentasBeneficiario.Add(new CuentaBeneficiario
+                            {
+                                RutBeneficiario = linea.RutBeneficiario,
+                                CodBanco = codBanco,
+                                TipoCuenta = tipoCta,
+                                NumeroCuenta = numeroCuenta,
+                                Alias = "Desde nuevas cuentas",
+                                UsuarioCreacion = usuario
+                            });
+                        }
+                    }
+
                     _db.LogCargaDetalles.Add(new LogCargaDetalle
                     {
                         IdCarga = logCarga.Id,
