@@ -232,7 +232,7 @@ public class SrjeDbContext : DbContext
         {
             e.ToTable("CUENTAS_BENEFICIARIO");
             e.HasKey(x => x.Id);
-            e.Property(x => x.Id).HasColumnName("ID");
+            e.Property(x => x.Id).HasColumnName("ID").ValueGeneratedOnAdd();
             e.Property(x => x.RutBeneficiario).HasColumnName("RUT_BENEFICIARIO").IsRequired();
             e.Property(x => x.CodBanco).HasColumnName("COD_BANCO").IsRequired();
             e.Property(x => x.TipoCuenta).HasColumnName("TIPO_CUENTA").IsRequired();

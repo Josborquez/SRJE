@@ -591,13 +591,13 @@ public class BeneficiarioService : IBeneficiarioService
             .FirstOrDefaultAsync(b => b.RutBeneficiario == rut)
             ?? throw new KeyNotFoundException("Beneficiario no encontrado");
 
-        // Verificar duplicado
-        var existe = await _db.CuentasBeneficiario.AnyAsync(c =>
+        // Verificar duplicado (CountAsync en vez de AnyAsync por compatibilidad Oracle)
+        var existe = await _db.CuentasBeneficiario.CountAsync(c =>
             c.RutBeneficiario == rut &&
             c.CodBanco == request.CodBanco &&
             c.TipoCuenta == request.TipoCuenta &&
             c.NumeroCuenta == request.NumeroCuenta);
-        if (existe)
+        if (existe > 0)
             throw new BusinessConflictException("Ya existe una cuenta con esos datos para este beneficiario");
 
         var maxOrden = await _db.CuentasBeneficiario

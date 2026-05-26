@@ -150,13 +150,13 @@ public class NuevasCuentasService : INuevasCuentasService
                         var codBanco = linea.CodBanco.Value;
                         var tipoCta = linea.TipoCuenta ?? 1;
 
-                        var existeCuenta = await _db.CuentasBeneficiario.AnyAsync(c =>
+                        var existeCuenta = await _db.CuentasBeneficiario.CountAsync(c =>
                             c.RutBeneficiario == linea.RutBeneficiario &&
                             c.CodBanco == codBanco &&
                             c.TipoCuenta == tipoCta &&
                             c.NumeroCuenta == numeroCuenta);
 
-                        if (!existeCuenta)
+                        if (existeCuenta == 0)
                         {
                             _db.CuentasBeneficiario.Add(new CuentaBeneficiario
                             {
