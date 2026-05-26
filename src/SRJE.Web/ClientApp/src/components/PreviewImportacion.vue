@@ -29,18 +29,18 @@
             <td><input type="checkbox" v-model="linea.incluir" /></td>
             <td>{{ linea.numeroLinea }}</td>
             <td v-for="col in columnas" :key="col.key">
-              <template v-if="isEditable(linea, col) && col.options">
+              <template v-if="isEditable(linea, col) && getOptions(linea, col).length">
                 <select
                   :value="linea[col.key]"
                   @change="onSelectChange(linea, col, $event)"
                   class="inline-select"
                 >
                   <option
-                    v-if="linea[col.key] && !col.options.some(o => o.value === linea[col.key])"
+                    v-if="linea[col.key] && !getOptions(linea, col).some(o => o.value === linea[col.key])"
                     :value="linea[col.key]"
                   >{{ linea[col.key] }}</option>
                   <option
-                    v-for="opt in col.options"
+                    v-for="opt in getOptions(linea, col)"
                     :key="opt.value"
                     :value="opt.value"
                   >{{ opt.label }}</option>
@@ -158,9 +158,15 @@ function isEditable(linea, col) {
   return false
 }
 
+function getOptions(linea, col) {
+  if (col.optionsFrom) return col.optionsFrom(linea) || []
+  return col.options || []
+}
+
 function onSelectChange(linea, col, event) {
   const val = event.target.value
   linea[col.key] = col.numeric ? Number(val) : val
+  if (col.onChange) col.onChange(linea, col.numeric ? Number(val) : val)
 }
 
 function rowClass(linea) {

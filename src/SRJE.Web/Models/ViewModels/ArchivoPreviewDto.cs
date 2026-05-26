@@ -10,6 +10,7 @@ public class ArchivoPreviewDto
     public int LineasNuevas { get; set; }
     public int LineasMulticuenta { get; set; }
     public decimal MontoTotal { get; set; }
+    public Dictionary<long, List<CuentaBeneficiarioDto>>? CuentasPorBeneficiario { get; set; }
 }
 
 public class PreviewLineaDto

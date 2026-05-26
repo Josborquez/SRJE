@@ -101,6 +101,45 @@ public class BeneficiariosController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>GET /api/beneficiarios/{rut}/cuentas — Listar cuentas del beneficiario</summary>
+    [HttpGet("{rut:long}/cuentas")]
+    public async Task<IActionResult> ListarCuentas(long rut)
+    {
+        var result = await _service.ListarCuentasAsync(rut);
+        return Ok(result);
+    }
+
+    /// <summary>POST /api/beneficiarios/{rut}/cuentas — Agregar cuenta</summary>
+    [HttpPost("{rut:long}/cuentas")]
+    [Authorize(Roles = "admin,operador")]
+    public async Task<IActionResult> AgregarCuenta(long rut, [FromBody] CrearCuentaBeneficiarioRequest request)
+    {
+        var usuario = User.Identity?.Name ?? "sistema";
+        var result = await _service.AgregarCuentaAsync(rut, request, usuario);
+        return CreatedAtAction(nameof(ListarCuentas), new { rut }, result);
+    }
+
+    /// <summary>PUT /api/beneficiarios/{rut}/cuentas/{id} — Actualizar cuenta</summary>
+    [HttpPut("{rut:long}/cuentas/{id:long}")]
+    [Authorize(Roles = "admin,operador")]
+    public async Task<IActionResult> ActualizarCuenta(long rut, long id, [FromBody] ActualizarCuentaBeneficiarioRequest request)
+    {
+        var usuario = User.Identity?.Name ?? "sistema";
+        var result = await _service.ActualizarCuentaAsync(rut, id, request, usuario);
+        return Ok(result);
+    }
+
+    /// <summary>DELETE /api/beneficiarios/{rut}/cuentas/{id} — Eliminar cuenta</summary>
+    [HttpDelete("{rut:long}/cuentas/{id:long}")]
+    [Authorize(Roles = "admin,operador")]
+    public async Task<IActionResult> EliminarCuenta(long rut, long id)
+    {
+        var usuario = User.Identity?.Name ?? "sistema";
+        var result = await _service.EliminarCuentaAsync(rut, id, usuario);
+        if (!result) return NotFound();
+        return Ok(new { eliminado = true });
+    }
+
     /// <summary>GET /api/beneficiarios/exportar/excel — Exportar a Excel</summary>
     [HttpGet("exportar/excel")]
     public async Task<IActionResult> ExportarExcel([FromQuery] string? estado = null)

@@ -81,6 +81,52 @@ public class RemuneracionesService : IRemuneracionesService
             }
         }
 
+        // Cargar cuentas almacenadas para beneficiarios multicuenta
+        Dictionary<long, List<CuentaBeneficiarioDto>>? cuentasPorBeneficiario = null;
+        var rutsMulticuenta = lineas
+            .Where(l => l.EsMulticuenta)
+            .Select(l => l.RutBeneficiario)
+            .Distinct()
+            .ToList();
+
+        if (rutsMulticuenta.Count > 0)
+        {
+            var cuentasEntities = await _db.CuentasBeneficiario.AsNoTracking()
+                .Where(c => rutsMulticuenta.Contains(c.RutBeneficiario) && c.Estado == "A")
+                .OrderBy(c => c.Orden)
+                .ToListAsync();
+
+            if (cuentasEntities.Count > 0)
+            {
+                var codsBanco = cuentasEntities.Select(c => c.CodBanco).Distinct().ToList();
+                var bancos = await _db.Bancos.AsNoTracking()
+                    .Where(b => codsBanco.Contains(b.CodBanco))
+                    .ToDictionaryAsync(b => b.CodBanco, b => b.NombreBanco);
+
+                var codsTipo = cuentasEntities.Select(c => c.TipoCuenta).Distinct().ToList();
+                var tipos = await _db.TiposCuenta.AsNoTracking()
+                    .Where(t => codsTipo.Contains(t.CodTipoCuenta))
+                    .ToDictionaryAsync(t => t.CodTipoCuenta, t => t.Descripcion);
+
+                cuentasPorBeneficiario = cuentasEntities
+                    .GroupBy(c => c.RutBeneficiario)
+                    .ToDictionary(
+                        g => g.Key,
+                        g => g.Select(c => new CuentaBeneficiarioDto
+                        {
+                            Id = c.Id,
+                            CodBanco = c.CodBanco,
+                            NombreBanco = bancos.GetValueOrDefault(c.CodBanco),
+                            TipoCuenta = c.TipoCuenta,
+                            TipoCuentaDescripcion = tipos.GetValueOrDefault(c.TipoCuenta),
+                            NumeroCuenta = c.NumeroCuenta,
+                            Alias = c.Alias,
+                            Orden = c.Orden
+                        }).ToList()
+                    );
+            }
+        }
+
         // Detectar beneficiarios con multiples funcionarios titulares
         var multiFuncKeys = lineas
             .Where(l => l.EstadoLinea != "ERROR" && l.RutFuncionario.HasValue)
@@ -101,7 +147,9 @@ public class RemuneracionesService : IRemuneracionesService
             }
         }
 
-        return BuildPreview(lineas);
+        var preview = BuildPreview(lineas);
+        preview.CuentasPorBeneficiario = cuentasPorBeneficiario;
+        return preview;
     }
 
     public async Task<ResultadoImportacionDto> ConfirmarRemuneracionesAsync(

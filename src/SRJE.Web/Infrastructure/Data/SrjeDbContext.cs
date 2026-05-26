@@ -18,6 +18,7 @@ public class SrjeDbContext : DbContext
     public DbSet<LogCargaDetalle> LogCargaDetalles => Set<LogCargaDetalle>();
     public DbSet<AuditoriaCambios> AuditoriaCambios => Set<AuditoriaCambios>();
     public DbSet<TipoCuenta> TiposCuenta => Set<TipoCuenta>();
+    public DbSet<CuentaBeneficiario> CuentasBeneficiario => Set<CuentaBeneficiario>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -224,6 +225,25 @@ public class SrjeDbContext : DbContext
             e.Property(x => x.Motivo).HasColumnName("MOTIVO").HasMaxLength(500);
             e.HasIndex(x => new { x.Entidad, x.IdEntidad });
             e.HasIndex(x => x.RutAfectado);
+        });
+
+        // CUENTAS_BENEFICIARIO
+        modelBuilder.Entity<CuentaBeneficiario>(e =>
+        {
+            e.ToTable("CUENTAS_BENEFICIARIO");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).HasColumnName("ID").ValueGeneratedOnAdd();
+            e.Property(x => x.RutBeneficiario).HasColumnName("RUT_BENEFICIARIO").IsRequired();
+            e.Property(x => x.CodBanco).HasColumnName("COD_BANCO").IsRequired();
+            e.Property(x => x.TipoCuenta).HasColumnName("TIPO_CUENTA").IsRequired();
+            e.Property(x => x.NumeroCuenta).HasColumnName("NUMERO_CUENTA").HasMaxLength(15).IsRequired();
+            e.Property(x => x.Alias).HasColumnName("ALIAS").HasMaxLength(60);
+            e.Property(x => x.Orden).HasColumnName("ORDEN").HasDefaultValue(1);
+            e.Property(x => x.Estado).HasColumnName("ESTADO").HasMaxLength(1).HasDefaultValue("A");
+            e.Property(x => x.FechaCreacion).HasColumnName("FECHA_CREACION").HasDefaultValueSql("SYSDATE");
+            e.Property(x => x.UsuarioCreacion).HasColumnName("USUARIO_CREACION").HasMaxLength(50);
+            e.HasIndex(x => x.RutBeneficiario);
+            e.HasIndex(x => new { x.RutBeneficiario, x.CodBanco, x.TipoCuenta, x.NumeroCuenta }).IsUnique();
         });
     }
 }

@@ -32,6 +32,19 @@ public class BeneficiarioDetalleDto : BeneficiarioDto
     public DateTime? FechaModificacion { get; set; }
     public string? UsuarioCreacion { get; set; }
     public List<RetencionDto> Retenciones { get; set; } = new();
+    public List<CuentaBeneficiarioDto> Cuentas { get; set; } = new();
+}
+
+public class CuentaBeneficiarioDto
+{
+    public long Id { get; set; }
+    public long CodBanco { get; set; }
+    public string? NombreBanco { get; set; }
+    public long TipoCuenta { get; set; }
+    public string? TipoCuentaDescripcion { get; set; }
+    public string NumeroCuenta { get; set; } = string.Empty;
+    public string? Alias { get; set; }
+    public int Orden { get; set; }
 }
 
 public class RetencionDto
