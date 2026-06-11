@@ -21,9 +21,16 @@ builder.Host.UseSerilog((context, services, configuration) => configuration
 builder.Services.Configure<SrjeSettings>(
     builder.Configuration.GetSection(SrjeSettings.SectionName));
 
-// Oracle DbContext
+// Oracle DbContext — la connection string viene de appsettings.Development.json (dev)
+// o de la variable de entorno ConnectionStrings__OracleConnection (produccion). Nunca en appsettings.json.
+var connectionString = builder.Configuration.GetConnectionString("OracleConnection");
+if (string.IsNullOrWhiteSpace(connectionString))
+    throw new InvalidOperationException(
+        "Connection string 'OracleConnection' no configurada. " +
+        "Definir variable de entorno ConnectionStrings__OracleConnection.");
+
 builder.Services.AddDbContext<SrjeDbContext>(options =>
-    options.UseOracle(builder.Configuration.GetConnectionString("OracleConnection")));
+    options.UseOracle(connectionString));
 
 // Autenticacion por cookies (pluggable: cambiar DevAuthService por otra implementacion en produccion)
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -48,8 +55,19 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     });
 builder.Services.AddAuthorization();
 
-// Auth service — reemplazar DevAuthService por otra implementacion en produccion (LDAP, OAuth, AD, etc.)
-builder.Services.AddScoped<IAuthService, DevAuthService>();
+// Auth service segun Auth:Provider — "Database" (USUARIOS_SISTEMA + BCrypt) o "Development" (solo dev)
+var authProvider = builder.Configuration["Auth:Provider"] ?? "Development";
+if (authProvider.Equals("Database", StringComparison.OrdinalIgnoreCase))
+{
+    builder.Services.AddScoped<IAuthService, DbAuthService>();
+}
+else
+{
+    if (!builder.Environment.IsDevelopment())
+        throw new InvalidOperationException(
+            $"Auth:Provider '{authProvider}' no permitido fuera de Development. Usar 'Database'.");
+    builder.Services.AddScoped<IAuthService, DevAuthService>();
+}
 
 // Services (DI)
 builder.Services.AddScoped<IBeneficiarioService, BeneficiarioService>();
@@ -78,6 +96,28 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+// Bootstrap usuario admin inicial (solo provider Database, solo si no existe).
+// El password se entrega por variable de entorno SRJE_ADMIN_PASSWORD; el hash nunca va en el repo.
+var adminPassword = Environment.GetEnvironmentVariable("SRJE_ADMIN_PASSWORD");
+if (authProvider.Equals("Database", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(adminPassword))
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<SrjeDbContext>();
+    if (!await db.UsuariosSistema.AnyAsync(u => u.Usuario == "admin"))
+    {
+        db.UsuariosSistema.Add(new SRJE.Web.Models.Entities.UsuarioSistema
+        {
+            Usuario = "admin",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(adminPassword),
+            NombreCompleto = "Administrador SRJE",
+            Rol = "admin",
+            Estado = "A"
+        });
+        await db.SaveChangesAsync();
+        Log.Information("Usuario admin inicial creado via SRJE_ADMIN_PASSWORD");
+    }
+}
 
 app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseSerilogRequestLogging();

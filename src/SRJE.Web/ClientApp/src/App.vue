@@ -116,15 +116,29 @@
         <router-view />
       </main>
     </div>
+
+    <!-- Aviso de sesion por expirar (inactividad) -->
+    <ConfirmModal
+      v-model="avisoVisible"
+      title="Sesion por expirar"
+      message="Su sesion expirara por inactividad en 5 minutos. ¿Desea continuar trabajando?"
+      confirm-text="Continuar trabajando"
+      cancel-text="Cerrar sesion"
+      @confirm="continuarSesion"
+      @cancel="handleLogout"
+    />
   </template>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import api from './api/index.js'
 import { useAuthStore } from './stores/auth.js'
 import { useBeneficiariosStore } from './stores/beneficiarios.js'
 import { useFuncionariosStore } from './stores/funcionarios.js'
+import { useIdleTimeout } from './composables/useIdleTimeout.js'
+import ConfirmModal from './components/ConfirmModal.vue'
 import {
   Scale,
   LayoutDashboard,
@@ -151,10 +165,30 @@ const funcionariosStore = useFuncionariosStore()
 const sidebarOpen = ref(false)
 
 async function handleLogout() {
-  await authStore.logout()
+  try {
+    await authStore.logout()
+  } catch { /* sesion ya invalida en el servidor */ }
   beneficiariosStore.$reset()
   funcionariosStore.$reset()
   router.push('/login')
+}
+
+// Aviso por inactividad: aviso a los 25 min, logout a los 30
+const { avisoVisible, start: startIdle, stop: stopIdle, continuar } = useIdleTimeout({
+  onTimeout: handleLogout
+})
+
+watch(
+  () => authStore.estaAutenticado() && route.name !== 'login',
+  (sesionActiva) => { sesionActiva ? startIdle() : stopIdle() },
+  { immediate: true }
+)
+
+async function continuarSesion() {
+  continuar()
+  try {
+    await api.get('/auth/me') // renueva la cookie (sliding expiration)
+  } catch { /* el interceptor 401 redirige a login */ }
 }
 </script>
 

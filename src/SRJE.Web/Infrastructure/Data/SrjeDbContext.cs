@@ -19,6 +19,7 @@ public class SrjeDbContext : DbContext
     public DbSet<AuditoriaCambios> AuditoriaCambios => Set<AuditoriaCambios>();
     public DbSet<TipoCuenta> TiposCuenta => Set<TipoCuenta>();
     public DbSet<CuentaBeneficiario> CuentasBeneficiario => Set<CuentaBeneficiario>();
+    public DbSet<UsuarioSistema> UsuariosSistema => Set<UsuarioSistema>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -244,6 +245,19 @@ public class SrjeDbContext : DbContext
             e.Property(x => x.UsuarioCreacion).HasColumnName("USUARIO_CREACION").HasMaxLength(50);
             e.HasIndex(x => x.RutBeneficiario);
             e.HasIndex(x => new { x.RutBeneficiario, x.CodBanco, x.TipoCuenta, x.NumeroCuenta }).IsUnique();
+        });
+
+        // USUARIOS_SISTEMA
+        modelBuilder.Entity<UsuarioSistema>(e =>
+        {
+            e.ToTable("USUARIOS_SISTEMA");
+            e.HasKey(x => x.Usuario);
+            e.Property(x => x.Usuario).HasColumnName("USUARIO").HasMaxLength(50);
+            e.Property(x => x.PasswordHash).HasColumnName("PASSWORD_HASH").HasMaxLength(128).IsRequired();
+            e.Property(x => x.NombreCompleto).HasColumnName("NOMBRE_COMPLETO").HasMaxLength(100).IsRequired();
+            e.Property(x => x.Rol).HasColumnName("ROL").HasMaxLength(20).IsRequired();
+            e.Property(x => x.Estado).HasColumnName("ESTADO").HasMaxLength(1).HasDefaultValue("A");
+            e.Property(x => x.FechaCreacion).HasColumnName("FECHA_CREACION").HasDefaultValueSql("SYSDATE");
         });
     }
 }
