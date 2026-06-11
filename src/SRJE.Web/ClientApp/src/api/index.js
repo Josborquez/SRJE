@@ -32,6 +32,7 @@ export const beneficiariosApi = {
   actualizar: (rut, data) => api.put(`/beneficiarios/${rut}`, data),
   inactivar: (rut) => api.delete(`/beneficiarios/${rut}`),
   retenciones: (rut) => api.get(`/beneficiarios/${rut}/retenciones`),
+  actualizarRetencion: (rut, id, data) => api.put(`/beneficiarios/${rut}/retenciones/${id}`, data),
   buscar: (q) => api.get('/beneficiarios/buscar', { params: { q } }),
   exportarExcel: (estado) => api.get('/beneficiarios/exportar/excel', { params: { estado }, responseType: 'blob' }),
   exportarCsv: (estado) => api.get('/beneficiarios/exportar/csv', { params: { estado }, responseType: 'blob' }),

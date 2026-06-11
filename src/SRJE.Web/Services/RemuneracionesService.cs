@@ -68,11 +68,14 @@ public class RemuneracionesService : IRemuneracionesService
                     ? benef.CtaEstado : benef.CtaOtBanco;
             }
 
-            // Marcar líneas multicuenta
+            // Marcar líneas multicuenta y limpiar datos bancarios para forzar selección manual
             var key = (linea.RutBeneficiario, RutFunc: linea.RutFuncionario ?? 0);
             if (multicuentaKeys.Contains(key))
             {
                 linea.EsMulticuenta = true;
+                linea.CodBanco = null;
+                linea.TipoCuenta = null;
+                linea.NumeroCuenta = null;
                 if (linea.EstadoLinea == "OK")
                 {
                     linea.EstadoLinea = "ADVERTENCIA";

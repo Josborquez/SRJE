@@ -24,6 +24,7 @@ public class BeneficiarioDto
     public DateTime? FechaCreacion { get; set; }
     public int CantidadRetenciones { get; set; }
     public decimal MontoTotalRetenciones { get; set; }
+    public List<MontoPorCuentaDto>? DesgloseCuentas { get; set; }
 }
 
 public class BeneficiarioDetalleDto : BeneficiarioDto
@@ -60,6 +61,18 @@ public class RetencionDto
     public string? TipoPago { get; set; }
     public string Estado { get; set; } = "A";
     public string? PeriodoProceso { get; set; }
+    public long? CodBanco { get; set; }
+    public string? NombreBanco { get; set; }
+    public long? TipoCuenta { get; set; }
+    public string? NumeroCuenta { get; set; }
+}
+
+public class MontoPorCuentaDto
+{
+    public string? NombreBanco { get; set; }
+    public string? NumeroCuenta { get; set; }
+    public decimal Monto { get; set; }
+    public int Cantidad { get; set; }
 }
 
 public class FuncionarioAsociadoDto

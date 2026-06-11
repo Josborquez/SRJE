@@ -92,6 +92,16 @@ public class BeneficiariosController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>PUT /api/beneficiarios/{rut}/retenciones/{id} — Actualizar retencion</summary>
+    [HttpPut("{rut:long}/retenciones/{id:long}")]
+    [Authorize(Roles = "admin,operador")]
+    public async Task<IActionResult> ActualizarRetencion(long rut, long id, [FromBody] ActualizarRetencionRequest request)
+    {
+        var usuario = User.Identity?.Name ?? "sistema";
+        var result = await _service.ActualizarRetencionAsync(rut, id, request, usuario);
+        return Ok(result);
+    }
+
     /// <summary>GET /api/beneficiarios/buscar?q= — Busqueda por nombre o RUT</summary>
     [HttpGet("buscar")]
     public async Task<IActionResult> Buscar([FromQuery] string q)

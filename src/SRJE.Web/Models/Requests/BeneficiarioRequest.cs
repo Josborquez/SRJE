@@ -62,6 +62,16 @@ public class ActualizarCuentaBeneficiarioRequest : CrearCuentaBeneficiarioReques
 {
 }
 
+public class ActualizarRetencionRequest
+{
+    public decimal Monto { get; set; }
+    public long? CodBanco { get; set; }
+    public long? TipoCuenta { get; set; }
+
+    [MaxLength(15)]
+    public string? NumeroCuenta { get; set; }
+}
+
 public class BuscarBeneficiarioQuery
 {
     public string? Q { get; set; }

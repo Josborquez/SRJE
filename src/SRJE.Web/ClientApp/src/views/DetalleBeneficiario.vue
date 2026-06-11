@@ -79,23 +79,86 @@
         <thead>
           <tr>
             <th>Funcionario</th>
+            <th>Banco</th>
+            <th>Cuenta</th>
             <th>Monto</th>
             <th>Codigo</th>
             <th>Tipo Pago</th>
             <th>Periodo</th>
+            <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="r in store.detalle.retenciones" :key="r.id">
             <td>{{ r.nombreFuncionario || r.rutTitularFormateado }}</td>
+            <td>{{ r.nombreBanco || '-' }}</td>
+            <td>{{ formatCuenta(r.numeroCuenta) }}</td>
             <td>${{ r.monto?.toLocaleString('es-CL') }}</td>
             <td>{{ r.codRetencion }}</td>
             <td>{{ r.tipoPago }}</td>
             <td>{{ r.periodoProceso }}</td>
+            <td>
+              <button class="btn-sm" @click="editarRetencion(r)">
+                <Pencil :size="14" /> Editar
+              </button>
+            </td>
           </tr>
         </tbody>
       </table>
     </section>
+
+    <!-- Modal editar retencion -->
+    <div v-if="editRet" class="modal-overlay" @click.self="cerrarModal">
+      <div class="modal-box">
+        <h3>Editar Retencion</h3>
+        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1rem;">
+          Funcionario: {{ editRet.nombreFuncionario || editRet.rutTitularFormateado }}
+          — Periodo: {{ editRet.periodoProceso }}
+        </p>
+        <div v-if="store.detalle.cuentas?.length" class="form-group">
+          <label>Cuenta almacenada</label>
+          <select v-model="cuentaSeleccionada" @change="aplicarCuenta" class="form-control cuenta-select">
+            <option value="">— Ingresar manualmente —</option>
+            <option v-for="c in store.detalle.cuentas" :key="c.id" :value="c.id">
+              {{ c.nombreBanco || c.codBanco }} — {{ c.tipoCuentaDescripcion || '' }} — {{ c.numeroCuenta }} {{ c.alias ? `(${c.alias})` : '' }}
+            </option>
+          </select>
+        </div>
+        <div v-if="!cuentaSeleccionada" class="campos-manuales">
+          <div class="form-group">
+            <label>Banco</label>
+            <select v-model="editForm.codBanco" class="form-control">
+              <option :value="null">— Sin banco —</option>
+              <option v-for="b in bancos" :key="b.codBanco" :value="b.codBanco">{{ b.nombreBanco }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Tipo Cuenta</label>
+            <select v-model="editForm.tipoCuenta" class="form-control">
+              <option :value="null">—</option>
+              <option v-for="tc in tiposCuenta" :key="tc.codigo" :value="tc.codigo">{{ tc.descripcion }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>N° Cuenta</label>
+            <input v-model="editForm.numeroCuenta" class="form-control" maxlength="15" />
+          </div>
+        </div>
+        <div v-else class="cuenta-preview">
+          <span class="cuenta-badge">{{ cuentaPreview }}</span>
+        </div>
+        <div class="form-group">
+          <label>Monto ($)</label>
+          <input v-model.number="editForm.monto" type="number" min="0" class="form-control" />
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-primary" @click="guardarRetencion" :disabled="guardando">
+            {{ guardando ? 'Guardando...' : 'Guardar' }}
+          </button>
+          <button class="btn btn-secondary" @click="cerrarModal">Cancelar</button>
+        </div>
+      </div>
+    </div>
 
     <div class="actions">
       <router-link :to="`/beneficiarios/${rut}/editar`" class="btn btn-primary">
@@ -135,6 +198,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useBeneficiariosStore } from '../stores/beneficiarios.js'
+import { catalogosApi } from '../api/index.js'
 import { formatCuenta } from '../composables/useFormato.js'
 import AlertMessage from '../components/AlertMessage.vue'
 import ConfirmModal from '../components/ConfirmModal.vue'
@@ -151,6 +215,21 @@ const alertMsg = ref('')
 const alertType = ref('info')
 const showConfirm = ref(false)
 
+// Editar retencion
+const editRet = ref(null)
+const editForm = ref({ monto: 0, codBanco: null, tipoCuenta: null, numeroCuenta: '' })
+const cuentaSeleccionada = ref('')
+const guardando = ref(false)
+const bancos = ref([])
+const tiposCuenta = ref([])
+
+const cuentaPreview = computed(() => {
+  if (!cuentaSeleccionada.value) return ''
+  const c = store.detalle?.cuentas?.find(c => c.id === cuentaSeleccionada.value)
+  if (!c) return ''
+  return `${c.nombreBanco || c.codBanco} — ${c.tipoCuentaDescripcion || ''} — ${c.numeroCuenta}`
+})
+
 const tipoCuentaLabel = computed(() => {
   const tc = store.detalle?.tipoCuenta
   if (tc === 1) return 'Cuenta Corriente'
@@ -159,10 +238,63 @@ const tipoCuentaLabel = computed(() => {
   return '-'
 })
 
-onMounted(() => {
+onMounted(async () => {
   store.detalle = null
   store.obtener(Number(props.rut))
+  try {
+    const [bancosRes, tiposRes] = await Promise.all([
+      catalogosApi.bancos(),
+      catalogosApi.tiposCuenta()
+    ])
+    bancos.value = bancosRes.data
+    tiposCuenta.value = tiposRes.data
+  } catch { /* catalogos opcionales */ }
 })
+
+function editarRetencion(r) {
+  editRet.value = r
+  editForm.value = {
+    monto: r.monto,
+    codBanco: r.codBanco ?? null,
+    tipoCuenta: r.tipoCuenta ?? null,
+    numeroCuenta: r.numeroCuenta ?? ''
+  }
+  // Pre-seleccionar cuenta almacenada si coincide
+  const cuentas = store.detalle?.cuentas || []
+  const match = cuentas.find(c =>
+    c.codBanco === r.codBanco && c.numeroCuenta === r.numeroCuenta
+  )
+  cuentaSeleccionada.value = match ? match.id : ''
+}
+
+function aplicarCuenta() {
+  if (!cuentaSeleccionada.value) return
+  const c = store.detalle?.cuentas?.find(c => c.id === cuentaSeleccionada.value)
+  if (!c) return
+  editForm.value.codBanco = c.codBanco
+  editForm.value.tipoCuenta = c.tipoCuenta
+  editForm.value.numeroCuenta = c.numeroCuenta
+}
+
+function cerrarModal() {
+  editRet.value = null
+  cuentaSeleccionada.value = ''
+}
+
+async function guardarRetencion() {
+  guardando.value = true
+  try {
+    await store.actualizarRetencion(Number(props.rut), editRet.value.id, editForm.value)
+    cerrarModal()
+    alertType.value = 'success'
+    alertMsg.value = 'Retencion actualizada exitosamente.'
+  } catch (e) {
+    alertType.value = 'error'
+    alertMsg.value = store.error || 'Error al actualizar la retencion.'
+  } finally {
+    guardando.value = false
+  }
+}
 
 function esc(str) {
   const div = document.createElement('div')
@@ -191,9 +323,11 @@ function imprimirFicha() {
   let retHtml = ''
   if (d.retenciones?.length) {
     retHtml = `<table class="ret-table">
-      <thead><tr><th>Funcionario</th><th>Monto</th><th>Codigo</th><th>Tipo Pago</th><th>Periodo</th></tr></thead>
+      <thead><tr><th>Funcionario</th><th>Banco</th><th>Cuenta</th><th>Monto</th><th>Codigo</th><th>Tipo Pago</th><th>Periodo</th></tr></thead>
       <tbody>${d.retenciones.map(r => `<tr>
         <td>${esc(r.nombreFuncionario || r.rutTitularFormateado || '-')}</td>
+        <td>${esc(r.nombreBanco || '-')}</td>
+        <td>${esc(r.numeroCuenta || '-')}</td>
         <td>$${(r.monto || 0).toLocaleString('es-CL')}</td>
         <td>${esc(r.codRetencion || '-')}</td>
         <td>${esc(r.tipoPago || '-')}</td>
@@ -293,3 +427,32 @@ async function ejecutarInactivar() {
   }
 }
 </script>
+
+<style scoped>
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(15, 23, 42, 0.5);
+  display: flex; align-items: center; justify-content: center; z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+.modal-box {
+  background: #fff; border-radius: 14px; padding: 1.5rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  max-width: 480px; width: 92%;
+}
+.modal-box h3 { margin: 0 0 0.25rem; font-size: 1.05rem; }
+.form-group { margin-bottom: 0.75rem; }
+.form-group label { display: block; font-size: 0.82rem; font-weight: 600; color: #475569; margin-bottom: 0.25rem; }
+.form-control {
+  width: 100%; padding: 0.5rem 0.65rem; border: 1px solid #cbd5e1; border-radius: 6px;
+  font-size: 0.9rem; background: #fff;
+}
+.form-control:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15); }
+.modal-actions { display: flex; gap: 0.6rem; margin-top: 1rem; }
+.cuenta-select { font-size: 0.85rem; }
+.cuenta-preview {
+  margin-bottom: 0.75rem; padding: 0.5rem 0.75rem;
+  background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px;
+}
+.cuenta-badge { font-size: 0.85rem; color: #166534; font-weight: 500; }
+.campos-manuales { border-left: 3px solid #e2e8f0; padding-left: 0.75rem; margin-bottom: 0.25rem; }
+</style>

@@ -291,4 +291,89 @@ public class BeneficiarioServiceTests : IDisposable
 
         Assert.Empty(result);
     }
+
+    // --- ActualizarRetencionAsync ---
+
+    private async Task<RetenidoJudicial> SeedRetencion(long rut = 7051537, long id = 1)
+    {
+        var entity = new RetenidoJudicial
+        {
+            Id = id,
+            IdRetencion = 100,
+            RutTitular = 12345678,
+            DvTitular = "5",
+            RutBeneficiario = rut,
+            DvBeneficiario = "7",
+            Monto = 50000,
+            Estado = "A"
+        };
+        _db.RetenidosJudiciales.Add(entity);
+        _db.Bancos.Add(new Banco { CodBanco = 12, NombreBanco = "BANCO ESTADO" });
+        await _db.SaveChangesAsync();
+        return entity;
+    }
+
+    [Fact]
+    public async Task ActualizarRetencionAsync_DeberiaActualizarMontoYCuenta()
+    {
+        await SeedRetencion();
+        var request = new ActualizarRetencionRequest
+        {
+            Monto = 80000,
+            CodBanco = 12,
+            TipoCuenta = 1,
+            NumeroCuenta = "123456789"
+        };
+
+        var result = await _service.ActualizarRetencionAsync(7051537, 1, request, "test");
+
+        Assert.Equal(80000, result.Monto);
+        var enBd = await _db.RetenidosJudiciales.FirstAsync(r => r.Id == 1);
+        Assert.Equal("123456789", enBd.CtaEstado);
+        Assert.Null(enBd.CtaOtBanco);
+    }
+
+    [Fact]
+    public async Task ActualizarRetencionAsync_DeberiaLanzarExcepcion_CuandoMontoEsCeroONegativo()
+    {
+        await SeedRetencion();
+        var request = new ActualizarRetencionRequest { Monto = 0 };
+
+        await Assert.ThrowsAsync<ArgumentException>(
+            () => _service.ActualizarRetencionAsync(7051537, 1, request, "test"));
+    }
+
+    [Fact]
+    public async Task ActualizarRetencionAsync_DeberiaLanzarExcepcion_CuandoBancoNoExiste()
+    {
+        await SeedRetencion();
+        var request = new ActualizarRetencionRequest { Monto = 80000, CodBanco = 99 };
+
+        await Assert.ThrowsAsync<ArgumentException>(
+            () => _service.ActualizarRetencionAsync(7051537, 1, request, "test"));
+    }
+
+    [Fact]
+    public async Task ActualizarRetencionAsync_DeberiaLanzarExcepcion_CuandoCuentaExcedeLargo()
+    {
+        await SeedRetencion();
+        var request = new ActualizarRetencionRequest
+        {
+            Monto = 80000,
+            CodBanco = 12,
+            NumeroCuenta = new string('1', 16) // LargoCtaEstado = 15
+        };
+
+        await Assert.ThrowsAsync<ArgumentException>(
+            () => _service.ActualizarRetencionAsync(7051537, 1, request, "test"));
+    }
+
+    [Fact]
+    public async Task ActualizarRetencionAsync_DeberiaLanzarExcepcion_CuandoNoExiste()
+    {
+        var request = new ActualizarRetencionRequest { Monto = 80000 };
+
+        await Assert.ThrowsAsync<KeyNotFoundException>(
+            () => _service.ActualizarRetencionAsync(99999, 1, request, "test"));
+    }
 }

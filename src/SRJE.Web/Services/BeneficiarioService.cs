@@ -120,10 +120,9 @@ public class BeneficiarioService : IBeneficiarioService
             }
         }
 
-        // Enriquecer con retenciones activas del ultimo periodo
+        // Enriquecer con retenciones activas del ultimo periodo (con desglose por cuenta)
         if (rutsItems.Count > 0)
         {
-            // Obtener el ultimo periodo disponible
             var ultimoPeriodo = await _db.RetenidosJudiciales.AsNoTracking()
                 .Where(r => r.Estado == "A")
                 .OrderByDescending(r => r.PeriodoProceso)
@@ -132,22 +131,39 @@ public class BeneficiarioService : IBeneficiarioService
 
             if (ultimoPeriodo != null)
             {
-                var retencionesPorRut = await _db.RetenidosJudiciales.AsNoTracking()
+                var retencionesDetalle = await _db.RetenidosJudiciales.AsNoTracking()
                     .Where(r => r.Estado == "A"
                         && r.PeriodoProceso == ultimoPeriodo
                         && rutsItems.Contains(r.RutBeneficiario))
-                    .GroupBy(r => r.RutBeneficiario)
-                    .Select(g => new { Rut = g.Key, Cantidad = g.Count(), Monto = g.Sum(r => r.Monto) })
+                    .Select(r => new { r.RutBeneficiario, r.CodBanco, r.CtaEstado, r.CtaOtBanco, r.Monto })
                     .ToListAsync();
 
-                var retDict = retencionesPorRut.ToDictionary(r => r.Rut);
-                foreach (var item in items)
+                // Catálogo de bancos para nombres
+                var codsBancosRet = retencionesDetalle.Where(r => r.CodBanco.HasValue).Select(r => r.CodBanco!.Value).Distinct().ToList();
+                var bancosRetDict = codsBancosRet.Count > 0
+                    ? await _db.Bancos.AsNoTracking()
+                        .Where(b => codsBancosRet.Contains(b.CodBanco))
+                        .ToDictionaryAsync(b => b.CodBanco, b => b.NombreBanco)
+                    : new Dictionary<long, string>();
+
+                var porBenef = retencionesDetalle.GroupBy(r => r.RutBeneficiario);
+                foreach (var grupo in porBenef)
                 {
-                    if (retDict.TryGetValue(item.RutBeneficiario, out var ret))
-                    {
-                        item.CantidadRetenciones = ret.Cantidad;
-                        item.MontoTotalRetenciones = ret.Monto;
-                    }
+                    var item = items.FirstOrDefault(i => i.RutBeneficiario == grupo.Key);
+                    if (item == null) continue;
+
+                    item.CantidadRetenciones = grupo.Count();
+                    item.MontoTotalRetenciones = grupo.Sum(r => r.Monto);
+
+                    item.DesgloseCuentas = grupo
+                        .GroupBy(r => new { r.CodBanco, Cuenta = r.CodBanco == _settings.CodBancoEstado ? r.CtaEstado : r.CtaOtBanco })
+                        .Select(g => new MontoPorCuentaDto
+                        {
+                            NombreBanco = g.Key.CodBanco.HasValue && bancosRetDict.TryGetValue(g.Key.CodBanco.Value, out var nb) ? nb : null,
+                            NumeroCuenta = g.Key.Cuenta,
+                            Monto = g.Sum(r => r.Monto),
+                            Cantidad = g.Count()
+                        }).ToList();
                 }
             }
         }
@@ -229,9 +245,26 @@ public class BeneficiarioService : IBeneficiarioService
                 CodRetencion = r.CodRetencion,
                 TipoPago = r.TipoPago,
                 Estado = r.Estado,
-                PeriodoProceso = r.PeriodoProceso
+                PeriodoProceso = r.PeriodoProceso,
+                CodBanco = r.CodBanco,
+                TipoCuenta = r.TipoCuenta,
+                NumeroCuenta = r.CodBanco == _settings.CodBancoEstado ? r.CtaEstado : r.CtaOtBanco
             }).ToList()
         };
+
+        // Enriquecer retenciones con nombres de banco
+        var codsBancoRet = dto.Retenciones.Where(r => r.CodBanco.HasValue).Select(r => r.CodBanco!.Value).Distinct().ToList();
+        if (codsBancoRet.Count > 0)
+        {
+            var bancosRet = await _db.Bancos.AsNoTracking()
+                .Where(b => codsBancoRet.Contains(b.CodBanco))
+                .ToDictionaryAsync(b => b.CodBanco, b => b.NombreBanco);
+            foreach (var ret in dto.Retenciones)
+            {
+                if (ret.CodBanco.HasValue && bancosRet.TryGetValue(ret.CodBanco.Value, out var nb))
+                    ret.NombreBanco = nb;
+            }
+        }
 
         // Derivar funcionarios asociados desde las retenciones
         var rutsTitulares = retenciones.Select(r => r.RutTitular).Distinct().ToList();
@@ -402,6 +435,89 @@ public class BeneficiarioService : IBeneficiarioService
             .ToListAsync();
     }
 
+    public async Task<RetencionDto> ActualizarRetencionAsync(long rut, long id, ActualizarRetencionRequest request, string usuario)
+    {
+        if (request.Monto <= 0)
+            throw new ArgumentException("El monto debe ser mayor a cero");
+
+        if (request.CodBanco.HasValue)
+        {
+            // CountAsync en vez de AnyAsync por compatibilidad Oracle
+            var bancoExiste = await _db.Bancos.AsNoTracking()
+                .CountAsync(b => b.CodBanco == request.CodBanco.Value);
+            if (bancoExiste == 0)
+                throw new ArgumentException($"El banco {request.CodBanco} no existe");
+
+            var largoMaximo = request.CodBanco == _settings.CodBancoEstado
+                ? _settings.LargoCtaEstado
+                : _settings.LargoCtaOtBanco;
+            if (!string.IsNullOrWhiteSpace(request.NumeroCuenta) && request.NumeroCuenta.Length > largoMaximo)
+                throw new ArgumentException($"El numero de cuenta excede el largo maximo de {largoMaximo} caracteres");
+        }
+
+        var entity = await _db.RetenidosJudiciales
+            .FirstOrDefaultAsync(r => r.Id == id && r.RutBeneficiario == rut)
+            ?? throw new KeyNotFoundException("Retencion no encontrada");
+
+        var valorAnterior = $"Monto:{entity.Monto} Banco:{entity.CodBanco} Cta:{entity.CtaEstado ?? entity.CtaOtBanco}";
+
+        entity.Monto = request.Monto;
+        entity.CodBanco = request.CodBanco;
+        entity.TipoCuenta = request.TipoCuenta;
+        entity.CtaEstado = request.CodBanco == _settings.CodBancoEstado ? request.NumeroCuenta : null;
+        entity.CtaOtBanco = request.CodBanco != _settings.CodBancoEstado ? request.NumeroCuenta : null;
+
+        _db.AuditoriaCambios.Add(new AuditoriaCambios
+        {
+            Entidad = "RETENIDO_JUDICIAL",
+            IdEntidad = entity.Id,
+            RutAfectado = RutHelper.Formatear(entity.RutBeneficiario, entity.DvBeneficiario),
+            Accion = "ACTUALIZAR",
+            CampoModificado = "MONTO,CUENTA",
+            ValorAnterior = valorAnterior,
+            ValorNuevo = $"Monto:{request.Monto} Banco:{request.CodBanco} Cta:{request.NumeroCuenta}",
+            Usuario = usuario,
+            Fecha = DateTime.Now
+        });
+
+        await _db.SaveChangesAsync();
+
+        // Enriquecer DTO con nombre de banco y funcionario
+        string? nombreBanco = null;
+        if (entity.CodBanco.HasValue)
+        {
+            nombreBanco = await _db.Bancos.AsNoTracking()
+                .Where(b => b.CodBanco == entity.CodBanco.Value)
+                .Select(b => b.NombreBanco)
+                .FirstOrDefaultAsync();
+        }
+
+        string? nombreFuncionario = null;
+        var func = await _db.Funcionarios.AsNoTracking()
+            .FirstOrDefaultAsync(f => f.RutFuncionario == entity.RutTitular);
+        if (func != null)
+            nombreFuncionario = $"{func.ApellidoPaterno} {func.ApellidoMaterno} {func.Nombres}".Trim();
+
+        return new RetencionDto
+        {
+            Id = entity.Id,
+            IdRetencion = entity.IdRetencion,
+            RutTitular = entity.RutTitular,
+            DvTitular = entity.DvTitular,
+            RutTitularFormateado = RutHelper.Formatear(entity.RutTitular, entity.DvTitular),
+            NombreFuncionario = nombreFuncionario,
+            Monto = entity.Monto,
+            CodRetencion = entity.CodRetencion,
+            TipoPago = entity.TipoPago,
+            Estado = entity.Estado,
+            PeriodoProceso = entity.PeriodoProceso,
+            CodBanco = entity.CodBanco,
+            NombreBanco = nombreBanco,
+            TipoCuenta = entity.TipoCuenta,
+            NumeroCuenta = entity.CodBanco == _settings.CodBancoEstado ? entity.CtaEstado : entity.CtaOtBanco
+        };
+    }
+
     public async Task<List<BeneficiarioDto>> BuscarAsync(string query)
     {
         var busqueda = query.Trim().ToUpper();
@@ -549,7 +665,7 @@ public class BeneficiarioService : IBeneficiarioService
             }
         }
 
-        // Enriquecer con retenciones del ultimo periodo
+        // Enriquecer con retenciones del ultimo periodo (con desglose por cuenta)
         var ultimoPeriodo = await _db.RetenidosJudiciales.AsNoTracking()
             .Where(r => r.Estado == "A")
             .OrderByDescending(r => r.PeriodoProceso)
@@ -559,21 +675,37 @@ public class BeneficiarioService : IBeneficiarioService
         if (ultimoPeriodo != null)
         {
             var rutsItems = items.Select(i => i.RutBeneficiario).ToList();
-            var retencionesPorRut = await _db.RetenidosJudiciales.AsNoTracking()
+            var retencionesDetalle = await _db.RetenidosJudiciales.AsNoTracking()
                 .Where(r => r.Estado == "A" && r.PeriodoProceso == ultimoPeriodo
                     && rutsItems.Contains(r.RutBeneficiario))
-                .GroupBy(r => r.RutBeneficiario)
-                .Select(g => new { Rut = g.Key, Cantidad = g.Count(), Monto = g.Sum(r => r.Monto) })
+                .Select(r => new { r.RutBeneficiario, r.CodBanco, r.CtaEstado, r.CtaOtBanco, r.Monto })
                 .ToListAsync();
 
-            var retDict = retencionesPorRut.ToDictionary(r => r.Rut);
-            foreach (var item in items)
+            var codsBancosRet = retencionesDetalle.Where(r => r.CodBanco.HasValue).Select(r => r.CodBanco!.Value).Distinct().ToList();
+            var bancosRetDict = codsBancosRet.Count > 0
+                ? await _db.Bancos.AsNoTracking()
+                    .Where(b => codsBancosRet.Contains(b.CodBanco))
+                    .ToDictionaryAsync(b => b.CodBanco, b => b.NombreBanco)
+                : new Dictionary<long, string>();
+
+            var porBenef = retencionesDetalle.GroupBy(r => r.RutBeneficiario);
+            foreach (var grupo in porBenef)
             {
-                if (retDict.TryGetValue(item.RutBeneficiario, out var ret))
-                {
-                    item.CantidadRetenciones = ret.Cantidad;
-                    item.MontoTotalRetenciones = ret.Monto;
-                }
+                var item = items.FirstOrDefault(i => i.RutBeneficiario == grupo.Key);
+                if (item == null) continue;
+
+                item.CantidadRetenciones = grupo.Count();
+                item.MontoTotalRetenciones = grupo.Sum(r => r.Monto);
+
+                item.DesgloseCuentas = grupo
+                    .GroupBy(r => new { r.CodBanco, Cuenta = r.CodBanco == _settings.CodBancoEstado ? r.CtaEstado : r.CtaOtBanco })
+                    .Select(g => new MontoPorCuentaDto
+                    {
+                        NombreBanco = g.Key.CodBanco.HasValue && bancosRetDict.TryGetValue(g.Key.CodBanco.Value, out var nb) ? nb : null,
+                        NumeroCuenta = g.Key.Cuenta,
+                        Monto = g.Sum(r => r.Monto),
+                        Cantidad = g.Count()
+                    }).ToList();
             }
         }
 

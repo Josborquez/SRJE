@@ -96,7 +96,17 @@
           <td>{{ b.nombreBanco || b.codBanco || '-' }}</td>
           <td>{{ formatCuenta(b.ctaEstado || b.ctaOtBanco) }}</td>
           <td class="text-center">{{ b.cantidadRetenciones || 0 }}</td>
-          <td class="text-right">{{ b.montoTotalRetenciones ? '$' + b.montoTotalRetenciones.toLocaleString('es-CL') : '-' }}</td>
+          <td class="text-right">
+            <template v-if="b.desgloseCuentas?.length > 1">
+              <div v-for="(dc, idx) in b.desgloseCuentas" :key="idx" class="desglose-linea">
+                <span class="desglose-banco">{{ dc.nombreBanco || 'Sin banco' }}</span>
+                <span class="desglose-cuenta" v-if="dc.numeroCuenta"> {{ formatCuenta(dc.numeroCuenta) }}</span>:
+                ${{ dc.monto.toLocaleString('es-CL') }} ({{ dc.cantidad }})
+              </div>
+              <div class="desglose-total"><strong>Total: ${{ b.montoTotalRetenciones.toLocaleString('es-CL') }}</strong></div>
+            </template>
+            <template v-else>{{ b.montoTotalRetenciones ? '$' + b.montoTotalRetenciones.toLocaleString('es-CL') : '-' }}</template>
+          </td>
           <td>
             <span :class="'estado estado-' + b.estado.toLowerCase()">
               <CircleCheck v-if="b.estado === 'A'" :size="13" />
@@ -262,3 +272,24 @@ async function ejecutarInactivar() {
   beneficiarioAInactivar.value = null
 }
 </script>
+
+<style scoped>
+.desglose-linea {
+  font-size: 0.82rem;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+.desglose-banco {
+  color: var(--text-secondary, #64748b);
+}
+.desglose-cuenta {
+  font-family: monospace;
+  font-size: 0.78rem;
+}
+.desglose-total {
+  margin-top: 2px;
+  padding-top: 2px;
+  border-top: 1px solid var(--border-color, #e2e8f0);
+  font-size: 0.82rem;
+}
+</style>

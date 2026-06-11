@@ -80,6 +80,22 @@ export const useBeneficiariosStore = defineStore('beneficiarios', () => {
     }
   }
 
+  async function actualizarRetencion(rut, id, retencion) {
+    error.value = null
+    try {
+      const { data } = await beneficiariosApi.actualizarRetencion(rut, id, retencion)
+      // Actualizar en detalle si está cargado
+      if (detalle.value?.retenciones) {
+        const idx = detalle.value.retenciones.findIndex(r => r.id === id)
+        if (idx >= 0) detalle.value.retenciones[idx] = data
+      }
+      return data
+    } catch (e) {
+      error.value = e.response?.data?.error || e.message
+      throw e
+    }
+  }
+
   async function inactivar(rut) {
     loading.value = true
     error.value = null
@@ -109,6 +125,6 @@ export const useBeneficiariosStore = defineStore('beneficiarios', () => {
   return {
     items, totalCount, totalInscritos, totalActivos, totalInactivos,
     page, pageSize, loading, error, detalle, totalPages,
-    listar, obtener, crear, actualizar, inactivar, $reset
+    listar, obtener, crear, actualizar, actualizarRetencion, inactivar, $reset
   }
 })
