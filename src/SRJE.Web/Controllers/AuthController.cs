@@ -13,11 +13,15 @@ namespace SRJE.Web.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
+    private readonly IRegistroAccesoService _registroAcceso;
 
-    public AuthController(IAuthService authService)
+    public AuthController(IAuthService authService, IRegistroAccesoService registroAcceso)
     {
         _authService = authService;
+        _registroAcceso = registroAcceso;
     }
+
+    private string? IpCliente => HttpContext.Connection.RemoteIpAddress?.ToString();
 
     /// <summary>POST /api/auth/login</summary>
     [HttpPost("login")]
@@ -26,7 +30,10 @@ public class AuthController : ControllerBase
     {
         var usuario = await _authService.ValidarCredencialesAsync(request.Usuario, request.Password);
         if (usuario == null)
+        {
+            await _registroAcceso.RegistrarAsync(request.Usuario, "login_fail", IpCliente);
             return Unauthorized(new { error = "Usuario o contraseña incorrectos" });
+        }
 
         var claims = new List<Claim>
         {
@@ -47,6 +54,8 @@ public class AuthController : ControllerBase
                 ExpiresUtc = DateTimeOffset.UtcNow.AddHours(8)
             });
 
+        await _registroAcceso.RegistrarAsync(usuario.Usuario, "login_ok", IpCliente);
+
         return Ok(usuario);
     }
 
@@ -54,7 +63,10 @@ public class AuthController : ControllerBase
     [HttpPost("logout")]
     public async Task<IActionResult> Logout()
     {
+        var usuario = User.Identity?.Name;
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        if (!string.IsNullOrEmpty(usuario))
+            await _registroAcceso.RegistrarAsync(usuario, "logout", IpCliente);
         return Ok(new { message = "Sesion cerrada" });
     }
 

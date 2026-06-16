@@ -44,7 +44,8 @@ public class MantenedoresController : ControllerBase
     [HttpPost("bancos")]
     public async Task<IActionResult> CrearBanco([FromBody] CrearBancoRequest request)
     {
-        var existe = await _db.Bancos.AnyAsync(b => b.CodBanco == request.CodBanco);
+        // CountAsync en vez de AnyAsync por compatibilidad Oracle
+        var existe = await _db.Bancos.CountAsync(b => b.CodBanco == request.CodBanco) > 0;
         if (existe)
             return Conflict(new { error = $"Ya existe un banco con codigo {request.CodBanco}" });
 
@@ -112,7 +113,8 @@ public class MantenedoresController : ControllerBase
     [HttpPost("tipos-cuenta")]
     public async Task<IActionResult> CrearTipoCuenta([FromBody] CrearTipoCuentaRequest request)
     {
-        var existe = await _db.TiposCuenta.AnyAsync(t => t.CodTipoCuenta == request.CodTipoCuenta);
+        // CountAsync en vez de AnyAsync por compatibilidad Oracle
+        var existe = await _db.TiposCuenta.CountAsync(t => t.CodTipoCuenta == request.CodTipoCuenta) > 0;
         if (existe)
             return Conflict(new { error = $"Ya existe un tipo de cuenta con codigo {request.CodTipoCuenta}" });
 

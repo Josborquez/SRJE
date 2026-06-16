@@ -76,6 +76,8 @@ builder.Services.AddScoped<ITemgeService, TemgeService>();
 builder.Services.AddScoped<INuevasCuentasService, NuevasCuentasService>();
 builder.Services.AddScoped<IAuditoriaBeneficiariosService, AuditoriaBeneficiariosService>();
 builder.Services.AddScoped<IFuncionarioService, FuncionarioService>();
+builder.Services.AddScoped<IUsuariosService, UsuariosService>();
+builder.Services.AddScoped<IRegistroAccesoService, RegistroAccesoService>();
 
 // MVC + JSON
 builder.Services.AddControllers()

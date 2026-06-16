@@ -310,8 +310,9 @@ public class BeneficiarioService : IBeneficiarioService
         if (!RutHelper.Validar(request.RutBeneficiario, request.DvBeneficiario))
             throw new ArgumentException("RUT beneficiario invalido");
 
+        // CountAsync en vez de AnyAsync por compatibilidad Oracle
         var existe = await _db.Beneficiarios
-            .AnyAsync(b => b.RutBeneficiario == request.RutBeneficiario);
+            .CountAsync(b => b.RutBeneficiario == request.RutBeneficiario) > 0;
         if (existe)
             throw new BusinessConflictException("Ya existe un beneficiario con ese RUT");
 

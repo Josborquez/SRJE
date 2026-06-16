@@ -101,6 +101,21 @@
               Tipos de Cuenta
             </router-link>
           </li>
+          <template v-if="esAdmin">
+            <li class="nav-section">Configuracion</li>
+            <li>
+              <router-link to="/configuracion/usuarios" @click="sidebarOpen = false">
+                <UserCog :size="18" class="nav-icon" />
+                Usuarios
+              </router-link>
+            </li>
+            <li>
+              <router-link to="/configuracion/actividad" @click="sidebarOpen = false">
+                <Activity :size="18" class="nav-icon" />
+                Actividad
+              </router-link>
+            </li>
+          </template>
         </ul>
         <div class="sidebar-footer">
           <div class="user-info">
@@ -131,7 +146,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from './api/index.js'
 import { useAuthStore } from './stores/auth.js'
@@ -154,7 +169,9 @@ import {
   LogOut,
   Building2,
   Wallet,
-  UsersRound
+  UsersRound,
+  UserCog,
+  Activity
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -163,6 +180,7 @@ const authStore = useAuthStore()
 const beneficiariosStore = useBeneficiariosStore()
 const funcionariosStore = useFuncionariosStore()
 const sidebarOpen = ref(false)
+const esAdmin = computed(() => authStore.usuario?.rol === 'admin')
 
 async function handleLogout() {
   try {

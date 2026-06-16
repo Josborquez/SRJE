@@ -20,6 +20,7 @@ public class SrjeDbContext : DbContext
     public DbSet<TipoCuenta> TiposCuenta => Set<TipoCuenta>();
     public DbSet<CuentaBeneficiario> CuentasBeneficiario => Set<CuentaBeneficiario>();
     public DbSet<UsuarioSistema> UsuariosSistema => Set<UsuarioSistema>();
+    public DbSet<LogAcceso> LogAccesos => Set<LogAcceso>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -258,6 +259,19 @@ public class SrjeDbContext : DbContext
             e.Property(x => x.Rol).HasColumnName("ROL").HasMaxLength(20).IsRequired();
             e.Property(x => x.Estado).HasColumnName("ESTADO").HasMaxLength(1).HasDefaultValue("A");
             e.Property(x => x.FechaCreacion).HasColumnName("FECHA_CREACION").HasDefaultValueSql("SYSDATE");
+        });
+
+        // LOG_ACCESOS
+        modelBuilder.Entity<LogAcceso>(e =>
+        {
+            e.ToTable("LOG_ACCESOS");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).HasColumnName("ID").ValueGeneratedOnAdd();
+            e.Property(x => x.Usuario).HasColumnName("USUARIO").HasMaxLength(50).IsRequired();
+            e.Property(x => x.Evento).HasColumnName("EVENTO").HasMaxLength(20).IsRequired();
+            e.Property(x => x.Ip).HasColumnName("IP").HasMaxLength(50);
+            e.Property(x => x.Fecha).HasColumnName("FECHA").HasDefaultValueSql("SYSDATE");
+            e.HasIndex(x => new { x.Usuario, x.Fecha });
         });
     }
 }

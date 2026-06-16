@@ -105,6 +105,18 @@ export const funcionariosApi = {
   stats: () => api.get('/funcionarios/stats')
 }
 
+// Usuarios del sistema (solo admin)
+export const usuariosApi = {
+  listar: () => api.get('/usuarios'),
+  obtener: (usuario) => api.get(`/usuarios/${usuario}`),
+  crear: (data) => api.post('/usuarios', data),
+  actualizar: (usuario, data) => api.put(`/usuarios/${usuario}`, data),
+  cambiarPassword: (usuario, data) => api.put(`/usuarios/${usuario}/password`, data),
+  toggle: (usuario) => api.patch(`/usuarios/${usuario}/toggle`),
+  accesos: (params) => api.get('/usuarios/accesos', { params }),
+  cargas: (params) => api.get('/usuarios/cargas', { params })
+}
+
 // Catalogos
 export const catalogosApi = {
   bancos: () => api.get('/catalogos/bancos'),

@@ -85,6 +85,18 @@ const routes = [
     path: '/mantenedores/tipos-cuenta',
     name: 'mantenedor-tipos-cuenta',
     component: () => import('./views/MantenedorTiposCuenta.vue')
+  },
+  {
+    path: '/configuracion/usuarios',
+    name: 'configuracion-usuarios',
+    component: () => import('./views/ConfiguracionUsuarios.vue'),
+    meta: { adminOnly: true }
+  },
+  {
+    path: '/configuracion/actividad',
+    name: 'configuracion-actividad',
+    component: () => import('./views/ActividadUsuarios.vue'),
+    meta: { adminOnly: true }
   }
 ]
 
@@ -112,6 +124,10 @@ router.beforeEach(async (to) => {
 
   if (!authStore.estaAutenticado()) {
     return { name: 'login' }
+  }
+
+  if (to.meta.adminOnly && authStore.usuario?.rol !== 'admin') {
+    return '/'
   }
 
   return true
