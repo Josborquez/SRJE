@@ -41,12 +41,22 @@ public class RemuneracionesService : IRemuneracionesService
             .Where(b => rutsArchivo.Contains(b.RutBeneficiario))
             .ToDictionaryAsync(b => b.RutBeneficiario);
 
-        // Detectar multicuenta: mismo (rutBenef, rutFunc) con más de 1 línea
-        var multicuentaKeys = lineas
-            .Where(l => l.EstadoLinea != "ERROR")
-            .GroupBy(l => (l.RutBeneficiario, RutFunc: l.RutFuncionario ?? 0))
-            .Where(g => g.Count() > 1)
-            .Select(g => g.Key)
+        // Cargar cuentas registradas (activas) de los beneficiarios del archivo
+        var cuentasEntities = await _db.CuentasBeneficiario.AsNoTracking()
+            .Where(c => rutsArchivo.Contains(c.RutBeneficiario) && c.Estado == "A")
+            .OrderBy(c => c.Orden)
+            .ToListAsync();
+        var cuentasPorRut = cuentasEntities
+            .GroupBy(c => c.RutBeneficiario)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        // Multicuenta: beneficiario con 2+ cuentas bancarias registradas (requiere
+        // asignacion manual). NO se infiere por cantidad de lineas: un beneficiario
+        // puede aparecer en varias lineas (distintos bonos/conceptos) que van todas
+        // a su unica cuenta.
+        var multicuentaRuts = cuentasPorRut
+            .Where(kv => kv.Value.Count > 1)
+            .Select(kv => kv.Key)
             .ToHashSet();
 
         foreach (var linea in lineas)
@@ -69,8 +79,7 @@ public class RemuneracionesService : IRemuneracionesService
             }
 
             // Marcar líneas multicuenta y limpiar datos bancarios para forzar selección manual
-            var key = (linea.RutBeneficiario, RutFunc: linea.RutFuncionario ?? 0);
-            if (multicuentaKeys.Contains(key))
+            if (multicuentaRuts.Contains(linea.RutBeneficiario))
             {
                 linea.EsMulticuenta = true;
                 linea.CodBanco = null;
@@ -84,50 +93,40 @@ public class RemuneracionesService : IRemuneracionesService
             }
         }
 
-        // Cargar cuentas almacenadas para beneficiarios multicuenta
+        // Cargar cuentas almacenadas para beneficiarios multicuenta (para el dropdown)
         Dictionary<long, List<CuentaBeneficiarioDto>>? cuentasPorBeneficiario = null;
-        var rutsMulticuenta = lineas
-            .Where(l => l.EsMulticuenta)
-            .Select(l => l.RutBeneficiario)
-            .Distinct()
-            .ToList();
-
-        if (rutsMulticuenta.Count > 0)
+        if (multicuentaRuts.Count > 0)
         {
-            var cuentasEntities = await _db.CuentasBeneficiario.AsNoTracking()
-                .Where(c => rutsMulticuenta.Contains(c.RutBeneficiario) && c.Estado == "A")
-                .OrderBy(c => c.Orden)
-                .ToListAsync();
+            var cuentasMulti = cuentasEntities
+                .Where(c => multicuentaRuts.Contains(c.RutBeneficiario))
+                .ToList();
 
-            if (cuentasEntities.Count > 0)
-            {
-                var codsBanco = cuentasEntities.Select(c => c.CodBanco).Distinct().ToList();
-                var bancos = await _db.Bancos.AsNoTracking()
-                    .Where(b => codsBanco.Contains(b.CodBanco))
-                    .ToDictionaryAsync(b => b.CodBanco, b => b.NombreBanco);
+            var codsBanco = cuentasMulti.Select(c => c.CodBanco).Distinct().ToList();
+            var bancos = await _db.Bancos.AsNoTracking()
+                .Where(b => codsBanco.Contains(b.CodBanco))
+                .ToDictionaryAsync(b => b.CodBanco, b => b.NombreBanco);
 
-                var codsTipo = cuentasEntities.Select(c => c.TipoCuenta).Distinct().ToList();
-                var tipos = await _db.TiposCuenta.AsNoTracking()
-                    .Where(t => codsTipo.Contains(t.CodTipoCuenta))
-                    .ToDictionaryAsync(t => t.CodTipoCuenta, t => t.Descripcion);
+            var codsTipo = cuentasMulti.Select(c => c.TipoCuenta).Distinct().ToList();
+            var tipos = await _db.TiposCuenta.AsNoTracking()
+                .Where(t => codsTipo.Contains(t.CodTipoCuenta))
+                .ToDictionaryAsync(t => t.CodTipoCuenta, t => t.Descripcion);
 
-                cuentasPorBeneficiario = cuentasEntities
-                    .GroupBy(c => c.RutBeneficiario)
-                    .ToDictionary(
-                        g => g.Key,
-                        g => g.Select(c => new CuentaBeneficiarioDto
-                        {
-                            Id = c.Id,
-                            CodBanco = c.CodBanco,
-                            NombreBanco = bancos.GetValueOrDefault(c.CodBanco),
-                            TipoCuenta = c.TipoCuenta,
-                            TipoCuentaDescripcion = tipos.GetValueOrDefault(c.TipoCuenta),
-                            NumeroCuenta = c.NumeroCuenta,
-                            Alias = c.Alias,
-                            Orden = c.Orden
-                        }).ToList()
-                    );
-            }
+            cuentasPorBeneficiario = cuentasMulti
+                .GroupBy(c => c.RutBeneficiario)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(c => new CuentaBeneficiarioDto
+                    {
+                        Id = c.Id,
+                        CodBanco = c.CodBanco,
+                        NombreBanco = bancos.GetValueOrDefault(c.CodBanco),
+                        TipoCuenta = c.TipoCuenta,
+                        TipoCuentaDescripcion = tipos.GetValueOrDefault(c.TipoCuenta),
+                        NumeroCuenta = c.NumeroCuenta,
+                        Alias = c.Alias,
+                        Orden = c.Orden
+                    }).ToList()
+                );
         }
 
         // Detectar beneficiarios con multiples funcionarios titulares
