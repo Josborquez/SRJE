@@ -84,6 +84,17 @@ public class BeneficiariosController : ControllerBase
         return Ok(new { inactivado = true });
     }
 
+    /// <summary>PATCH /api/beneficiarios/{rut}/nombre — Corregir nombre (usado en auditoria)</summary>
+    [HttpPatch("{rut:long}/nombre")]
+    [Authorize(Roles = "admin,operador")]
+    public async Task<IActionResult> CorregirNombre(long rut, [FromBody] CorregirNombreBeneficiarioRequest request)
+    {
+        var usuario = User.Identity?.Name ?? "sistema";
+        var ok = await _service.CorregirNombreAsync(rut, request.NombreBeneficiario, usuario);
+        if (!ok) return NotFound();
+        return Ok(new { actualizado = true });
+    }
+
     /// <summary>GET /api/beneficiarios/{rut}/retenciones — Retenciones del beneficiario</summary>
     [HttpGet("{rut:long}/retenciones")]
     public async Task<IActionResult> ObtenerRetenciones(long rut)

@@ -417,6 +417,35 @@ public class BeneficiarioService : IBeneficiarioService
         return true;
     }
 
+    public async Task<bool> CorregirNombreAsync(long rut, string nombreBeneficiario, string usuario)
+    {
+        var entity = await _db.Beneficiarios
+            .FirstOrDefaultAsync(b => b.RutBeneficiario == rut);
+        if (entity == null) return false;
+
+        var anterior = entity.NombreBeneficiario;
+        if (anterior == nombreBeneficiario) return true;
+
+        entity.NombreBeneficiario = nombreBeneficiario;
+        entity.FechaModificacion = DateTime.Now;
+
+        _db.AuditoriaCambios.Add(new AuditoriaCambios
+        {
+            Entidad = "BENEFICIARIO",
+            IdEntidad = entity.Id,
+            RutAfectado = RutHelper.Formatear(entity.RutBeneficiario, entity.DvBeneficiario),
+            Accion = "ACTUALIZAR",
+            CampoModificado = "NOMBRE",
+            ValorAnterior = anterior,
+            ValorNuevo = nombreBeneficiario,
+            Usuario = usuario,
+            Fecha = DateTime.Now
+        });
+
+        await _db.SaveChangesAsync();
+        return true;
+    }
+
     public async Task<List<RetencionDto>> ObtenerRetencionesAsync(long rut)
     {
         return await _db.RetenidosJudiciales.AsNoTracking()

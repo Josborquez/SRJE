@@ -10,6 +10,7 @@ public interface IBeneficiarioService
     Task<BeneficiarioDto> CrearAsync(CrearBeneficiarioRequest request, string usuario);
     Task<BeneficiarioDto> ActualizarAsync(long rut, ActualizarBeneficiarioRequest request, string usuario);
     Task<bool> InactivarAsync(long rut, string usuario);
+    Task<bool> CorregirNombreAsync(long rut, string nombreBeneficiario, string usuario);
     Task<List<RetencionDto>> ObtenerRetencionesAsync(long rut);
     Task<RetencionDto> ActualizarRetencionAsync(long rut, long id, ActualizarRetencionRequest request, string usuario);
     Task<List<BeneficiarioDto>> BuscarAsync(string query);

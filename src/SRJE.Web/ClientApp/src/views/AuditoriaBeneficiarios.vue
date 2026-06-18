@@ -163,6 +163,7 @@
               <th>Campo</th>
               <th>Valor Archivo</th>
               <th>Valor Sistema</th>
+              <th>Accion</th>
             </tr>
           </thead>
           <tbody>
@@ -173,6 +174,26 @@
                 <td>{{ campo.campo }}</td>
                 <td class="val-archivo">{{ campo.valorArchivo }}</td>
                 <td class="val-sistema">{{ campo.valorSistema }}</td>
+                <td class="acciones-dif">
+                  <template v-if="campo.campo === 'Nombre'">
+                    <button
+                      class="btn-mini btn-mini-archivo"
+                      :disabled="procesando === dif.rutBeneficiario"
+                      title="Actualizar el sistema con el valor del archivo"
+                      @click="usarArchivo(dif, campo)"
+                    >
+                      <Check :size="13" /> Usar Archivo
+                    </button>
+                    <button
+                      class="btn-mini btn-mini-sistema"
+                      :disabled="procesando === dif.rutBeneficiario"
+                      title="Mantener el valor del sistema y descartar la diferencia"
+                      @click="mantenerSistema(dif)"
+                    >
+                      Mantener Sistema
+                    </button>
+                  </template>
+                </td>
               </tr>
             </template>
           </tbody>
@@ -186,11 +207,11 @@
 import { ref } from 'vue'
 import FileUpload from '../components/FileUpload.vue'
 import AlertMessage from '../components/AlertMessage.vue'
-import { archivosApi } from '../api/index.js'
+import { archivosApi, beneficiariosApi } from '../api/index.js'
 import {
   FileSearch, FileText, FileSpreadsheet, Database,
   UserPlus, UserMinus, ArrowLeftRight, CircleCheck,
-  CircleAlert, RotateCcw
+  CircleAlert, RotateCcw, Check
 } from 'lucide-vue-next'
 
 const resultado = ref(null)
@@ -200,7 +221,35 @@ const error = ref(null)
 const alertMsg = ref('')
 const alertType = ref('info')
 const tab = ref('archivo')
+const procesando = ref(null)
 let archivoOriginal = null
+
+async function usarArchivo(dif, campo) {
+  procesando.value = dif.rutBeneficiario
+  try {
+    await beneficiariosApi.corregirNombre(dif.rutBeneficiario, { nombreBeneficiario: campo.valorArchivo })
+    quitarDiferencia(dif)
+    resultado.value.totalCoincidentes++
+    alertType.value = 'success'
+    alertMsg.value = `Sistema actualizado: ${dif.rutFormateado} -> "${campo.valorArchivo}".`
+  } catch (e) {
+    alertType.value = 'error'
+    alertMsg.value = e.response?.data?.error || 'No se pudo actualizar el nombre en el sistema.'
+  } finally {
+    procesando.value = null
+  }
+}
+
+function mantenerSistema(dif) {
+  quitarDiferencia(dif)
+  alertType.value = 'info'
+  alertMsg.value = `Se mantuvo el valor del sistema para ${dif.rutFormateado}.`
+}
+
+function quitarDiferencia(dif) {
+  resultado.value.conDiferencias = resultado.value.conDiferencias
+    .filter(d => d.rutBeneficiario !== dif.rutBeneficiario)
+}
 
 async function onFileSelected(file) {
   if (!file) return
@@ -320,4 +369,39 @@ function cancelar() {
 
 .val-archivo { color: var(--color-warning); font-weight: 500; }
 .val-sistema { color: var(--color-info); font-weight: 500; }
+
+.acciones-dif {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  white-space: nowrap;
+}
+
+.btn-mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-mini:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-mini-archivo {
+  background: var(--color-primary);
+  color: #fff;
+}
+.btn-mini-archivo:hover:not(:disabled) { filter: brightness(0.93); }
+
+.btn-mini-sistema {
+  background: none;
+  border-color: var(--border-color);
+  color: var(--text-secondary);
+}
+.btn-mini-sistema:hover:not(:disabled) { color: var(--text-primary); }
 </style>

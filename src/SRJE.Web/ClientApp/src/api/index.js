@@ -31,6 +31,7 @@ export const beneficiariosApi = {
   crear: (data) => api.post('/beneficiarios', data),
   actualizar: (rut, data) => api.put(`/beneficiarios/${rut}`, data),
   inactivar: (rut) => api.delete(`/beneficiarios/${rut}`),
+  corregirNombre: (rut, data) => api.patch(`/beneficiarios/${rut}/nombre`, data),
   retenciones: (rut) => api.get(`/beneficiarios/${rut}/retenciones`),
   actualizarRetencion: (rut, id, data) => api.put(`/beneficiarios/${rut}/retenciones/${id}`, data),
   buscar: (q) => api.get('/beneficiarios/buscar', { params: { q } }),

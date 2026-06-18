@@ -43,6 +43,12 @@ public class ActualizarBeneficiarioRequest : CrearBeneficiarioRequest
 {
 }
 
+public class CorregirNombreBeneficiarioRequest
+{
+    [Required, MaxLength(39)]
+    public string NombreBeneficiario { get; set; } = string.Empty;
+}
+
 public class CrearCuentaBeneficiarioRequest
 {
     [Required]
