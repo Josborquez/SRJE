@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fontsource/inter": "^5.2.8",
     "axios": "^1.7.9",
     "lucide-vue-next": "^0.577.0",
     "pinia": "^2.3.0",
