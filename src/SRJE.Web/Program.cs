@@ -134,7 +134,16 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-// Fallback: sirve index.html para Vue Router (SPA)
-app.MapFallbackToFile("index.html");
+// Fallback SPA: inyecta el <base href> segun PathBase para que la app funcione
+// bajo cualquier ruta de IIS (sub-aplicacion) sin recompilar el frontend.
+app.MapFallback(async context =>
+{
+    var indexPath = Path.Combine(app.Environment.WebRootPath, "index.html");
+    var html = await File.ReadAllTextAsync(indexPath);
+    var pathBase = context.Request.PathBase.HasValue ? context.Request.PathBase.Value : string.Empty;
+    html = html.Replace("<base href=\"/\">", $"<base href=\"{pathBase}/\">");
+    context.Response.ContentType = "text/html; charset=utf-8";
+    await context.Response.WriteAsync(html);
+});
 
 app.Run();

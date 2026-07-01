@@ -1,16 +1,16 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
-export default defineConfig({
-  base: '/RetencionJudicial/',
+export default defineConfig(({ command }) => ({
+  // build: rutas relativas para que resuelvan contra el <base href> que inyecta el backend
+  base: command === 'build' ? './' : '/',
   plugins: [vue()],
   server: {
     port: 5173,
     proxy: {
-      '/RetencionJudicial/api': {
+      '/api': {
         target: 'http://localhost:5000',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/RetencionJudicial/, '')
+        changeOrigin: true
       }
     }
   },
@@ -18,4 +18,4 @@ export default defineConfig({
     outDir: '../wwwroot',
     emptyOutDir: true
   }
-})
+}))

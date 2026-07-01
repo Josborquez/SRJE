@@ -1,7 +1,9 @@
 import axios from 'axios'
 
+const baseHref = document.querySelector('base')?.getAttribute('href') || '/'
+
 const api = axios.create({
-  baseURL: import.meta.env.BASE_URL + 'api',
+  baseURL: baseHref + 'api',
   timeout: 30000,
   withCredentials: true
 })
