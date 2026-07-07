@@ -65,7 +65,7 @@ export const archivosApi = {
     return api.post('/archivos/nuevas-cuentas/preview', form)
   },
   confirmarNuevasCuentas: (data) => api.post('/archivos/nuevas-cuentas/confirmar', data),
-  generarTemge: (periodo) => api.get('/archivos/temge/generar', { params: { periodo }, responseType: 'blob' }),
+  generarTemge: (periodo) => api.get('/archivos/temge/generar', { params: { periodo } }),
   compararAuditoria: (file) => {
     const form = new FormData()
     form.append('archivo', file)

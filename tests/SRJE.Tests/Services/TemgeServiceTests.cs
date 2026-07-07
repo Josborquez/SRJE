@@ -80,8 +80,8 @@ public class TemgeServiceTests : IDisposable
         _db.RetenidosJudiciales.Add(CrearRetencion(7051537, 200000));
         await _db.SaveChangesAsync();
 
-        var archivo = await _service.GenerarTemgeAsync("test");
-        var contenido = Encoding.Latin1.GetString(archivo);
+        var resultado = await _service.GenerarTemgeAsync("test");
+        var contenido = Encoding.Latin1.GetString(resultado.Archivo);
         var lineas = contenido.Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
 
         // Cabecera + 2 detalles + cierre = 4 lineas
@@ -99,8 +99,8 @@ public class TemgeServiceTests : IDisposable
             codBanco: 1, tipoCuenta: 1, ctaOtBanco: "222222222222222"));
         await _db.SaveChangesAsync();
 
-        var archivo = await _service.GenerarTemgeAsync("test");
-        var contenido = Encoding.Latin1.GetString(archivo);
+        var resultado = await _service.GenerarTemgeAsync("test");
+        var contenido = Encoding.Latin1.GetString(resultado.Archivo);
         var detalle = contenido.Split("\r\n")[1];
 
         // Pos 52 (0-based 51): '=' indica otro banco (no Banco Estado)
@@ -118,8 +118,8 @@ public class TemgeServiceTests : IDisposable
         _db.RetenidosJudiciales.Add(CrearRetencion(7051537, 150000));
         await _db.SaveChangesAsync();
 
-        var archivo = await _service.GenerarTemgeAsync("test");
-        var contenido = Encoding.Latin1.GetString(archivo);
+        var resultado = await _service.GenerarTemgeAsync("test");
+        var contenido = Encoding.Latin1.GetString(resultado.Archivo);
         var detalle = contenido.Split("\r\n")[1];
 
         // Banco Estado: espacio en pos 52
@@ -146,13 +146,19 @@ public class TemgeServiceTests : IDisposable
         _db.RetenidosJudiciales.Add(CrearRetencion(7051537, 100000));
         await _db.SaveChangesAsync();
 
-        var archivo = await _service.GenerarTemgeAsync("test");
-        var contenido = Encoding.Latin1.GetString(archivo);
+        var resultado = await _service.GenerarTemgeAsync("test");
+        var contenido = Encoding.Latin1.GetString(resultado.Archivo);
         var lineas = contenido.Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
 
         // Solo cabecera y cierre, sin detalles
         lineas.Should().HaveCount(2);
         lineas.Count(l => l[0] == '2').Should().Be(0);
+
+        // La exclusion queda reportada
+        resultado.Excluidos.Should().HaveCount(1);
+        resultado.Excluidos[0].Motivo.Should().Be("Sin cuenta bancaria registrada");
+        resultado.Excluidos[0].NombreBeneficiario.Should().Be("SIN CUENTA");
+        resultado.Excluidos[0].Monto.Should().Be(100000);
     }
 
     [Fact]
@@ -187,8 +193,8 @@ public class TemgeServiceTests : IDisposable
 
         await _db.SaveChangesAsync();
 
-        var archivo = await _service.GenerarTemgeAsync("test");
-        var contenido = Encoding.Latin1.GetString(archivo);
+        var resultado = await _service.GenerarTemgeAsync("test");
+        var contenido = Encoding.Latin1.GetString(resultado.Archivo);
         var lineas = contenido.Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
 
         // 2 lineas de detalle (no agrupadas)
@@ -216,11 +222,15 @@ public class TemgeServiceTests : IDisposable
         _db.RetenidosJudiciales.Add(CrearRetencion(7051537, 100000));
         await _db.SaveChangesAsync();
 
-        var archivo = await _service.GenerarTemgeAsync("test");
-        var contenido = Encoding.Latin1.GetString(archivo);
+        var resultado = await _service.GenerarTemgeAsync("test");
+        var contenido = Encoding.Latin1.GetString(resultado.Archivo);
         var lineas = contenido.Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
 
         lineas.Count(l => l[0] == '2').Should().Be(0);
+
+        // La exclusion queda reportada
+        resultado.Excluidos.Should().HaveCount(1);
+        resultado.Excluidos[0].Motivo.Should().Be("Beneficiario no existe o esta inactivo");
     }
 
     [Fact]
@@ -233,8 +243,8 @@ public class TemgeServiceTests : IDisposable
         _db.RetenidosJudiciales.Add(ret);
         await _db.SaveChangesAsync();
 
-        var archivo = await _service.GenerarTemgeAsync("test");
-        var contenido = Encoding.Latin1.GetString(archivo);
+        var resultado = await _service.GenerarTemgeAsync("test");
+        var contenido = Encoding.Latin1.GetString(resultado.Archivo);
         var lineas = contenido.Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
 
         lineas.Count(l => l[0] == '2').Should().Be(0);
@@ -259,13 +269,13 @@ public class TemgeServiceTests : IDisposable
         await _db.SaveChangesAsync();
 
         // Sin filtro: ambas retenciones
-        var archivoTodo = await _service.GenerarTemgeAsync("test");
-        var lineasTodo = Encoding.Latin1.GetString(archivoTodo).Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
+        var resultadoTodo = await _service.GenerarTemgeAsync("test");
+        var lineasTodo = Encoding.Latin1.GetString(resultadoTodo.Archivo).Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
         lineasTodo.Count(l => l[0] == '2').Should().Be(2);
 
         // Solo marzo
-        var archivoMarzo = await _service.GenerarTemgeAsync("test", "260301");
-        var lineasMarzo = Encoding.Latin1.GetString(archivoMarzo).Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
+        var resultadoMarzo = await _service.GenerarTemgeAsync("test", "260301");
+        var lineasMarzo = Encoding.Latin1.GetString(resultadoMarzo.Archivo).Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
         lineasMarzo.Count(l => l[0] == '2').Should().Be(1);
 
         // Verificar monto de marzo

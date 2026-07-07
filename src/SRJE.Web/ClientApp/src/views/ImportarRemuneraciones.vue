@@ -17,6 +17,9 @@
       <div class="periodo-input">
         <label><Calendar :size="16" /> Periodo Proceso (AAAAMM):</label>
         <input v-model="periodo" placeholder="Ej: 202602" maxlength="6" />
+        <span class="monto-total">Monto total del archivo:
+          <strong>${{ montoTotalArchivo.toLocaleString('es-CL') }}</strong>
+          ({{ preview.lineas?.length || 0 }} registros)</span>
       </div>
 
       <PreviewImportacion
@@ -113,6 +116,10 @@ const columnas = computed(() => [
 
 const lineasSeleccionadas = computed(() =>
   preview.value?.lineas?.filter(l => l.incluir).length || 0
+)
+
+const montoTotalArchivo = computed(() =>
+  preview.value?.lineas?.reduce((s, l) => s + (l.monto || 0), 0) || 0
 )
 
 onMounted(async () => {
@@ -229,5 +236,15 @@ function cancelar() {
   outline: none;
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+.monto-total {
+  margin-left: auto;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.monto-total strong {
+  color: var(--text-primary, inherit);
+  font-family: var(--font-mono, monospace);
 }
 </style>

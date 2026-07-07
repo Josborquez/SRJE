@@ -38,6 +38,31 @@
     <div v-if="generado" class="resultado">
       <h3><CheckCircle :size="18" /> Archivo generado exitosamente</h3>
       <p>El archivo se ha descargado automaticamente a su computador.</p>
+      <p>Registros incluidos: <strong>{{ cantidadRegistros }}</strong> |
+        Monto total: <strong>${{ montoTotal.toLocaleString('es-CL') }}</strong></p>
+    </div>
+
+    <div v-if="excluidos.length" class="excluidos">
+      <h3><TriangleAlert :size="18" /> {{ excluidos.length }} retenciones excluidas del archivo
+        (${{ montoExcluido.toLocaleString('es-CL') }})</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>RUT Beneficiario</th>
+            <th>Nombre</th>
+            <th>Monto</th>
+            <th>Motivo</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(e, i) in excluidos" :key="i">
+            <td>{{ e.rutBeneficiario }}-{{ e.dvBeneficiario }}</td>
+            <td>{{ e.nombreBeneficiario || '-' }}</td>
+            <td class="monto">${{ e.monto.toLocaleString('es-CL') }}</td>
+            <td>{{ e.motivo }}</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
     <ConfirmModal
@@ -55,7 +80,7 @@ import { ref, computed } from 'vue'
 import { archivosApi } from '../api/index.js'
 import AlertMessage from '../components/AlertMessage.vue'
 import ConfirmModal from '../components/ConfirmModal.vue'
-import { FileDown, Download, CircleAlert, CheckCircle, Calendar } from 'lucide-vue-next'
+import { FileDown, Download, CircleAlert, CheckCircle, Calendar, TriangleAlert } from 'lucide-vue-next'
 
 const loading = ref(false)
 const error = ref(null)
@@ -64,6 +89,13 @@ const alertMsg = ref('')
 const alertType = ref('info')
 const showConfirm = ref(false)
 const periodo = ref('')
+const excluidos = ref([])
+const cantidadRegistros = ref(0)
+const montoTotal = ref(0)
+
+const montoExcluido = computed(() =>
+  excluidos.value.reduce((s, e) => s + (e.monto || 0), 0)
+)
 
 const periodoValido = computed(() => {
   if (!periodo.value) return false
@@ -75,22 +107,32 @@ async function generar() {
   error.value = null
   generado.value = false
   alertMsg.value = ''
+  excluidos.value = []
   try {
-    const response = await archivosApi.generarTemge(periodo.value)
-    const url = window.URL.createObjectURL(new Blob([response.data]))
+    const { data } = await archivosApi.generarTemge(periodo.value)
+    if (!data?.archivo) {
+      throw new Error('Respuesta inesperada del servidor. Verifique que el backend este actualizado y reintente.')
+    }
+    const bytes = Uint8Array.from(atob(data.archivo), c => c.charCodeAt(0))
+    const url = window.URL.createObjectURL(new Blob([bytes], { type: 'text/plain' }))
     const link = document.createElement('a')
     link.href = url
-    const filename = response.headers['content-disposition']
-      ?.match(/filename="?(.+)"?/)?.[1]
-      || `TEMGE_${periodo.value}.txt`
-    link.setAttribute('download', filename)
+    link.setAttribute('download', data.nombreArchivo || `TEMGE_${periodo.value}.txt`)
     document.body.appendChild(link)
     link.click()
     link.remove()
     window.URL.revokeObjectURL(url)
     generado.value = true
-    alertType.value = 'success'
-    alertMsg.value = `Archivo TEMGE generado y descargado exitosamente para el periodo ${periodo.value}.`
+    excluidos.value = data.excluidos || []
+    cantidadRegistros.value = data.cantidadRegistros || 0
+    montoTotal.value = data.montoTotal || 0
+    if (excluidos.value.length) {
+      alertType.value = 'warning'
+      alertMsg.value = `Archivo TEMGE generado, pero ${excluidos.value.length} retenciones quedaron fuera por $${montoExcluido.value.toLocaleString('es-CL')}. Revise el detalle mas abajo.`
+    } else {
+      alertType.value = 'success'
+      alertMsg.value = `Archivo TEMGE generado y descargado exitosamente para el periodo ${periodo.value}.`
+    }
   } catch (e) {
     error.value = e.response?.data?.error || e.message
     alertType.value = 'error'
@@ -157,5 +199,34 @@ async function generar() {
 .periodo-error {
   color: var(--color-danger, #e53e3e);
   font-size: 0.85rem;
+}
+.excluidos {
+  margin-top: 1.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--color-warning, #f59e0b);
+  border-radius: var(--border-radius-lg);
+  padding: 1.25rem 1.5rem;
+}
+.excluidos h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  margin-bottom: 0.75rem;
+  color: var(--color-warning-dark, #b45309);
+}
+.excluidos table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.excluidos th, .excluidos td {
+  text-align: left;
+  padding: 0.45rem 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+}
+.excluidos td.monto {
+  text-align: right;
+  font-family: var(--font-mono, monospace);
 }
 </style>

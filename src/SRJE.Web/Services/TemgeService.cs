@@ -12,7 +12,7 @@ public interface ITemgeService
 {
     Task<TemgeArchivoDto> PreviewTemgeAsync(Stream stream, string nombreArchivo);
     Task<ResultadoImportacionDto> ConfirmarTemgeAsync(ConfirmarImportacionRequest request, string usuario, string ip);
-    Task<byte[]> GenerarTemgeAsync(string usuario, string? periodoProceso = null);
+    Task<TemgeGeneradoDto> GenerarTemgeAsync(string usuario, string? periodoProceso = null);
 }
 
 public class TemgeService : ITemgeService
@@ -232,7 +232,7 @@ public class TemgeService : ITemgeService
         }
     }
 
-    public async Task<byte[]> GenerarTemgeAsync(string usuario, string? periodoProceso = null)
+    public async Task<TemgeGeneradoDto> GenerarTemgeAsync(string usuario, string? periodoProceso = null)
     {
         await using var transaction = await _db.Database.BeginTransactionAsync();
         try
@@ -254,11 +254,21 @@ public class TemgeService : ITemgeService
 
             // Construir 1 registro por retencion, con fallback: retencion -> beneficiario -> default
             var datos = new List<(RegistroTemge Registro, long IdRetencion)>();
+            var excluidos = new List<TemgeExcluidoDto>();
 
             foreach (var ret in retenciones)
             {
                 if (!beneficiarios.TryGetValue(ret.RutBeneficiario, out var benef))
+                {
+                    excluidos.Add(new TemgeExcluidoDto
+                    {
+                        RutBeneficiario = ret.RutBeneficiario,
+                        DvBeneficiario = ret.DvBeneficiario,
+                        Monto = ret.Monto,
+                        Motivo = "Beneficiario no existe o esta inactivo"
+                    });
                     continue;
+                }
 
                 var codBanco = ret.CodBanco ?? benef.CodBanco ?? _settings.CodBancoEstado;
                 var tipoCuenta = ret.TipoCuenta ?? benef.TipoCuenta ?? 2;
@@ -267,7 +277,17 @@ public class TemgeService : ITemgeService
 
                 // Debe tener al menos un numero de cuenta
                 if (ctaEstado == null && ctaOtBanco == null)
+                {
+                    excluidos.Add(new TemgeExcluidoDto
+                    {
+                        RutBeneficiario = ret.RutBeneficiario,
+                        DvBeneficiario = ret.DvBeneficiario,
+                        NombreBeneficiario = benef.NombreBeneficiario,
+                        Monto = ret.Monto,
+                        Motivo = "Sin cuenta bancaria registrada"
+                    });
                     continue;
+                }
 
                 datos.Add((new RegistroTemge
                 {
@@ -318,7 +338,26 @@ public class TemgeService : ITemgeService
                 "Archivo TEMGE generado: {CantRegistros} registros, monto total {MontoTotal}, archivo {NombreArchivo}",
                 registros.Count, registros.Sum(d => d.Monto), historial.NombreArchivo);
 
-            return archivo;
+            if (excluidos.Count > 0)
+            {
+                foreach (var ex in excluidos)
+                    _logger.LogWarning(
+                        "Retencion excluida del TEMGE: RUT {Rut}-{Dv} {Nombre}, monto {Monto}, motivo: {Motivo}",
+                        ex.RutBeneficiario, ex.DvBeneficiario, ex.NombreBeneficiario ?? "(sin nombre)", ex.Monto, ex.Motivo);
+
+                _logger.LogWarning(
+                    "TEMGE {NombreArchivo}: {CantExcluidos} retenciones excluidas por monto total {MontoExcluido}",
+                    historial.NombreArchivo, excluidos.Count, excluidos.Sum(e => e.Monto));
+            }
+
+            return new TemgeGeneradoDto
+            {
+                Archivo = archivo,
+                NombreArchivo = historial.NombreArchivo,
+                CantidadRegistros = registros.Count,
+                MontoTotal = registros.Sum(d => d.Monto),
+                Excluidos = excluidos
+            };
         }
         catch (Exception ex)
         {
