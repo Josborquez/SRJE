@@ -1,4 +1,6 @@
+using System.Text;
 using Microsoft.EntityFrameworkCore;
+using OfficeOpenXml;
 using SRJE.Web.Helpers;
 using SRJE.Web.Infrastructure.Data;
 using SRJE.Web.Models.Entities;
@@ -310,6 +312,124 @@ public class FuncionarioService : IFuncionarioService
             MontoMensualTotal = montoMensualTotal,
             PeriodoActual = ultimoPeriodo
         };
+    }
+
+    public async Task<byte[]> ExportarExcelAsync(string? q = null, string? activo = null)
+    {
+        var funcionarios = await ObtenerFuncionariosParaExportar(q, activo);
+
+        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        using var package = new ExcelPackage();
+        var ws = package.Workbook.Worksheets.Add("Funcionarios");
+
+        var headers = new[] { "RUT", "Apellido Paterno", "Apellido Materno", "Nombres",
+            "Beneficiarios", "Monto Total", "Estado" };
+        for (int c = 0; c < headers.Length; c++)
+        {
+            ws.Cells[1, c + 1].Value = headers[c];
+            ws.Cells[1, c + 1].Style.Font.Bold = true;
+            ws.Cells[1, c + 1].Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+            ws.Cells[1, c + 1].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(44, 62, 80));
+            ws.Cells[1, c + 1].Style.Font.Color.SetColor(System.Drawing.Color.White);
+        }
+
+        for (int i = 0; i < funcionarios.Count; i++)
+        {
+            var f = funcionarios[i];
+            int row = i + 2;
+            ws.Cells[row, 1].Value = f.RutFormateado;
+            ws.Cells[row, 2].Value = f.ApellidoPaterno;
+            ws.Cells[row, 3].Value = f.ApellidoMaterno;
+            ws.Cells[row, 4].Value = f.Nombres;
+            ws.Cells[row, 5].Value = f.CantidadBeneficiarios;
+            ws.Cells[row, 6].Value = f.MontoTotalRetenciones;
+            ws.Cells[row, 6].Style.Numberformat.Format = "#,##0";
+            ws.Cells[row, 7].Value = f.Activo == "S" ? "Activo" : "Inactivo";
+        }
+
+        ws.Cells[ws.Dimension.Address].AutoFitColumns();
+        return package.GetAsByteArray();
+    }
+
+    public async Task<byte[]> ExportarCsvAsync(string? q = null, string? activo = null)
+    {
+        var funcionarios = await ObtenerFuncionariosParaExportar(q, activo);
+
+        var sb = new StringBuilder();
+        sb.AppendLine("RUT;Apellido Paterno;Apellido Materno;Nombres;Beneficiarios;Monto Total;Estado");
+
+        foreach (var f in funcionarios)
+        {
+            sb.AppendLine(string.Join(";",
+                f.RutFormateado,
+                f.ApellidoPaterno ?? "",
+                f.ApellidoMaterno ?? "",
+                f.Nombres ?? "",
+                f.CantidadBeneficiarios,
+                f.MontoTotalRetenciones,
+                f.Activo == "S" ? "Activo" : "Inactivo"
+            ));
+        }
+
+        return Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(sb.ToString())).ToArray();
+    }
+
+    private async Task<List<FuncionarioDto>> ObtenerFuncionariosParaExportar(string? q, string? activo)
+    {
+        var query = _db.Funcionarios.AsNoTracking().AsQueryable();
+
+        if (!string.IsNullOrEmpty(q))
+        {
+            var busqueda = q.Trim().ToUpper();
+            if (long.TryParse(busqueda.Replace(".", "").Replace("-", ""), out var rut))
+                query = query.Where(f => f.RutFuncionario == rut);
+            else
+                query = query.Where(f =>
+                    (f.ApellidoPaterno != null && f.ApellidoPaterno.ToUpper().Contains(busqueda)) ||
+                    (f.ApellidoMaterno != null && f.ApellidoMaterno.ToUpper().Contains(busqueda)) ||
+                    (f.Nombres != null && f.Nombres.ToUpper().Contains(busqueda)));
+        }
+
+        if (!string.IsNullOrEmpty(activo))
+            query = query.Where(f => f.Activo == activo);
+
+        var items = await query
+            .OrderBy(f => f.ApellidoPaterno).ThenBy(f => f.ApellidoMaterno).ThenBy(f => f.Nombres)
+            .Select(f => MapToDto(f))
+            .ToListAsync();
+
+        // Enriquecer sin filtrar por RUT (evita limite de IN en Oracle al exportar todo)
+        var beneficiariosPorFunc = await _db.RetenidosJudiciales.AsNoTracking()
+            .Where(r => r.Estado == "A")
+            .Select(r => new { r.RutTitular, r.RutBeneficiario })
+            .Distinct()
+            .GroupBy(r => r.RutTitular)
+            .Select(g => new { Rut = g.Key, Cantidad = g.Count() })
+            .ToDictionaryAsync(x => x.Rut, x => x.Cantidad);
+
+        var ultimoPeriodo = await _db.RetenidosJudiciales.AsNoTracking()
+            .Where(r => r.Estado == "A")
+            .OrderByDescending(r => r.PeriodoProceso)
+            .Select(r => r.PeriodoProceso)
+            .FirstOrDefaultAsync();
+
+        var montoPorFunc = ultimoPeriodo == null
+            ? new Dictionary<long, decimal>()
+            : await _db.RetenidosJudiciales.AsNoTracking()
+                .Where(r => r.Estado == "A" && r.PeriodoProceso == ultimoPeriodo)
+                .GroupBy(r => r.RutTitular)
+                .Select(g => new { Rut = g.Key, Monto = g.Sum(r => r.Monto) })
+                .ToDictionaryAsync(x => x.Rut, x => x.Monto);
+
+        foreach (var item in items)
+        {
+            if (beneficiariosPorFunc.TryGetValue(item.RutFuncionario, out var cantidad))
+                item.CantidadBeneficiarios = cantidad;
+            if (montoPorFunc.TryGetValue(item.RutFuncionario, out var monto))
+                item.MontoTotalRetenciones = monto;
+        }
+
+        return items;
     }
 
     private static FuncionarioDto MapToDto(Funcionario f) => new()

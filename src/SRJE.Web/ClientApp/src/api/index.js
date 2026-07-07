@@ -105,7 +105,9 @@ export const funcionariosApi = {
   obtener: (rut) => api.get(`/funcionarios/${rut}`),
   actualizar: (rut, data) => api.put(`/funcionarios/${rut}`, data),
   inactivar: (rut) => api.delete(`/funcionarios/${rut}`),
-  stats: () => api.get('/funcionarios/stats')
+  stats: () => api.get('/funcionarios/stats'),
+  exportarExcel: (params) => api.get('/funcionarios/exportar/excel', { params, responseType: 'blob' }),
+  exportarCsv: (params) => api.get('/funcionarios/exportar/csv', { params, responseType: 'blob' })
 }
 
 // Usuarios del sistema (solo admin)

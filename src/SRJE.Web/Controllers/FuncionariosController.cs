@@ -33,6 +33,24 @@ public class FuncionariosController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>GET /api/funcionarios/exportar/excel — Exportar a Excel</summary>
+    [HttpGet("exportar/excel")]
+    public async Task<IActionResult> ExportarExcel([FromQuery] string? q = null, [FromQuery] string? activo = null)
+    {
+        var bytes = await _service.ExportarExcelAsync(q, activo);
+        return File(bytes,
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            $"Funcionarios_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx");
+    }
+
+    /// <summary>GET /api/funcionarios/exportar/csv — Exportar a CSV</summary>
+    [HttpGet("exportar/csv")]
+    public async Task<IActionResult> ExportarCsv([FromQuery] string? q = null, [FromQuery] string? activo = null)
+    {
+        var bytes = await _service.ExportarCsvAsync(q, activo);
+        return File(bytes, "text/csv", $"Funcionarios_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
+    }
+
     /// <summary>GET /api/funcionarios/{rut} — Ficha completa por RUT</summary>
     [HttpGet("{rut:long}")]
     public async Task<IActionResult> ObtenerPorRut(long rut)

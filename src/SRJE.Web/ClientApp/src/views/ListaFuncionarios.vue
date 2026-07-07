@@ -51,6 +51,14 @@
           <option value="S">Activos</option>
           <option value="N">Inactivos</option>
         </select>
+        <div class="export-group">
+          <button @click="exportar('excel')" class="btn btn-secondary" :disabled="exportando">
+            <FileSpreadsheet :size="16" /> Excel
+          </button>
+          <button @click="exportar('csv')" class="btn btn-secondary" :disabled="exportando">
+            <FileText :size="16" /> CSV
+          </button>
+        </div>
       </div>
     </div>
 
@@ -86,7 +94,7 @@
           <td>{{ f.apellidoMaterno || '-' }}</td>
           <td>{{ f.nombres || '-' }}</td>
           <td class="text-center">{{ f.cantidadBeneficiarios || 0 }}</td>
-          <td class="text-right">{{ f.montoTotal ? '$' + f.montoTotal.toLocaleString('es-CL') : '-' }}</td>
+          <td class="text-right">{{ f.montoTotalRetenciones ? '$' + f.montoTotalRetenciones.toLocaleString('es-CL') : '-' }}</td>
           <td>
             <span :class="'estado estado-' + (f.activo === 'S' ? 'a' : 'i')">
               <CircleCheck v-if="f.activo === 'S'" :size="13" />
@@ -137,11 +145,12 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useFuncionariosStore } from '../stores/funcionarios.js'
+import { funcionariosApi } from '../api/index.js'
 import AlertMessage from '../components/AlertMessage.vue'
 import {
   Users, Search, Eye, Pencil,
   CircleCheck, CircleX, CircleAlert, Inbox,
-  DollarSign, Calendar
+  DollarSign, Calendar, FileSpreadsheet, FileText
 } from 'lucide-vue-next'
 
 const store = useFuncionariosStore()
@@ -150,6 +159,7 @@ const filtroEstado = ref('')
 const tamanioPagina = ref(20)
 const alertMsg = ref('')
 const alertType = ref('info')
+const exportando = ref(false)
 let debounceTimer = null
 
 onMounted(() => {
@@ -187,6 +197,33 @@ function cambiarTamano() {
   store.pageSize = tamanioPagina.value
   store.page = 1
   store.listar(buildParams())
+}
+
+async function exportar(formato) {
+  exportando.value = true
+  try {
+    const response = formato === 'excel'
+      ? await funcionariosApi.exportarExcel(buildParams())
+      : await funcionariosApi.exportarCsv(buildParams())
+    const url = window.URL.createObjectURL(new Blob([response.data]))
+    const link = document.createElement('a')
+    link.href = url
+    const filename = response.headers['content-disposition']
+      ?.match(/filename="?(.+?)"?(;|$)/)?.[1]
+      || `Funcionarios.${formato === 'excel' ? 'xlsx' : 'csv'}`
+    link.setAttribute('download', filename)
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+    alertType.value = 'success'
+    alertMsg.value = `Archivo ${formato.toUpperCase()} exportado exitosamente.`
+  } catch (e) {
+    alertType.value = 'error'
+    alertMsg.value = `Error al exportar: ${e.message}`
+  } finally {
+    exportando.value = false
+  }
 }
 
 const rangoInicio = computed(() => store.totalCount === 0 ? 0 : (store.page - 1) * store.pageSize + 1)

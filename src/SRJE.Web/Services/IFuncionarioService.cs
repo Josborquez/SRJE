@@ -10,4 +10,6 @@ public interface IFuncionarioService
     Task<FuncionarioDto> ActualizarAsync(long rut, ActualizarFuncionarioRequest request, string usuario);
     Task<bool> InactivarAsync(long rut, string usuario);
     Task<FuncionarioStatsDto> ObtenerStatsAsync();
+    Task<byte[]> ExportarExcelAsync(string? q = null, string? activo = null);
+    Task<byte[]> ExportarCsvAsync(string? q = null, string? activo = null);
 }
